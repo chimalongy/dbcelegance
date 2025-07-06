@@ -18,7 +18,7 @@ const ProductList = ({ gender }) => {
     ];
     const basePrice = [2700, 920, 1350, 850, 1200, 1800, 2200, 450, 680, 950];
 
-    for (let i = 1; i <= 15 ; i++) {
+    for (let i = 1; i <= 60; i++) {
       const randIndex = Math.floor(Math.random() * baseNames.length);
       const imagePrefix = `/images/products/${gender === "mensfashion" ? "M" : "F"}`;
       
