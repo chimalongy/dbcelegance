@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import React, { useState, useEffect } from "react";
 
 const ProductList = ({ gender }) => {
@@ -20,8 +21,7 @@ const ProductList = ({ gender }) => {
 
     for (let i = 1; i <= 15 ; i++) {
       const randIndex = Math.floor(Math.random() * baseNames.length);
-      const imagePrefix = `/images/products/${gender === "mensfashion" ? "M" : "F"}`;
-      
+      const imagePrefix = `/images/products/${gender === "mensfashion" ? "M" : "F"}`; 
       const images = Array.from({ length: 3 }, (_, j) => `${imagePrefix}${j + 1}.jpg`);
       
       products.push({
@@ -55,7 +55,8 @@ const ProductList = ({ gender }) => {
     <div className="container mx-auto py-8">
       <div className="grid grid-cols-2 gap-2 lg:gap-10 sm:grid-cols-2 lg:grid-cols-4">
         {currentProducts.map((product) => (
-          <div key={product.id} className="bg-white shadow hover:shadow-lg transition duration-300 overflow-hidden">
+          <Link href={`/store/${gender}/${product.name}`}key={product.id}>
+              <div  className="bg-white shadow hover:shadow-lg transition duration-300 overflow-hidden">
             {/* Scrollable Image Container */}
             <div className="h-[300px] lg:h-[600px] overflow-x-auto whitespace-nowrap scroll-smooth scrollbar-thin scrollbar-thumb-gray-400">
               <div className="flex h-full">
@@ -77,6 +78,10 @@ const ProductList = ({ gender }) => {
               <p className="text-gray-700 font-bold">${product.price.toFixed(2)}</p>
             </div>
           </div>
+          
+          
+          
+          </Link>
         ))}
       </div>
 
