@@ -11,11 +11,11 @@ function Home() {
     <div className='flex flex-col lg:flex-row h-screen relative'>
 
       {/* Centered H1 over entire screen */}
-      <div className='absolute inset-0 flex items-center justify-center z-20 pointer-events-none'>
+      {/* <div className='absolute inset-0 flex items-center justify-center z-20 pointer-events-none'>
         <h1 className='text-4xl font-bold text-white text-center drop-shadow-lg'>
           DBC Elegance
         </h1>
-      </div>
+      </div> */}
 
       {/* Men's Fashion */}
       <div
