@@ -11,3 +11,14 @@
 .animate-fadeIn {
   animation: fadeIn 0.2s ease-out forwards;
 }
+
+@layer utilities {
+  .hide-scrollbar {
+    @apply overflow-y-auto;
+    scrollbar-width: none; /* Firefox */
+  }
+
+  .hide-scrollbar::-webkit-scrollbar {
+    display: none; /* Chrome, Safari */
+  }
+}

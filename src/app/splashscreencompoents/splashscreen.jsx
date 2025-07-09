@@ -47,7 +47,7 @@ export default function SplashScreen() {
 
   if (!isMounted) {
     return (
-      <div className=" bg-amber-100 h-screen flex justify-center items-center">
+      <div className=" h-screen flex justify-center items-center">
         <Image
         src="/images/dbclogo.png"
         alt="dbclogo"
@@ -59,7 +59,7 @@ export default function SplashScreen() {
   }
 
   return (
-     <div className=" bg-amber-100 h-screen flex justify-center items-center">
+     <div className=" h-screen flex justify-center items-center">
          <Image
         src="/images/dbclogo.png"
         alt="dbclogo"
