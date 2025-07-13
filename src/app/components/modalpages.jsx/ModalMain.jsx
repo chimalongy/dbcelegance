@@ -4,20 +4,23 @@ import React, { useState } from 'react';
 import { CiSearch, CiHeart, CiUser, CiShoppingCart, CiCircleMinus } from 'react-icons/ci';
 import Search from './Search';
 import AccountsPage from './AccountsPage';
+import { useNavStore } from '@/app/lib/store/navmodalstore';
 
 const ModalMain = () => {
-  const [activeTab, setActiveTab] = useState('wishlist');
-  const [showModal, setShowModal] = useState(true);
+   const { selectednavtab, setSelectedNavTab, clearSelectedNavTab, showmodal,setShowModal } = useNavStore();
 
-  if (!showModal) return null;
+  //const [activeTab, setActiveTab] = useState(selectednavtab);
+  
+ 
+  if (!showmodal) return null;
 
   function renderActiveTab() {
-    switch (activeTab) {
+    switch (selectednavtab) {
       case "search":
         return <Search />;
       case "wishlist":
         return <Search />; // Replace with actual Wishlist component
-      case "profile":
+      case "user":
         return <AccountsPage />; // Replace with actual Profile component
       case "cart":
         return <Search />; // Replace with actual Cart component
@@ -39,7 +42,12 @@ const ModalMain = () => {
           <div className="flex justify-between items-center px-4 py-3">
             {/* Close Button */}
             <button
-              onClick={() => setShowModal(false)}
+              onClick={
+                () => {
+                  setShowModal(false)
+                  clearSelectedNavTab()
+                }
+              }
               className="flex items-center gap-1 text-sm text-gray-700 hover:text-black"
               aria-label="Close modal"
             >
@@ -52,15 +60,15 @@ const ModalMain = () => {
               {[
                 { name: 'search', icon: <CiSearch /> },
                 { name: 'wishlist', icon: <CiHeart /> },
-                { name: 'profile', icon: <CiUser /> },
+                { name: 'user', icon: <CiUser /> },
                 { name: 'cart', icon: <CiShoppingCart /> },
               ].map(({ name, icon }) => (
                 <button
                   key={name}
-                  onClick={() => setActiveTab(name)}
+                  onClick={() => setSelectedNavTab(name)}
                   aria-label={name}
                   className={`flex justify-center items-center h-[40px] w-[40px] ${
-                    activeTab === name ? 'border-b-4 border-b-amber-500' : ''
+                    selectednavtab === name ? 'border-b-4 border-b-amber-500' : ''
                   }`}
                 >
                   <span className="text-2xl text-gray-700">{icon}</span>

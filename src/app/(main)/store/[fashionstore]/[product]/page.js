@@ -3,8 +3,11 @@ import Navbar from "@/app/components/Nav";
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Footer from "@/app/components/Footer";
+import { useNavStore } from '../../../../lib/store/navmodalstore';
+import ModalMain from "@/app/components/modalpages.jsx/ModalMain";
 
 const ProductPage = () => {
+   const { selectednavtab, setSelectedNavTab, clearSelectedNavTab, showmodal,setShowModal } = useNavStore();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDesktop, setIsDesktop] = useState(false);
   const [activeTab, setActiveTab] = useState("description");
@@ -257,6 +260,7 @@ const ProductPage = () => {
             </div>
           </div>
         </div>
+         {showmodal && <ModalMain/>}
       </div>
 
       <Footer />

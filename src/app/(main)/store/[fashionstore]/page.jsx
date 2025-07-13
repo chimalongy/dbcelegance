@@ -8,11 +8,13 @@ import ProductList from '@/app/components/ProductList';
 import Footer from '@/app/components/Footer';
 import Navbar from '@/app/components/Nav';
 import ModalMain from '@/app/components/modalpages.jsx/ModalMain';
+import { useNavStore } from '../../../lib/store/navmodalstore';
 
 export default function FashionPage() {
+    const { selectednavtab, setSelectedNavTab, clearSelectedNavTab, showmodal,setShowModal } = useNavStore();
     const params = useParams();
     const gender = params.fashionstore;
-    const [shownavmodals, setshownavmodals] = useState(false)
+   
 
     const backgroundImage =
         gender === 'mensfashion' ? mensfashionbg.src : womensfashionbg.src;
@@ -27,7 +29,7 @@ export default function FashionPage() {
 
     return (
         <div className="w-full ">
-            <Navbar showmodal={()=>{setshownavmodals(true)}} close={()=>{setshownavmodals(false)}} />
+            <Navbar  />
             <div className="relative">
 
                 {/* Parallax Section */}
@@ -61,7 +63,7 @@ export default function FashionPage() {
                     <ProductList gender={gender} />
                 </div>
 
-                {shownavmodals && <ModalMain close={()=>{setshownavmodals(false)}}/>}
+                {showmodal && <ModalMain/>}
             </div>
 
 

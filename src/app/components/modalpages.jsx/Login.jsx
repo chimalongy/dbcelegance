@@ -32,10 +32,8 @@ const LoginForm = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row justify-between w-full max-w-5xl mx-auto p-6 min-h-screen">
-         <p className="text-sm text-center mt-4 text-gray-500">
-            Log in to your account.
-          </p>
+    <div className="flex flex-col lg:flex-row justify-between w-full max-w-5xl mx-auto p-6 ">
+          <h1 className="text-2xl font-bold mb-6">Login</h1>
       {/* Left side info */}
       {/* <div className="hidden lg:flex flex-col justify-center w-1/3">
         <h2 className="text-lg font-semibold text-gray-800">Login</h2>
@@ -45,7 +43,7 @@ const LoginForm = () => {
       {/* Right side form */}
       <div className="w-full lg:w-2/3 max-w-md mx-auto">
         {/* Social buttons */}
-        <div className="flex flex-col gap-4">
+        {/* <div className="flex flex-col gap-4">
           <button
             onClick={() => handleSocialLogin("Google")}
             className="border px-4 py-2 rounded-md flex items-center justify-center gap-2 text-sm"
@@ -58,20 +56,20 @@ const LoginForm = () => {
           >
             <FaFacebook /> Facebook
           </button>
-        </div>
+        </div> */}
 
         {/* Privacy */}
-        <p className="text-center text-xs text-gray-500 mt-4">Privacy statement</p>
+        {/* <p className="text-center text-xs text-gray-500 mt-4">Privacy statement</p> */}
 
         {/* Divider */}
-        <div className="flex items-center my-4">
+        {/* <div className="flex items-center my-4">
           <hr className="flex-grow border-gray-300" />
           <span className="mx-2 text-gray-400 text-sm">Or</span>
           <hr className="flex-grow border-gray-300" />
-        </div>
+        </div> */}
 
         {/* Login form */}
-        <form onSubmit={handleLogin} className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4 mt-36">
             
           <div>
             <label className="text-sm text-gray-700 font-medium">* Email address</label>
@@ -130,7 +128,7 @@ const LoginForm = () => {
         <hr className="my-6" />
 
         {/* Sign up */}
-        <div className="flex justify-between items-center">
+        {/* <div className="flex justify-between items-center">
           <div>
             <p className="text-sm text-gray-700 font-semibold">Sign up</p>
             <p className="text-sm text-gray-500">Don't have an account yet?</p>
@@ -141,7 +139,7 @@ const LoginForm = () => {
           >
             Create an account
           </button>
-        </div>
+        </div> */}
       </div>
     </div>
   );

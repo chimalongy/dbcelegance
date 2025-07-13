@@ -1,9 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-
-
-
+import { useNavStore } from '../lib/store/navmodalstore';
 
 import {
   FaBars,
@@ -21,8 +19,10 @@ import { CiShoppingCart } from "react-icons/ci";
 import Link from 'next/link';
 
 
-export default function Navbar({showmodal}) {
+export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
+  const { selectednavtab, setSelectedNavTab, clearSelectedNavTab, showmodal,setShowModal } = useNavStore();
+  
 
   return (
     <nav className="w-full border-b border-gray-100 px-6 py-4 flex justify-between items-center relative bg-white z-50 shadow-sm">
@@ -52,40 +52,45 @@ export default function Navbar({showmodal}) {
         <button className="p-1 text-gray-700 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
           onClick={
             () => {
-            showmodal()
+              setSelectedNavTab("search")
+              console.log(selectednavtab)
+              setShowModal(true)
             }
           }
         >
           <CiSearch className="" />
         </button>
         <button className="p-1 text-gray-700 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
-          // onClick={
-          //   () => {
-          //     setSelectedModalPage("wishlist")
-          //     setShowModal(true);
-          //   }
-          // }
+          onClick={
+            () => {
+              setSelectedNavTab("wishlist")
+              console.log(selectednavtab)
+              setShowModal(true)
+            }
+          }
 
         >
           <CiHeart className="" />
         </button>
         <button className="p-1 text-gray-700 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
-          // onClick={
-          //   () => {
-          //     setSelectedModalPage("user")
-          //     setShowModal(true);
-          //   }
-          // }
+          onClick={
+            () => {
+              setSelectedNavTab("user")
+              console.log(selectednavtab)
+              setShowModal(true)
+            }
+          }
         >
           <CiUser className="" />
         </button>
         <button className="p-1 text-gray-700 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
-          // onClick={
-          //   () => {
-          //     setSelectedModalPage("cart")
-          //     setShowModal(true);
-          //   }
-          // }
+          onClick={
+            () => {
+              setSelectedNavTab("cart")
+              console.log(selectednavtab)
+              setShowModal(true)
+            }
+          }
         >
           <CiShoppingCart className="" />
         </button>
