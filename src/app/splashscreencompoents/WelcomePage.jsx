@@ -44,7 +44,7 @@ export default function WelcomePage() {
   }, []);
 
   return (
-    <div className="h-screen bg-amber-50 flex items-center justify-center overflow-hidden">
+   <div className="h-full bg-amber-50 flex items-center justify-center overflow-hidden">
       <div className="text-center w-full px-4 max-w-md">
         <AnimatePresence>
           {showWelcome && (

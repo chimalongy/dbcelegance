@@ -10,7 +10,7 @@ import WelcomePage from "./splashscreencompoents/WelcomePage";
 // Import individual slide components
 
 
-export default function Home() {
+export default function MyComponent() {
   return (
     <div className="h-screen">
       <Swiper
@@ -19,16 +19,19 @@ export default function Home() {
         loop={false}
         onReachEnd={(swiper) => swiper.autoplay.stop()}
         slidesPerView={1}
+        className="h-full" // Make Swiper fill parent
       >
-        <SwiperSlide>
-          <SplashScreen/>
+        <SwiperSlide className="h-full"> {/* Make slide fill Swiper */}
+          <div className="h-full"> {/* Ensure content fills slide */}
+            <SplashScreen />
+          </div>
         </SwiperSlide>
-        
-        <SwiperSlide>
-          <WelcomePage/>
+
+        <SwiperSlide className="h-full">
+          <div className="h-full">
+            <WelcomePage />
+          </div>
         </SwiperSlide>
-        
-        
       </Swiper>
     </div>
   );
