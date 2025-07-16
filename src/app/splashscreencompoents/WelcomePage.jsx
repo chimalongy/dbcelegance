@@ -127,7 +127,7 @@ export default function WelcomePage() {
                     router.push("/home")
                 }}
             >
-              Continue
+              Explore
             </motion.button>
           )}
         {/* </AnimatePresence> */}

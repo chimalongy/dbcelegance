@@ -58,7 +58,7 @@ export default function Navbar() {
             }
           }
         >
-          <CiSearch className="" />
+          <CiSearch  className="" />
         </button>
         <button className="p-1 text-gray-700 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
           onClick={
@@ -70,7 +70,7 @@ export default function Navbar() {
           }
 
         >
-          <CiHeart className="" />
+          <CiHeart  className="" />
         </button>
         <button className="p-1 text-gray-700 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
           onClick={
@@ -81,7 +81,7 @@ export default function Navbar() {
             }
           }
         >
-          <CiUser className="" />
+          <CiUser  className="" />
         </button>
         <button className="p-1 text-gray-700 hover:text-gray-900 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
           onClick={
@@ -92,7 +92,7 @@ export default function Navbar() {
             }
           }
         >
-          <CiShoppingCart className="" />
+          <CiShoppingCart size={24} className="" />
         </button>
       </div>
 
