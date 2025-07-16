@@ -48,23 +48,25 @@ export default function SplashScreen() {
   if (!isMounted) {
     return (
       <div className=" h-screen flex justify-center items-center">
-        <Image
+        <img
         src="/images/dbclogo.png"
         alt="dbclogo"
-        width={200}
-        height={200}
+        className="lg:w-[10%] w-[40%]"
+        // width={200}
+        // height={200}
         />
       </div>
     );
   }
 
   return (
-     <div className=" h-screen flex justify-center items-center">
-         <Image
+    <div className=" h-screen flex justify-center items-center">
+        <img
         src="/images/dbclogo.png"
         alt="dbclogo"
-        width={200}
-        height={200}
+        className="lg:w-[10%] w-[40%]"
+        // width={200}
+        // height={200}
         />
       </div>
   
