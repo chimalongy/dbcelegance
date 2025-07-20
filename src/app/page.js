@@ -21,8 +21,8 @@ export default function MyComponent() {
         slidesPerView={1}
         className="h-full" // Make Swiper fill parent
       >
-        <SwiperSlide className="h-full"> {/* Make slide fill Swiper */}
-          <div className="h-full"> {/* Ensure content fills slide */}
+        <SwiperSlide className="h-full"> 
+          <div className="h-full">
             <SplashScreen />
           </div>
         </SwiperSlide>

@@ -2,7 +2,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import ModalMain from "./components/modalpages.jsx/ModalMain";
-
+import { Toaster } from "react-hot-toast";
 import Navbar from "./components/Nav";
 
 
@@ -33,7 +33,7 @@ export default function RootLayout({ children }) {
         {/* <Navbar /> */}
         {children}
 
-       
+       <Toaster/>
       </body>
     </html>
   );
