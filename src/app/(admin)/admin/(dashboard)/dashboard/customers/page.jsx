@@ -4,7 +4,8 @@ import { useState } from 'react';
 import { 
   FiSearch, FiChevronDown, FiChevronUp, 
   FiUser, FiMail, FiMapPin, FiGlobe, FiClock
-} from 'react-icons/fi';
+} from 'react-icons/fi';  
+
 
 export default function CustomersPage() {
   // Sample customer data with IP and location
