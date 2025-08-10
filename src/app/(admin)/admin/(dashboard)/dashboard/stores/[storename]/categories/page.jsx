@@ -1,45 +1,76 @@
 "use client";
 
-import { useState } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiX, FiChevronDown, FiChevronUp } from 'react-icons/fi';
+import { useEffect, useState } from 'react';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiChevronDown, FiChevronUp, FiLoader } from 'react-icons/fi';
 import AddCategoryModal from './components/AddCategoryModal';
 import EditCategoryModal from './components/EditCategoryModal';
 import DeleteCategoryModal from './components/DeleteCategoryModal';
-
-// Sample category images (replace with your actual image paths)
-const categoryImages = {
-  "Shirts": "/images/stores/male/categories/shirts.jpg",
-  "Jeans": "/images/stores/male/categories/jeans.jpg",
-  "Trousers": "/images/stores/male/categories/trousers.jpg",
-  
-};
+import axios from 'axios';
+import { apiSummary } from '@/app/lib/apiSummary';
+import { useParams } from 'next/navigation';
+import toast from 'react-hot-toast';
+import { useAdminUserStore } from '@/app/lib/store/adminuserstore';
+import { useRouter } from 'next/navigation';
 
 export default function CategoriesPage() {
-  // Sample data with image references
-  const [categories, setCategories] = useState([
-    { id: 1, name: "Shirts", status: "active", createdAt: "2023-05-15", image: categoryImages["Shirts"] },
-    { id: 2, name: "Jeans", status: "active", createdAt: "2023-04-22", image: categoryImages["Jeans"] },
-    { id: 3, name: "Trousers", status: "active", createdAt: "2023-04-22", image: categoryImages["Trousers"] },
-   
-  ]);
+  const router = useRouter();
+  const admin_user = useAdminUserStore(state => state.adminuser);
+  const params = useParams();
+  const [categories, setCategories] = useState([]);
+  const [loading, setLoading] = useState(true);
 
-  // State for modals
+  async function fetchstorecategories() {
+    try {
+      setLoading(true);
+      const response = await axios.post(
+        apiSummary.admin.stores.categories.get_all_categories, 
+        { category_store: params.storename }
+      );
+      setCategories(response.data.data);
+    } catch (error) {
+      console.error("Error fetching categories:", error);
+      toast.error("Failed to fetch categories");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (admin_user?.id) {
+      if (!admin_user.accessiblepages.some((accessible_page) => accessible_page === "stores")) {
+        toast.error("You don't have access to this page.");
+        router.push("/admin/dashboard/");
+      } else {
+        fetchstorecategories();
+      }
+    }
+  }, [admin_user?.id]);
+
+  // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  
-  // State for form data
+
+  // Loading states
+  const [isAdding, setIsAdding] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Form data
   const [currentCategory, setCurrentCategory] = useState(null);
   const [newCategory, setNewCategory] = useState({
     name: "",
     status: "active",
-    image: ""
+    image: null
   });
 
-  // State for filters
+  // Filters and sorting
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
-  const [sortConfig, setSortConfig] = useState({ key: "id", direction: "ascending" });
+  const [sortConfig, setSortConfig] = useState({ 
+    key: "category_id", 
+    direction: "ascending" 
+  });
 
   // Handle sorting
   const requestSort = (key) => {
@@ -60,52 +91,151 @@ export default function CategoriesPage() {
     return 0;
   });
 
-  // Filter categories based on search and filters
+  // Filter categories
   const filteredCategories = sortedCategories.filter(category => {
-    const matchesSearch = category.name.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "all" || category.status === statusFilter;
+    const matchesSearch = category.category_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "all" || category.category_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
   // Handle add category
-  const handleAddCategory = (e) => {
-    e.preventDefault();
-    const newId = categories.length > 0 ? Math.max(...categories.map(c => c.id)) + 1 : 1;
-    const categoryToAdd = {
-      ...newCategory,
-      id: newId,
-      createdAt: new Date().toISOString().split('T')[0],
-      image: newCategory.image //|| "/images/categories/default.jpg" // Default image if none provided
-    };
-    setCategories([...categories, categoryToAdd]);
-    setNewCategory({ name: "", status: "active", image: "" });
-    setShowAddModal(false);
-  };
+ const handleAddCategory = async (e) => {
+  e.preventDefault();
+  setIsAdding(true);
+
+  try {
+    const formData = new FormData();
+    formData.append("category_name", newCategory.name);
+    formData.append("category_status", newCategory.status);
+    formData.append("category_store", params.storename);
+
+    if (newCategory.image instanceof File) {
+      formData.append("category_image", newCategory.image);
+    }
+
+    const response = await axios.post(
+      apiSummary.admin.stores.categories.add_category,
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+
+    if (response.data.success) {
+      toast.success("Category added successfully!");
+      setCategories([...categories, response.data.data]);
+      setShowAddModal(false);
+      setNewCategory({ name: "", status: "active", image: null });
+    } else {
+      throw new Error(response.data.message || "Failed to add category.");
+    }
+  } catch (err) {
+    console.log("Add category error:", err);
+
+    // Handle Axios errors with server-provided message
+    if (err.response?.data?.message) {
+      toast.error(err.response.data.message);
+    } else {
+      toast.error(err.message || "Failed to add category. Please try again.");
+    }
+  } finally {
+    setIsAdding(false);
+  }
+};
 
   // Handle edit category
-  const handleEditCategory = (e) => {
+  const handleEditCategory = async (e) => {
     e.preventDefault();
-    setCategories(categories.map(cat => 
-      cat.id === currentCategory.id ? currentCategory : cat
-    ));
-    setShowEditModal(false);
+    setIsEditing(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("category_id", currentCategory.id);
+      formData.append("category_name", currentCategory.name);
+      formData.append("category_status", currentCategory.status);
+      formData.append("category_store", currentCategory.store);
+
+      if (currentCategory.image instanceof File) {
+        formData.append("category_image", currentCategory.image);
+      }
+
+      const response = await axios.post(
+        apiSummary.admin.stores.categories.update_category,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Category updated successfully!");
+        setCategories(categories.map(cat =>
+          cat.category_id === currentCategory.id ? response.data.data : cat
+        ));
+        setShowEditModal(false);
+      } else {
+        throw new Error(response.data.message || "Failed to update category.");
+      }
+    } catch (err) {
+      console.error("Edit category error:", err);
+      toast.error(err.message || "Failed to update category. Please try again.");
+    } finally {
+      setIsEditing(false);
+    }
   };
 
   // Handle delete category
-  const handleDeleteCategory = () => {
-    setCategories(categories.filter(cat => cat.id !== currentCategory.id));
-    setShowDeleteModal(false);
+  const handleDeleteCategory = async () => {
+    if (!currentCategory) return;
+    
+    setIsDeleting(true);
+
+    try {
+      const response = await axios.post(
+        apiSummary.admin.stores.categories.delete_category,
+        { category_id: currentCategory.category_id }
+      );
+
+      if (response.data.success) {
+        setCategories(categories.filter(cat => cat.category_id !== currentCategory.category_id));
+        toast.success("Category deleted successfully!");
+        setShowDeleteModal(false);
+      } else {
+        throw new Error(response.data.message || "Failed to delete category.");
+      }
+    } catch (err) {
+      console.error("Delete category error:", err);
+      toast.error(err.message || "Failed to delete category. Please try again.");
+    } finally {
+      setIsDeleting(false);
+      setCurrentCategory(null);
+    }
   };
 
-  // Open edit modal and set current category
+  // Open edit modal
   const openEditModal = (category) => {
-    setCurrentCategory({ ...category });
+    setCurrentCategory({ 
+      id: category.category_id,
+      name: category.category_name,
+      status: category.category_status,
+      image: category.category_image,
+      store: params.storename,
+      category_id: category.category_id // Keeping this for backward compatibility
+    });
     setShowEditModal(true);
   };
 
-  // Open delete modal and set current category
+  // Open delete modal
   const openDeleteModal = (category) => {
-    setCurrentCategory(category);
+    setCurrentCategory({
+      category_id: category.category_id,
+      name: category.category_name,
+      // Add any other properties you want to display in the modal
+    });
     setShowDeleteModal(true);
   };
 
@@ -137,7 +267,7 @@ export default function CategoriesPage() {
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
-          
+
           <select
             className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             value={statusFilter}
@@ -147,7 +277,7 @@ export default function CategoriesPage() {
             <option value="active">Active</option>
             <option value="inactive">Inactive</option>
           </select>
-          
+
           <div className="flex justify-end">
             <button
               onClick={() => {
@@ -164,162 +294,170 @@ export default function CategoriesPage() {
 
       {/* Categories Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th 
-                  scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => requestSort("id")}
-                >
-                  <div className="flex items-center">
-                    ID
-                    {sortConfig.key === "id" && (
-                      sortConfig.direction === "ascending" ? 
-                        <FiChevronUp className="ml-1" /> : 
-                        <FiChevronDown className="ml-1" />
-                    )}
-                  </div>
-                </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Image
-                </th>
-                <th 
-                  scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => requestSort("name")}
-                >
-                  <div className="flex items-center">
-                    Name
-                    {sortConfig.key === "name" && (
-                      sortConfig.direction === "ascending" ? 
-                        <FiChevronUp className="ml-1" /> : 
-                        <FiChevronDown className="ml-1" />
-                    )}
-                  </div>
-                </th>
-                <th 
-                  scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => requestSort("status")}
-                >
-                  <div className="flex items-center">
-                    Status
-                    {sortConfig.key === "status" && (
-                      sortConfig.direction === "ascending" ? 
-                        <FiChevronUp className="ml-1" /> : 
-                        <FiChevronDown className="ml-1" />
-                    )}
-                  </div>
-                </th>
-                <th 
-                  scope="col" 
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
-                  onClick={() => requestSort("createdAt")}
-                >
-                  <div className="flex items-center">
-                    Created
-                    {sortConfig.key === "createdAt" && (
-                      sortConfig.direction === "ascending" ? 
-                        <FiChevronUp className="ml-1" /> : 
-                        <FiChevronDown className="ml-1" />
-                    )}
-                  </div>
-                </th>
-                <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCategories.length > 0 ? (
-                filteredCategories.map((category) => (
-                  <tr key={category.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {category.id}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="w-12 h-12 rounded-md overflow-hidden">
-                        <img 
-                          src={category.image} 
-                          alt={category.name}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.src = "";
-                          }}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-medium text-gray-900">
-                        {category.name}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                        category.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
-                      }`}>
-                        {category.status.charAt(0).toUpperCase() + category.status.slice(1)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(category.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button
-                        onClick={() => openEditModal(category)}
-                        className="text-blue-600 hover:text-blue-900 mr-4"
-                      >
-                        <FiEdit2 />
-                      </button>
-                      <button
-                        onClick={() => openDeleteModal(category)}
-                        className="text-red-600 hover:text-red-900"
-                      >
-                        <FiTrash2 />
-                      </button>
+        {loading ? (
+          <div className="p-8 text-center text-gray-500 flex flex-col items-center justify-center h-64">
+            <FiLoader className="animate-spin text-2xl mb-2 text-blue-600" />
+            <p>Loading categories...</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => requestSort("category_id")}
+                  >
+                    <div className="flex items-center">
+                      ID
+                      {sortConfig.key === "category_id" && (
+                        sortConfig.direction === "ascending" ?
+                          <FiChevronUp className="ml-1" /> :
+                          <FiChevronDown className="ml-1" />
+                      )}
+                    </div>
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Image
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => requestSort("category_name")}
+                  >
+                    <div className="flex items-center">
+                      Name
+                      {sortConfig.key === "category_name" && (
+                        sortConfig.direction === "ascending" ?
+                          <FiChevronUp className="ml-1" /> :
+                          <FiChevronDown className="ml-1" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => requestSort("category_status")}
+                  >
+                    <div className="flex items-center">
+                      Status
+                      {sortConfig.key === "category_status" && (
+                        sortConfig.direction === "ascending" ?
+                          <FiChevronUp className="ml-1" /> :
+                          <FiChevronDown className="ml-1" />
+                      )}
+                    </div>
+                  </th>
+                  <th
+                    scope="col"
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer"
+                    onClick={() => requestSort("created_at")}
+                  >
+                    <div className="flex items-center">
+                      Created
+                      {sortConfig.key === "created_at" && (
+                        sortConfig.direction === "ascending" ?
+                          <FiChevronUp className="ml-1" /> :
+                          <FiChevronDown className="ml-1" />
+                      )}
+                    </div>
+                  </th>
+                  <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    Actions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-200">
+                {filteredCategories.length > 0 ? (
+                  filteredCategories.map((category) => (
+                    <tr key={category.category_id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {category.category_id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="w-12 h-12 rounded-md overflow-hidden">
+                          <img
+                            src={category.category_image}
+                            alt={category.category_name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {category.category_name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${category.category_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                          {category.category_status.charAt(0).toUpperCase() + category.category_status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(category.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => openEditModal(category)}
+                          className="text-blue-600 hover:text-blue-900 mr-4"
+                          disabled={isEditing}
+                        >
+                          <FiEdit2 />
+                        </button>
+                        <button
+                          onClick={() => openDeleteModal(category)}
+                          className="text-red-600 hover:text-red-900"
+                          disabled={isDeleting}
+                        >
+                          <FiTrash2 />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
+                      No categories found matching your criteria.
                     </td>
                   </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="px-6 py-4 text-center text-sm text-gray-500">
-                    No categories found matching your criteria.
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Add Category Modal */}
       {showAddModal && (
-        <AddCategoryModal 
-          setShowAddModal={setShowAddModal} 
-          newCategory={newCategory} 
-          setNewCategory={setNewCategory} 
-          handleAddCategory={handleAddCategory} 
+        <AddCategoryModal
+          setShowAddModal={setShowAddModal}
+          newCategory={newCategory}
+          setNewCategory={setNewCategory}
+          handleAddCategory={handleAddCategory}
+          isAdding={isAdding}
         />
       )}
 
       {/* Edit Category Modal */}
       {showEditModal && currentCategory && (
-        <EditCategoryModal 
-          setShowEditModal={setShowEditModal} 
+        <EditCategoryModal
+          setShowEditModal={setShowEditModal}
           currentCategory={currentCategory}
           setCurrentCategory={setCurrentCategory}
           handleEditCategory={handleEditCategory}
+          isEditing={isEditing}
         />
       )}
 
       {/* Delete Confirmation Modal */}
       {showDeleteModal && currentCategory && (
-        <DeleteCategoryModal  
-          setShowDeleteModal={setShowDeleteModal} 
-          handleDeleteCategory={handleDeleteCategory} 
-          currentCategory={currentCategory} 
+        <DeleteCategoryModal
+          setShowDeleteModal={setShowDeleteModal}
+          handleDeleteCategory={handleDeleteCategory}
+          currentCategory={currentCategory}
+          isDeleting={isDeleting}
         />
       )}
     </div>

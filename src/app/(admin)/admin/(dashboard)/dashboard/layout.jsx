@@ -1,14 +1,27 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   FiMenu, FiX, FiHome, FiUsers, FiSettings, FiFileText,
-  FiShoppingCart, FiBox, FiTag, FiLogOut, FiGift
+  FiShoppingCart, FiBox, FiTag, FiLogOut, FiGift, FiUser
 } from 'react-icons/fi';
 
+import { Toaster } from 'react-hot-toast';
+import { useAdminUserStore } from '@/app/lib/store/adminuserstore';
+
+
 export default function AdminLayout({ children }) {
+
+  const {clearAdminUser}=useAdminUserStore()
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const toggleSidebar = () => setSidebarOpen(!sidebarOpen);
+
+
+  const adminuser = useAdminUserStore((state)=>state.adminuser)
+
+ useEffect(() => {
+    if (adminuser?.id) console.log(adminuser);
+  }, [adminuser?.id]);
 
   return (
     <div className="flex h-screen bg-gray-100">
@@ -35,6 +48,14 @@ export default function AdminLayout({ children }) {
               <a href="/admin/dashboard" className="flex items-center p-2 rounded hover:bg-blue-700">
                 <FiHome className="mr-3" />
                 Dashboard
+              </a>
+            </li>
+
+            {/* Users Section - Added this new section */}
+            <li>
+              <a href="/admin/dashboard/users" className="flex items-center p-2 rounded hover:bg-blue-700">
+                <FiUser className="mr-3" />
+                Users
               </a>
             </li>
 
@@ -93,21 +114,10 @@ export default function AdminLayout({ children }) {
                 Customers
               </a>
             </li>
-            {/* <li>
-              <a href="/admin/dashboard/reports" className="flex items-center p-2 rounded hover:bg-blue-700">
-                <FiFileText className="mr-3" />
-                Reports
-              </a>
-            </li>
-            <li>
-              <a href="/admin/dashboard/settings" className="flex items-center p-2 rounded hover:bg-blue-700">
-                <FiSettings className="mr-3" />
-                Settings
-              </a>
-            </li> */}
           </ul>
 
-          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-700">
+          <div className="absolute bottom-0 left-0 right-0 p-4 border-t border-blue-700" 
+          onClick={()=>{clearAdminUser()}}>
             <a href="/admin" className="flex items-center p-2 rounded hover:bg-blue-700">
               <FiLogOut className="mr-3" />
               Logout
@@ -138,9 +148,9 @@ export default function AdminLayout({ children }) {
                   </svg>
                 </div>
               </div>
-              <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
+              {/* <div className="h-8 w-8 rounded-full bg-blue-500 flex items-center justify-center text-white">
                 <span>AD</span>
-              </div>
+              </div> */}
             </div>
           </div>
         </header>
@@ -148,7 +158,9 @@ export default function AdminLayout({ children }) {
         {/* Page content */}
         <main className="flex-1 overflow-y-auto p-4 bg-gray-50">
           {children}
+          <Toaster/>
         </main>
+
       </div>
     </div>
   );

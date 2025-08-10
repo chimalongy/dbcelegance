@@ -1,630 +1,793 @@
-"use client"
-import { useState, useEffect } from 'react';
-import { FiPlus, FiEdit2, FiTrash2, FiImage, FiX, FiChevronUp, FiChevronDown, FiSearch } from 'react-icons/fi';
+"use client";
+
+import { useEffect, useState } from 'react';
+import { FiPlus, FiEdit2, FiTrash2, FiSearch, FiLoader, FiPackage } from 'react-icons/fi';
+import { useParams } from 'next/navigation';
+import axios from 'axios';
+import { apiSummary } from '@/app/lib/apiSummary';
 import { toast } from 'react-hot-toast';
+import { useAdminUserStore } from '@/app/lib/store/adminuserstore';
+import { useRouter } from 'next/navigation';
+import AddAccessoryCategoryModal from './components/AddAccessoryCategoryModal';
+import AddAccessoryProductModal from './components/AddAccessoryProductModal';
+import EditAccessoryCategoryModal from './components/EditAccessoryCategoryModal';
+import DeleteAccessoryCategoryModal from './components/DeleteAccessoryCategoryModal';
+import EditAccessoryProductModal from './components/EditAccessoryProductModal';
+import DeleteAccessoryProductModal from './components/DeleteAccessoryProductModal';
 
 const AccessoryManagement = () => {
-  const [activeTab, setActiveTab] = useState('categories');
-  const [categories, setCategories] = useState([]);
-  const [accessories, setAccessories] = useState([]);
-  const [isCategoryModalOpen, setIsCategoryModalOpen] = useState(false);
-  const [isAccessoryModalOpen, setIsAccessoryModalOpen] = useState(false);
-  const [currentItem, setCurrentItem] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
+  const router = useRouter();
+  const admin_user = useAdminUserStore(state => state.adminuser);
+  const params = useParams();
+  const store_name = params.storename;
 
-  // Form states
-  const [categoryForm, setCategoryForm] = useState({
+  // Data states
+  const [accessoryCategories, setAccessoryCategories] = useState([]);
+  const [accessoryProducts, setAccessoryProducts] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Active tab state
+  const [activeTab, setActiveTab] = useState('categories');
+
+  // Modal states
+  const [showAddCategoryModal, setShowAddCategoryModal] = useState(false);
+  const [showAddProductModal, setShowAddProductModal] = useState(false);
+  const [showEditCategoryModal, setShowEditCategoryModal] = useState(false);
+  const [showDeleteCategoryModal, setShowDeleteCategoryModal] = useState(false);
+  const [showEditProductModal, setShowEditProductModal] = useState(false);
+  const [showDeleteProductModal, setShowDeleteProductModal] = useState(false);
+
+  // Loading states
+  const [isAddingCategory, setIsAddingCategory] = useState(false);
+  const [isAddingProduct, setIsAddingProduct] = useState(false);
+  const [isEditingCategory, setIsEditingCategory] = useState(false);
+  const [isDeletingCategory, setIsDeletingCategory] = useState(false);
+  const [isEditingProduct, setIsEditingProduct] = useState(false);
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+
+  // Selected items
+  const [currentCategory, setCurrentCategory] = useState(null);
+  const [currentProduct, setCurrentProduct] = useState(null);
+
+  // Filter states
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+
+  // Form data
+  const [newCategory, setNewCategory] = useState({
     name: '',
-    description: '',
-    image: null,
-    previewImage: null
+    status: 'active',
+    image: null
   });
-  
-  const [accessoryForm, setAccessoryForm] = useState({
+
+  const [newProduct, setNewProduct] = useState({
     name: '',
     description: '',
+    category: '',
     price: '',
     stockQuantity: '',
     sku: '',
-    categoryId: '',
-    images: [],
-    previewImages: []
+    status: 'active',
+    images: []
   });
 
-  // Fetch data on component mount
-  useEffect(() => {
-    // TODO: Fetch categories and accessories from API
-    // Mock data for demonstration
-    setCategories([
-      { id: 1, name: 'Jewelry', description: 'Necklaces, bracelets, rings', image_url: 'jewelry.jpg' },
-      { id: 2, name: 'Bags', description: 'Handbags, clutches, backpacks', image_url: 'bags.jpg' }
-    ]);
-    
-    setAccessories([
-      { id: 1, name: 'Silver Necklace', description: 'Elegant silver necklace', price: 49.99, stockQuantity: 25, sku: 'ACC-001', categoryId: 1, images: ['necklace1.jpg', 'necklace2.jpg'] },
-      { id: 2, name: 'Leather Tote', description: 'Premium leather tote bag', price: 129.99, stockQuantity: 10, sku: 'ACC-002', categoryId: 2, images: ['tote1.jpg'] }
-    ]);
-  }, []);
+  // Fetch accessory categories
+  async function fetchAccessoryCategories() {
+    try {
+      const response = await axios.post(
+        apiSummary.admin.stores.accessories.get_all_categories,
+        { accessory_category_store: store_name }
+      );
+      setAccessoryCategories(response.data.data);
+    } catch (error) {
+      console.error("Error fetching accessory categories:", error);
+      toast.error("Failed to fetch accessory categories");
+    }
+  }
 
-  // Filter items based on search term
-  const filteredCategories = categories.filter(category => 
-    category.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    category.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
-  
-  const filteredAccessories = accessories.filter(accessory => 
-    accessory.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    accessory.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    accessory.sku?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Fetch accessory products
+  async function fetchAccessoryProducts() {
+    try {
+      const response = await axios.post(
+        apiSummary.admin.stores.accessories.get_all_products,
+        { accessory_store: store_name }
+      );
+      setAccessoryProducts(response.data.data);
+    } catch (error) {
+      console.error("Error fetching accessory products:", error);
+      toast.error("Failed to fetch accessory products");
+    }
+  }
+
+  useEffect(() => {
+    if (admin_user?.id) {
+      if (!admin_user.accessiblepages.some((accessible_page) => accessible_page === "stores")) {
+        toast.error("You don't have access to this page.");
+        router.push("/admin/dashboard/");
+      } else {
+        fetchAccessoryCategories();
+        fetchAccessoryProducts();
+        setLoading(false);
+      }
+    }
+  }, [admin_user?.id]);
+
+  // Filter data based on search and filters
+  const filteredCategories = accessoryCategories.filter(category => {
+    const matchesSearch = category.accessory_category_name.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || category.accessory_category_status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const filteredProducts = accessoryProducts.filter(product => {
+    const matchesSearch = product.accessory_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.accessory_description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         product.sku?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || product.accessory_status === statusFilter;
+    const matchesCategory = categoryFilter === 'all' || product.accessory_category === parseInt(categoryFilter);
+    return matchesSearch && matchesStatus && matchesCategory;
+  });
 
   // Category handlers
-  const handleCategorySubmit = (e) => {
+  const handleAddCategory = async (e) => {
     e.preventDefault();
-    // TODO: API call to create/update category
-    if (currentItem) {
-      // Update existing category
-      setCategories(categories.map(cat => 
-        cat.id === currentItem.id ? { ...cat, ...categoryForm } : cat
-      ));
-      toast.success('Category updated successfully');
-    } else {
-      // Add new category
-      const newCategory = {
-        id: categories.length + 1,
-        ...categoryForm
-      };
-      setCategories([...categories, newCategory]);
-      toast.success('Category added successfully');
+    setIsAddingCategory(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("accessory_category_name", newCategory.name);
+      formData.append("accessory_category_status", newCategory.status);
+      formData.append("accessory_category_store", store_name);
+
+      if (newCategory.image instanceof File) {
+        formData.append("accessory_category_image", newCategory.image);
+      }
+
+      const response = await axios.post(
+        apiSummary.admin.stores.accessories.add_category,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Accessory category added successfully!");
+        setAccessoryCategories([...accessoryCategories, response.data.data]);
+        setShowAddCategoryModal(false);
+        setNewCategory({ name: '', status: 'active', image: null });
+      } else {
+        throw new Error(response.data.message || "Failed to add accessory category.");
+      }
+    } catch (err) {
+      console.log("Add accessory category error:", err);
+      if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error(err.message || "Failed to add accessory category. Please try again.");
+      }
+    } finally {
+      setIsAddingCategory(false);
     }
-    setIsCategoryModalOpen(false);
-    resetForms();
   };
 
-  const handleEditCategory = (category) => {
-    setCurrentItem(category);
-    setCategoryForm({
-      name: category.name,
-      description: category.description,
-      image: null,
-      previewImage: category.image_url
-    });
-    setIsCategoryModalOpen(true);
-  };
-
-  const handleDeleteCategory = (id) => {
-    // TODO: Confirm deletion and check if category has accessories
-    setCategories(categories.filter(cat => cat.id !== id));
-    toast.success('Category deleted successfully');
-  };
-
-  // Accessory handlers
-  const handleAccessorySubmit = (e) => {
+  const handleEditCategory = async (e) => {
     e.preventDefault();
-    // TODO: API call to create/update accessory
-    if (currentItem) {
-      // Update existing accessory
-      setAccessories(accessories.map(acc => 
-        acc.id === currentItem.id ? { ...acc, ...accessoryForm } : acc
-      ));
-      toast.success('Accessory updated successfully');
-    } else {
-      // Add new accessory
-      const newAccessory = {
-        id: accessories.length + 1,
-        ...accessoryForm
-      };
-      setAccessories([...accessories, newAccessory]);
-      toast.success('Accessory added successfully');
+    setIsEditingCategory(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("accessory_category_id", currentCategory.accessory_category_id);
+      formData.append("accessory_category_name", currentCategory.name);
+      formData.append("accessory_category_status", currentCategory.status);
+      formData.append("accessory_category_store", store_name);
+
+      if (currentCategory.image instanceof File) {
+        formData.append("accessory_category_image", currentCategory.image);
+      }
+
+      const response = await axios.post(
+        apiSummary.admin.stores.accessories.update_category,
+        formData,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        toast.success("Accessory category updated successfully!");
+        const updatedCategories = accessoryCategories.map(cat =>
+          cat.accessory_category_id === currentCategory.accessory_category_id 
+            ? response.data.data 
+            : cat
+        );
+        setAccessoryCategories(updatedCategories);
+        setShowEditCategoryModal(false);
+        setCurrentCategory(null);
+      } else {
+        throw new Error(response.data.message || "Failed to update accessory category.");
+      }
+    } catch (err) {
+      console.log("Edit accessory category error:", err);
+      if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error(err.message || "Failed to update accessory category. Please try again.");
+      }
+    } finally {
+      setIsEditingCategory(false);
     }
-    setIsAccessoryModalOpen(false);
-    resetForms();
   };
 
-  const handleEditAccessory = (accessory) => {
-    setCurrentItem(accessory);
-    setAccessoryForm({
-      name: accessory.name,
-      description: accessory.description,
-      price: accessory.price,
-      stockQuantity: accessory.stockQuantity,
-      sku: accessory.sku,
-      categoryId: accessory.categoryId,
-      images: [],
-      previewImages: accessory.images
-    });
-    setIsAccessoryModalOpen(true);
+  const handleDeleteCategory = async () => {
+    if (!currentCategory) return;
+    
+    setIsDeletingCategory(true);
+
+    try {
+      const response = await axios.post(
+        apiSummary.admin.stores.accessories.delete_category,
+        { accessory_category_id: currentCategory.accessory_category_id }
+      );
+
+      if (response.data.success) {
+        toast.success("Accessory category deleted successfully!");
+        setAccessoryCategories(accessoryCategories.filter(cat => 
+          cat.accessory_category_id !== currentCategory.accessory_category_id
+        ));
+        setShowDeleteCategoryModal(false);
+        setCurrentCategory(null);
+      } else {
+        throw new Error(response.data.message || "Failed to delete accessory category.");
+      }
+    } catch (err) {
+      console.log("Delete accessory category error:", err);
+      if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error(err.message || "Failed to delete accessory category. Please try again.");
+      }
+    } finally {
+      setIsDeletingCategory(false);
+    }
   };
 
-  const handleDeleteAccessory = (id) => {
-    // TODO: Confirm deletion
-    setAccessories(accessories.filter(acc => acc.id !== id));
-    toast.success('Accessory deleted successfully');
-  };
+  // Product handlers
+  const handleAddProduct = async (e) => {
+    e.preventDefault();
+    setIsAddingProduct(true);
 
-  // Image handlers
-  const handleCategoryImageChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      setCategoryForm({
-        ...categoryForm,
-        image: file,
-        previewImage: URL.createObjectURL(file)
+    try {
+      const formData = new FormData();
+      formData.append("accessory_name", newProduct.name);
+      formData.append("accessory_description", newProduct.description || "");
+      formData.append("accessory_category", newProduct.category);
+      formData.append("accessory_price", newProduct.price);
+      formData.append("stock_quantity", newProduct.stockQuantity);
+      formData.append("sku", newProduct.sku || "");
+      formData.append("accessory_status", newProduct.status);
+      formData.append("accessory_store", store_name);
+
+      // Append actual File objects
+      newProduct.images.forEach((item) => {
+        formData.append("accessory_gallery", item.file);
       });
+
+      const response = await axios.post(
+        apiSummary.admin.stores.accessories.add_product,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      if (response.data.success) {
+        toast.success("Accessory product added successfully!");
+        setAccessoryProducts([...accessoryProducts, response.data.data]);
+        setShowAddProductModal(false);
+        setNewProduct({
+          name: '',
+          description: '',
+          category: '',
+          price: '',
+          stockQuantity: '',
+          sku: '',
+          status: 'active',
+          images: []
+        });
+      } else {
+        throw new Error(response.data.message || "Failed to add accessory product.");
+      }
+    } catch (err) {
+      console.log("Add accessory product error:", err);
+      if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error(err.message || "Failed to add accessory product. Please try again.");
+      }
+    } finally {
+      setIsAddingProduct(false);
     }
   };
 
-  const handleAccessoryImagesChange = (e) => {
-    const files = Array.from(e.target.files);
-    const newPreviewImages = files.map(file => URL.createObjectURL(file));
-    
-    setAccessoryForm({
-      ...accessoryForm,
-      images: [...accessoryForm.images, ...files],
-      previewImages: [...accessoryForm.previewImages, ...newPreviewImages]
-    });
+  const handleEditProduct = async (e) => {
+    e.preventDefault();
+    setIsEditingProduct(true);
+
+    try {
+      const formData = new FormData();
+      formData.append("accessory_id", currentProduct.accessory_id);
+      formData.append("accessory_name", currentProduct.name);
+      formData.append("accessory_description", currentProduct.description || "");
+      formData.append("accessory_category", currentProduct.category);
+      formData.append("accessory_price", currentProduct.price);
+      formData.append("stock_quantity", currentProduct.stockQuantity);
+      formData.append("sku", currentProduct.sku || "");
+      formData.append("accessory_status", currentProduct.status);
+      formData.append("accessory_store", store_name);
+
+      // Append new File objects only
+      currentProduct.images.forEach((item) => {
+        if (item.file instanceof File) {
+          formData.append("accessory_gallery", item.file);
+        }
+      });
+
+      const response = await axios.post(
+        apiSummary.admin.stores.accessories.update_product,
+        formData,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+
+      if (response.data.success) {
+        toast.success("Accessory product updated successfully!");
+        const updatedProducts = accessoryProducts.map(prod =>
+          prod.accessory_id === currentProduct.accessory_id 
+            ? response.data.data 
+            : prod
+        );
+        setAccessoryProducts(updatedProducts);
+        setShowEditProductModal(false);
+        setCurrentProduct(null);
+      } else {
+        throw new Error(response.data.message || "Failed to update accessory product.");
+      }
+    } catch (err) {
+      console.log("Edit accessory product error:", err);
+      if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error(err.message || "Failed to update accessory product. Please try again.");
+      }
+    } finally {
+      setIsEditingProduct(false);
+    }
   };
 
-  const removeAccessoryImage = (index) => {
-    const updatedImages = [...accessoryForm.images];
-    const updatedPreviews = [...accessoryForm.previewImages];
+  const handleDeleteProduct = async () => {
+    if (!currentProduct) return;
     
-    updatedImages.splice(index, 1);
-    updatedPreviews.splice(index, 1);
-    
-    setAccessoryForm({
-      ...accessoryForm,
-      images: updatedImages,
-      previewImages: updatedPreviews
-    });
+    setIsDeletingProduct(true);
+
+    try {
+      const response = await axios.post(
+        apiSummary.admin.stores.accessories.delete_product,
+        { accessory_id: currentProduct.accessory_id }
+      );
+
+      if (response.data.success) {
+        toast.success("Accessory product deleted successfully!");
+        setAccessoryProducts(accessoryProducts.filter(prod => 
+          prod.accessory_id !== currentProduct.accessory_id
+        ));
+        setShowDeleteProductModal(false);
+        setCurrentProduct(null);
+      } else {
+        throw new Error(response.data.message || "Failed to delete accessory product.");
+      }
+    } catch (err) {
+      console.log("Delete accessory product error:", err);
+      if (err.response?.data?.message) {
+        toast.error(err.response.data.message);
+      } else {
+        toast.error(err.message || "Failed to delete accessory product. Please try again.");
+      }
+    } finally {
+      setIsDeletingProduct(false);
+    }
   };
 
-  const moveImageUp = (index) => {
-    if (index === 0) return;
-    
-    const updatedImages = [...accessoryForm.images];
-    const updatedPreviews = [...accessoryForm.previewImages];
-    
-    // Swap with previous image
-    [updatedImages[index], updatedImages[index - 1]] = [updatedImages[index - 1], updatedImages[index]];
-    [updatedPreviews[index], updatedPreviews[index - 1]] = [updatedPreviews[index - 1], updatedPreviews[index]];
-    
-    setAccessoryForm({
-      ...accessoryForm,
-      images: updatedImages,
-      previewImages: updatedPreviews
+  // Modal handlers
+  const openEditCategoryModal = (category) => {
+    setCurrentCategory({
+      accessory_category_id: category.accessory_category_id,
+      name: category.accessory_category_name,
+      status: category.accessory_category_status,
+      image: category.accessory_category_image
     });
+    setShowEditCategoryModal(true);
   };
 
-  const moveImageDown = (index) => {
-    if (index === accessoryForm.images.length - 1) return;
-    
-    const updatedImages = [...accessoryForm.images];
-    const updatedPreviews = [...accessoryForm.previewImages];
-    
-    // Swap with next image
-    [updatedImages[index], updatedImages[index + 1]] = [updatedImages[index + 1], updatedImages[index]];
-    [updatedPreviews[index], updatedPreviews[index + 1]] = [updatedPreviews[index + 1], updatedPreviews[index]];
-    
-    setAccessoryForm({
-      ...accessoryForm,
-      images: updatedImages,
-      previewImages: updatedPreviews
+  const openDeleteCategoryModal = (category) => {
+    setCurrentCategory({
+      accessory_category_id: category.accessory_category_id,
+      name: category.accessory_category_name
     });
+    setShowDeleteCategoryModal(true);
   };
 
-  // Reset forms
-  const resetForms = () => {
-    setCategoryForm({
-      name: '',
-      description: '',
-      image: null,
-      previewImage: null
+  const openEditProductModal = (product) => {
+    setCurrentProduct({
+      accessory_id: product.accessory_id,
+      name: product.accessory_name,
+      description: product.accessory_description,
+      category: product.accessory_category,
+      price: product.accessory_price,
+      stockQuantity: product.stock_quantity,
+      sku: product.sku,
+      status: product.accessory_status,
+      images: product.accessory_gallery || []
     });
-    
-    setAccessoryForm({
-      name: '',
-      description: '',
-      price: '',
-      stockQuantity: '',
-      sku: '',
-      categoryId: '',
-      images: [],
-      previewImages: []
-    });
-    
-    setCurrentItem(null);
+    setShowEditProductModal(true);
   };
+
+  const openDeleteProductModal = (product) => {
+    setCurrentProduct({
+      accessory_id: product.accessory_id,
+      name: product.accessory_name
+    });
+    setShowDeleteProductModal(true);
+  };
+
+  const clearFilters = () => {
+    setSearchTerm('');
+    setStatusFilter('all');
+    setCategoryFilter('all');
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <FiLoader className="animate-spin text-2xl mb-2 text-blue-600" />
+        <span className="sr-only">Loading...</span>
+      </div>
+    );
+  }
 
   return (
-    <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold text-gray-800 mb-8">Accessory Management</h1>
-      
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-800">Accessory Management</h1>
+          <p className="text-sm text-gray-500">
+            Manage your accessory categories and products
+          </p>
+        </div>
+        <button
+          onClick={() => {
+            if (activeTab === 'categories') {
+              setShowAddCategoryModal(true);
+            } else {
+              setShowAddProductModal(true);
+            }
+          }}
+          className="flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+        >
+          <FiPlus className="mr-2" />
+          Add {activeTab === 'categories' ? 'Category' : 'Product'}
+        </button>
+      </div>
+
       {/* Tabs Navigation */}
-      <div className="flex border-b border-gray-200 mb-6">
+      <div className="flex border-b border-gray-200">
         <button
           className={`py-2 px-4 font-medium ${activeTab === 'categories' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
           onClick={() => setActiveTab('categories')}
         >
-          Categories
+          Accessory Categories
         </button>
         <button
-          className={`py-2 px-4 font-medium ${activeTab === 'accessories' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
-          onClick={() => setActiveTab('accessories')}
+          className={`py-2 px-4 font-medium ${activeTab === 'products' ? 'text-blue-600 border-b-2 border-blue-600' : 'text-gray-500'}`}
+          onClick={() => setActiveTab('products')}
         >
-          Accessories
+          Accessory Products
         </button>
       </div>
-      
-      {/* Search and Add Button */}
-      <div className="flex justify-between items-center mb-6">
-        <div className="relative w-64">
-          <FiSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Search..."
-            className="pl-10 pr-4 py-2 w-full border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+
+      {/* Filters */}
+      <div className="bg-white p-4 rounded-lg shadow">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FiSearch className="text-gray-400" />
+            </div>
+            <input
+              type="text"
+              placeholder={`Search ${activeTab}...`}
+              className="pl-10 pr-4 py-2 w-full border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+            />
+          </div>
+
+          <select
+            className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+          >
+            <option value="all">All Statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
+          {activeTab === 'products' && (
+            <select
+              className="px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              value={categoryFilter}
+              onChange={(e) => setCategoryFilter(e.target.value)}
+            >
+              <option value="all">All Categories</option>
+              {accessoryCategories.map(category => (
+                <option key={category.accessory_category_id} value={category.accessory_category_id}>
+                  {category.accessory_category_name}
+                </option>
+              ))}
+            </select>
+          )}
+
+          <div className="flex justify-end">
+            <button
+              onClick={clearFilters}
+              className="px-4 py-2 text-gray-600 border rounded-lg hover:bg-gray-50 transition-colors"
+            >
+              Reset Filters
+            </button>
+          </div>
         </div>
-        <button
-          className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center"
-          onClick={() => {
-            resetForms();
-            activeTab === 'categories' ? setIsCategoryModalOpen(true) : setIsAccessoryModalOpen(true);
-          }}
-        >
-          <FiPlus className="mr-2" />
-          Add {activeTab === 'categories' ? 'Category' : 'Accessory'}
-        </button>
       </div>
-      
+
       {/* Categories Tab */}
       {activeTab === 'categories' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Description</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredCategories.map((category) => (
-                <tr key={category.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="h-10 w-10 rounded-full overflow-hidden bg-gray-200">
-                      {category.image_url && (
-                        <img
-                          src={category.image_url}
-                          alt={category.name}
-                          className="h-full w-full object-cover"
-                        />
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{category.name}</td>
-                  <td className="px-6 py-4 text-sm text-gray-500">{category.description}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEditCategory(category)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      <FiEdit2 />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteCategory(category.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <FiTrash2 />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {filteredCategories.length === 0 ? (
+            <div className="p-8 text-center">
+              <FiPackage className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-lg font-medium text-gray-900">No categories found</h3>
+              <p className="mt-1 text-sm text-gray-500">Get started by adding your first category.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredCategories.map((category) => (
+                    <tr key={category.accessory_category_id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {category.accessory_category_id}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="w-12 h-12 rounded-md overflow-hidden">
+                          <img
+                            src={category.accessory_category_image}
+                            alt={category.accessory_category_name}
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <div className="text-sm font-medium text-gray-900">
+                          {category.accessory_category_name}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                          category.accessory_category_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {category.accessory_category_status.charAt(0).toUpperCase() + category.accessory_category_status.slice(1)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(category.created_at).toLocaleDateString()}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <button
+                          onClick={() => openEditCategoryModal(category)}
+                          className="text-blue-600 hover:text-blue-900 mr-4"
+                          disabled={isDeletingCategory}
+                        >
+                          <FiEdit2 />
+                        </button>
+                        <button
+                          onClick={() => openDeleteCategoryModal(category)}
+                          className="text-red-600 hover:text-red-900"
+                          disabled={isDeletingCategory}
+                        >
+                          {isDeletingCategory ? <FiLoader className="animate-spin" /> : <FiTrash2 />}
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
-      
-      {/* Accessories Tab */}
-      {activeTab === 'accessories' && (
+
+      {/* Products Tab */}
+      {activeTab === 'products' && (
         <div className="bg-white rounded-lg shadow overflow-hidden">
-          <table className="min-w-full divide-y divide-gray-200">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredAccessories.map((accessory) => (
-                <tr key={accessory.id}>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{accessory.name}</div>
-                    <div className="text-sm text-gray-500 line-clamp-2">{accessory.description}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {categories.find(c => c.id === accessory.categoryId)?.name || 'Uncategorized'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">${accessory.price}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{accessory.stockQuantity}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{accessory.sku || '-'}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => handleEditAccessory(accessory)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
-                    >
-                      <FiEdit2 />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteAccessory(accessory.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <FiTrash2 />
-                    </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          {filteredProducts.length === 0 ? (
+            <div className="p-8 text-center">
+              <FiPackage className="mx-auto h-12 w-12 text-gray-400" />
+              <h3 className="mt-2 text-lg font-medium text-gray-900">No products found</h3>
+              <p className="mt-1 text-sm text-gray-500">Get started by adding your first product.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">ID</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Image</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stock</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">SKU</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredProducts.map((product) => {
+                    const category = accessoryCategories.find(c => c.accessory_category_id === product.accessory_category);
+                    
+                    return (
+                      <tr key={product.accessory_id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {product.accessory_id}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="w-12 h-12 rounded-md overflow-hidden">
+                            {product.accessory_gallery?.length > 0 ? (
+                              <img
+                                src={product.accessory_gallery[0].url}
+                                alt={product.accessory_name}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+                                <FiPackage className="text-gray-400 h-6 w-6" />
+                              </div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <div className="text-sm font-medium text-gray-900">{product.accessory_name}</div>
+                          <div className="text-sm text-gray-500 line-clamp-2">{product.accessory_description}</div>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {category?.accessory_category_name || 'Uncategorized'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          ${product.accessory_price}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {product.stock_quantity}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                          {product.sku || '-'}
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap">
+                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            product.accessory_status === 'active' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                          }`}>
+                            {product.accessory_status.charAt(0).toUpperCase() + product.accessory_status.slice(1)}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                          <button
+                            onClick={() => openEditProductModal(product)}
+                            className="text-blue-600 hover:text-blue-900 mr-4"
+                            disabled={isDeletingProduct}
+                          >
+                            <FiEdit2 />
+                          </button>
+                          <button
+                            onClick={() => openDeleteProductModal(product)}
+                            className="text-red-600 hover:text-red-900"
+                            disabled={isDeletingProduct}
+                          >
+                            {isDeletingProduct ? <FiLoader className="animate-spin" /> : <FiTrash2 />}
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
-      
-      {/* Category Modal */}
-      {isCategoryModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">
-                {currentItem ? 'Edit Category' : 'Add New Category'}
-              </h2>
-              <button onClick={() => setIsCategoryModalOpen(false)} className="text-gray-500 hover:text-gray-700">
-                <FiX size={24} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleCategorySubmit}>
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                <input
-                  type="text"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  value={categoryForm.name}
-                  onChange={(e) => setCategoryForm({...categoryForm, name: e.target.value})}
-                  required
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  value={categoryForm.description}
-                  onChange={(e) => setCategoryForm({...categoryForm, description: e.target.value})}
-                />
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Image *</label>
-                <div className="flex items-center">
-                  <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md border border-gray-300 flex items-center">
-                    <FiImage className="mr-2" />
-                    {categoryForm.image ? 'Change Image' : 'Upload Image'}
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleCategoryImageChange}
-                      required={!currentItem}
-                    />
-                  </label>
-                  {categoryForm.previewImage && (
-                    <div className="ml-4 relative">
-                      <img
-                        src={categoryForm.previewImage}
-                        alt="Preview"
-                        className="h-16 w-16 object-cover rounded-md"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsCategoryModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  {currentItem ? 'Update' : 'Create'} Category
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+
+      {/* Add Category Modal */}
+      {showAddCategoryModal && (
+        <AddAccessoryCategoryModal
+          setShowAddCategoryModal={setShowAddCategoryModal}
+          newCategory={newCategory}
+          setNewCategory={setNewCategory}
+          handleAddCategory={handleAddCategory}
+          isAddingCategory={isAddingCategory}
+        />
       )}
-      
-      {/* Accessory Modal */}
-      {isAccessoryModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full p-6 max-h-[90vh] overflow-y-auto">
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-gray-800">
-                {currentItem ? 'Edit Accessory' : 'Add New Accessory'}
-              </h2>
-              <button onClick={() => setIsAccessoryModalOpen(false)} className="text-gray-500 hover:text-gray-700">
-                <FiX size={24} />
-              </button>
-            </div>
-            
-            <form onSubmit={handleAccessorySubmit}>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Name *</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={accessoryForm.name}
-                    onChange={(e) => setAccessoryForm({...accessoryForm, name: e.target.value})}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Category *</label>
-                  <select
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={accessoryForm.categoryId}
-                    onChange={(e) => setAccessoryForm({...accessoryForm, categoryId: e.target.value})}
-                    required
-                  >
-                    <option value="">Select a category</option>
-                    {categories.map(category => (
-                      <option key={category.id} value={category.id}>{category.name}</option>
-                    ))}
-                  </select>
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                <textarea
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  rows={3}
-                  value={accessoryForm.description}
-                  onChange={(e) => setAccessoryForm({...accessoryForm, description: e.target.value})}
-                />
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={accessoryForm.price}
-                    onChange={(e) => setAccessoryForm({...accessoryForm, price: e.target.value})}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity *</label>
-                  <input
-                    type="number"
-                    min="0"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={accessoryForm.stockQuantity}
-                    onChange={(e) => setAccessoryForm({...accessoryForm, stockQuantity: e.target.value})}
-                    required
-                  />
-                </div>
-                
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
-                  <input
-                    type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    value={accessoryForm.sku}
-                    onChange={(e) => setAccessoryForm({...accessoryForm, sku: e.target.value})}
-                  />
-                </div>
-              </div>
-              
-              <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-1">Images *</label>
-                <div className="flex items-center mb-2">
-                  <label className="cursor-pointer bg-gray-100 hover:bg-gray-200 px-4 py-2 rounded-md border border-gray-300 flex items-center">
-                    <FiImage className="mr-2" />
-                    Add Images
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleAccessoryImagesChange}
-                      multiple
-                      required={accessoryForm.previewImages.length === 0}
-                    />
-                  </label>
-                </div>
-                
-                {accessoryForm.previewImages.length > 0 && (
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 mt-4">
-                    {accessoryForm.previewImages.map((image, index) => (
-                      <div key={index} className="relative group">
-                        <img
-                          src={image}
-                          alt={`Preview ${index + 1}`}
-                          className="h-32 w-full object-cover rounded-md border border-gray-200"
-                        />
-                        <div className="absolute inset-0 bg-black bg-opacity-50 opacity-0 group-hover:opacity-100 flex items-center justify-center space-x-2 transition-opacity">
-                          <button
-                            type="button"
-                            onClick={() => moveImageUp(index)}
-                            className="p-1 bg-white rounded-full hover:bg-gray-100"
-                            disabled={index === 0}
-                          >
-                            <FiChevronUp className={index === 0 ? 'text-gray-400' : 'text-gray-700'} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => moveImageDown(index)}
-                            className="p-1 bg-white rounded-full hover:bg-gray-100"
-                            disabled={index === accessoryForm.previewImages.length - 1}
-                          >
-                            <FiChevronDown className={index === accessoryForm.previewImages.length - 1 ? 'text-gray-400' : 'text-gray-700'} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => removeAccessoryImage(index)}
-                            className="p-1 bg-white rounded-full hover:bg-gray-100"
-                          >
-                            <FiX className="text-red-600" />
-                          </button>
-                        </div>
-                        <div className="absolute top-1 left-1 bg-black bg-opacity-50 text-white text-xs px-1 rounded">
-                          {index + 1}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-              
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setIsAccessoryModalOpen(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
-                >
-                  {currentItem ? 'Update' : 'Create'} Accessory
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+
+      {/* Add Product Modal */}
+      {showAddProductModal && (
+        <AddAccessoryProductModal
+          setShowAddProductModal={setShowAddProductModal}
+          newProduct={newProduct}
+          setNewProduct={setNewProduct}
+          handleAddProduct={handleAddProduct}
+          categories={accessoryCategories}
+          isAddingProduct={isAddingProduct}
+        />
+      )}
+
+      {/* Edit Category Modal */}
+      {showEditCategoryModal && (
+        <EditAccessoryCategoryModal
+          setShowEditCategoryModal={setShowEditCategoryModal}
+          currentCategory={currentCategory}
+          setCurrentCategory={setCurrentCategory}
+          handleEditCategory={handleEditCategory}
+          isEditingCategory={isEditingCategory}
+        />
+      )}
+
+      {/* Delete Category Modal */}
+      {showDeleteCategoryModal && (
+        <DeleteAccessoryCategoryModal
+          setShowDeleteCategoryModal={setShowDeleteCategoryModal}
+          currentCategory={currentCategory}
+          handleDeleteCategory={handleDeleteCategory}
+          isDeletingCategory={isDeletingCategory}
+        />
+      )}
+
+      {/* Edit Product Modal */}
+      {showEditProductModal && (
+        <EditAccessoryProductModal
+          setShowEditProductModal={setShowEditProductModal}
+          currentProduct={currentProduct}
+          setCurrentProduct={setCurrentProduct}
+          handleEditProduct={handleEditProduct}
+          categories={accessoryCategories}
+          isEditingProduct={isEditingProduct}
+        />
+      )}
+
+      {/* Delete Product Modal */}
+      {showDeleteProductModal && (
+        <DeleteAccessoryProductModal
+          setShowDeleteProductModal={setShowDeleteProductModal}
+          currentProduct={currentProduct}
+          handleDeleteProduct={handleDeleteProduct}
+          isDeletingProduct={isDeletingProduct}
+        />
       )}
     </div>
   );
