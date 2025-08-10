@@ -2,7 +2,7 @@ import bcrypt from 'bcrypt';
 import pool from './DBConnect';
 
 class DBFunctions {
-
+ 
   async findAdminUser(email) {
     try {
       const result = await pool.query(
