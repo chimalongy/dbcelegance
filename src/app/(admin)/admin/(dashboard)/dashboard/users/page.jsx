@@ -193,8 +193,19 @@ export default function UsersPage() {
     });
 
   const formatDate = (dateString) => {
-    const options = { year: 'numeric', month: 'short', day: 'numeric' };
+    if (!dateString) return "Never";
+    const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
     return new Date(dateString).toLocaleDateString(undefined, options);
+  };
+
+  const formatLocation = (location) => {
+    if (!location || location === "Location Unknown") return "Unknown";
+    return location;
+  };
+
+  const formatIP = (ip) => {
+    if (!ip || ip === "Unknown") return "Unknown";
+    return ip;
   };
 
   return (
@@ -328,6 +339,33 @@ export default function UsersPage() {
                   </th>
                   <th 
                     className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => requestSort('last_login')}
+                  >
+                    <div className="flex items-center">
+                      Last Login
+                      {getSortIcon('last_login')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => requestSort('last_login_ip')}
+                  >
+                    <div className="flex items-center">
+                      IP Address
+                      {getSortIcon('last_login_ip')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
+                    onClick={() => requestSort('last_login_location')}
+                  >
+                    <div className="flex items-center">
+                      Location
+                      {getSortIcon('last_login_location')}
+                    </div>
+                  </th>
+                  <th 
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100"
                     onClick={() => requestSort('created_at')}
                   >
                     <div className="flex items-center">
@@ -386,6 +424,15 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatDate(user.last_login)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatIP(user.last_login_ip)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {formatLocation(user.last_login_location)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                         {formatDate(user.created_at)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -410,7 +457,7 @@ export default function UsersPage() {
                   ))
                 ) : (
                   <tr>
-                    <td colSpan="6" className="px-6 py-8 text-center">
+                    <td colSpan="9" className="px-6 py-8 text-center">
                       <div className="flex flex-col items-center justify-center text-gray-400">
                         <FiUser className="text-3xl mb-2" />
                         <p className="text-sm">No users found matching your criteria</p>

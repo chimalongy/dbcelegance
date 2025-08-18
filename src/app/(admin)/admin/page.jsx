@@ -1,5 +1,5 @@
 "use client"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { FaLock, FaEnvelope, FaExclamationCircle, FaEye, FaEyeSlash } from 'react-icons/fa';
 import { ImSpinner8 } from 'react-icons/im';
 import { useRouter } from 'next/navigation'; 
@@ -10,6 +10,27 @@ import { apiSummary } from '@/app/lib/apiSummary';
 import { useAdminUserStore } from '@/app/lib/store/adminuserstore';
 
 const AdminLogin = () => {
+
+  const [location, setLocation] = useState({});
+
+  useEffect(() => {
+    axios.get("https://ipapi.co/json/")
+      .then((res) => {
+        setLocation({
+          ip: res.data.ip,
+          country: res.data.country_name,
+          state: res.data.region
+        });
+      })
+      .catch((err) => console.error(err));
+  }, []);
+
+
+
+
+
+
+
 const {clearAdminUser,adminuser,setAdminUser}= useAdminUserStore()
  
   const [email, setEmail] = useState('');
@@ -38,7 +59,7 @@ const {clearAdminUser,adminuser,setAdminUser}= useAdminUserStore()
     setError('');
     
     try {
-      let response = await axios.post(apiSummary.admin.login, {email, password});
+      let response = await axios.post(apiSummary.admin.login, {email, password, last_login_ip:location.ip, last_login_location:location.country+", "+location.state});
       console.log(response.data);
 
       if (response.data.data.status=="inactive"){

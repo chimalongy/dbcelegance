@@ -3,18 +3,28 @@ import DBFunctions from "../../../../../utils/DB/DBFunctions";
 import { TableCreator } from "../../../../../utils/DB/TableCreator";
 import bcrypt from "bcrypt";
 
+
+
+
+
 export async function POST(request) {
   const dbActions = new DBFunctions();
   await TableCreator();
 
   try {
     const body = await request.json();
-    const { email, password } = body;
+    const { email, password, last_login_ip, last_login_location ,} = body;
 
     // Validate input
     if (!email || !password) {
       return NextResponse.json(
         { success: false, error_message: "All fields are required" },
+        { status: 400 }
+      );
+    }
+    if (!last_login_ip || !last_login_location) {
+      return NextResponse.json(
+        { success: false, error_message: "Could not retrive your location details." },
         { status: 400 }
       );
     }
@@ -48,9 +58,20 @@ export async function POST(request) {
       );
     }
 
+ 
+
+    // Update login information in database
+    const loginUpdateResult = await dbActions.updateAdminUserLoginInfo(userdata.id, {
+      last_login_ip: last_login_ip,
+      last_login_location: last_login_location
+    });
+
+    if (!loginUpdateResult.success) {
+      console.error("Failed to update login info:", loginUpdateResult.error);
+    }
+
     // Check if it's a default password
     userdata.is_new_user = password === process.env.NEW_ADMIN_DEFAULT_PASSWORD;
-
 
     delete userdata.password
     return NextResponse.json(

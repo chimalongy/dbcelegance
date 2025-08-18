@@ -54,6 +54,10 @@ async function createAdminUsersTable() {
       role VARCHAR(100) NOT NULL,
       password VARCHAR(500) NOT NULL,
       status VARCHAR(255) NOT NULL,
+      last_login VARCHAR(500),
+      last_logout VARCHAR(500),
+      last_login_ip VARCHAR(255) DEFAULT 'Unknown',
+      last_login_location VARCHAR(255) DEFAULT 'Unknown',
       accessiblepages VARCHAR(1000) NOT NULL,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
@@ -196,6 +200,73 @@ async function createAccessoryProductsTable() {
   }
 }
 
+async function createAuditLogsTable() {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'} (
+      audit_id SERIAL PRIMARY KEY,
+      user_id INT REFERENCES ${process.env.DATABASE_ADMIN_USERS_TABLE}(id) ON DELETE SET NULL,
+      user_email VARCHAR(255),
+      action_type VARCHAR(100) NOT NULL,
+      action_category VARCHAR(100) NOT NULL,
+      resource_type VARCHAR(100) NOT NULL,
+      resource_id VARCHAR(255),
+      resource_name VARCHAR(500),
+      old_values JSONB,
+      new_values JSONB,
+      ip_address VARCHAR(255),
+      user_agent TEXT,
+      location VARCHAR(500),
+      session_id VARCHAR(255),
+      status VARCHAR(50) DEFAULT 'success',
+      error_message TEXT,
+      metadata JSONB,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+    
+    CREATE INDEX IF NOT EXISTS idx_audit_user_id ON ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}(user_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_action_type ON ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}(action_type);
+    CREATE INDEX IF NOT EXISTS idx_audit_resource_type ON ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}(resource_type);
+    CREATE INDEX IF NOT EXISTS idx_audit_created_at ON ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}(created_at);
+    CREATE INDEX IF NOT EXISTS idx_audit_user_email ON ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}(user_email);
+  `;
+
+  try {
+    await pool.query(createTableQuery);
+    console.log('Audit logs table created successfully');
+  } catch (error) {
+    console.error('Error creating audit logs table:', error);
+    throw error;
+  }
+}
+
+async function migrateAdminUsersTable() {
+  try {
+    // Check if the new columns exist
+    const checkColumnsQuery = `
+      SELECT column_name 
+      FROM information_schema.columns 
+      WHERE table_name = $1 
+      AND column_name IN ('last_login_ip', 'last_login_location')
+    `;
+    
+    const result = await pool.query(checkColumnsQuery, [process.env.DATABASE_ADMIN_USERS_TABLE]);
+    
+    // If columns don't exist, add them
+    if (result.rows.length < 2) {
+      const addColumnsQuery = `
+        ALTER TABLE ${process.env.DATABASE_ADMIN_USERS_TABLE} 
+        ADD COLUMN IF NOT EXISTS last_login_ip VARCHAR(255) DEFAULT 'Unknown',
+        ADD COLUMN IF NOT EXISTS last_login_location VARCHAR(255) DEFAULT 'Unknown'
+      `;
+      
+      await pool.query(addColumnsQuery);
+      console.log('Migration: Added login tracking columns to admin_users table');
+    }
+  } catch (error) {
+    console.error('Error during migration:', error);
+  }
+}
+
 export async function TableCreator(){
    const placeholderFile = Buffer.from('placeholder')
 
@@ -226,4 +297,6 @@ export async function TableCreator(){
     await createProductVariantTable();
     await createAccessoryCategoryTable();
     await createAccessoryProductsTable();
+    await createAuditLogsTable();
+    await migrateAdminUsersTable();
 }

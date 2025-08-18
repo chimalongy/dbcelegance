@@ -145,13 +145,270 @@ class DBFunctions {
   async getAllUsers() {
     try {
       const result = await pool.query(
-        `SELECT id, first_name, last_name, email, role, status, accessiblepages, created_at FROM ${process.env.DATABASE_ADMIN_USERS_TABLE}`
+        `SELECT * FROM ${process.env.DATABASE_ADMIN_USERS_TABLE}`
       );
 
       return { success: true, data: result.rows };
     } catch (error) {
       console.error('Error getting users:', error);
       return { success: false, error: 'Failed to get users: ' + error };
+    }
+  }
+
+  async updateAdminUserLoginInfo(userId, loginData) {
+    try {
+      const { last_login_ip, last_login_location } = loginData;
+
+      const result = await pool.query(
+        `UPDATE ${process.env.DATABASE_ADMIN_USERS_TABLE} 
+         SET last_login = CURRENT_TIMESTAMP,
+             last_login_ip = $1,
+             last_login_location = $2
+         WHERE id = $3
+         RETURNING id, last_login, last_login_ip, last_login_location`,
+        [last_login_ip, last_login_location, userId]
+      );
+
+      if (result.rowCount === 0) {
+        return { success: false, error: 'User not found' };
+      }
+
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.error('Error updating admin user login info:', error);
+      return { success: false, error: 'Failed to update login info' };
+    }
+  }
+
+  async createAuditLog(auditData) {
+    try {
+      const {
+        user_id,
+        user_email,
+        action_type,
+        action_category,
+        resource_type,
+        resource_id,
+        resource_name,
+        old_values,
+        new_values,
+        ip_address,
+        user_agent,
+        location,
+        session_id,
+        status = 'success',
+        error_message,
+        metadata
+      } = auditData;
+
+      const result = await pool.query(
+        `INSERT INTO ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'} 
+         (user_id, user_email, action_type, action_category, resource_type, resource_id, 
+          resource_name, old_values, new_values, ip_address, user_agent, location, 
+          session_id, status, error_message, metadata)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
+         RETURNING audit_id`,
+        [user_id, user_email, action_type, action_category, resource_type, resource_id,
+         resource_name, old_values, new_values, ip_address, user_agent, location,
+         session_id, status, error_message, metadata]
+      );
+
+      return {
+        success: true,
+        data: result.rows[0]
+      };
+    } catch (error) {
+      console.error('Error creating audit log:', error);
+      return {
+        success: false,
+        error: 'Failed to create audit log'
+      };
+    }
+  }
+
+  async getAuditLogs(filters = {}) {
+    try {
+      let query = `
+        SELECT al.*, au.first_name, au.last_name, au.role
+        FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'} al
+        LEFT JOIN ${process.env.DATABASE_ADMIN_USERS_TABLE} au ON al.user_id = au.id
+        WHERE 1=1
+      `;
+      
+      const params = [];
+      let paramCount = 0;
+
+      // Apply filters
+      if (filters.user_email) {
+        paramCount++;
+        query += ` AND al.user_email ILIKE $${paramCount}`;
+        params.push(`%${filters.user_email}%`);
+      }
+
+      if (filters.action_type) {
+        paramCount++;
+        query += ` AND al.action_type = $${paramCount}`;
+        params.push(filters.action_type);
+      }
+
+      if (filters.action_category) {
+        paramCount++;
+        query += ` AND al.action_category = $${paramCount}`;
+        params.push(filters.action_category);
+      }
+
+      if (filters.resource_type) {
+        paramCount++;
+        query += ` AND al.resource_type = $${paramCount}`;
+        params.push(filters.resource_type);
+      }
+
+      if (filters.status) {
+        paramCount++;
+        query += ` AND al.status = $${paramCount}`;
+        params.push(filters.status);
+      }
+
+      if (filters.start_date) {
+        paramCount++;
+        query += ` AND al.created_at >= $${paramCount}`;
+        params.push(filters.start_date);
+      }
+
+      if (filters.end_date) {
+        paramCount++;
+        query += ` AND al.created_at <= $${paramCount}`;
+        params.push(filters.end_date);
+      }
+
+      // Add sorting
+      query += ` ORDER BY al.created_at DESC`;
+
+      // Add pagination
+      if (filters.limit) {
+        paramCount++;
+        query += ` LIMIT $${paramCount}`;
+        params.push(filters.limit);
+      }
+
+      if (filters.offset) {
+        paramCount++;
+        query += ` OFFSET $${paramCount}`;
+        params.push(filters.offset);
+      }
+
+      const result = await pool.query(query, params);
+
+      return {
+        success: true,
+        data: result.rows
+      };
+    } catch (error) {
+      console.error('Error getting audit logs:', error);
+      return {
+        success: false,
+        error: 'Failed to get audit logs'
+      };
+    }
+  }
+
+  async getAuditLogById(auditId) {
+    try {
+      const result = await pool.query(
+        `SELECT al.*, au.first_name, au.last_name, au.role
+         FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'} al
+         LEFT JOIN ${process.env.DATABASE_ADMIN_USERS_TABLE} au ON al.user_id = au.id
+         WHERE al.audit_id = $1`,
+        [auditId]
+      );
+
+      if (result.rows.length === 0) {
+        return {
+          success: false,
+          error: 'Audit log not found'
+        };
+      }
+
+      return {
+        success: true,
+        data: result.rows[0]
+      };
+    } catch (error) {
+      console.error('Error getting audit log by ID:', error);
+      return {
+        success: false,
+        error: 'Failed to get audit log'
+      };
+    }
+  }
+
+  async getAuditStats(filters = {}) {
+    try {
+      let query = `
+        SELECT 
+          COUNT(*) as total_logs,
+          COUNT(CASE WHEN status = 'success' THEN 1 END) as successful_actions,
+          COUNT(CASE WHEN status = 'error' THEN 1 END) as failed_actions,
+          COUNT(DISTINCT user_id) as unique_users,
+          COUNT(DISTINCT action_type) as unique_action_types,
+          COUNT(DISTINCT resource_type) as unique_resource_types
+        FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}
+        WHERE 1=1
+      `;
+      
+      const params = [];
+      let paramCount = 0;
+
+      // Apply date filters
+      if (filters.start_date) {
+        paramCount++;
+        query += ` AND created_at >= $${paramCount}`;
+        params.push(filters.start_date);
+      }
+
+      if (filters.end_date) {
+        paramCount++;
+        query += ` AND created_at <= $${paramCount}`;
+        params.push(filters.end_date);
+      }
+
+      const result = await pool.query(query, params);
+
+      return {
+        success: true,
+        data: result.rows[0]
+      };
+    } catch (error) {
+      console.error('Error getting audit stats:', error);
+      return {
+        success: false,
+        error: 'Failed to get audit stats'
+      };
+    }
+  }
+
+  async getAuditLogsByUser(userId, limit = 50) {
+    try {
+      const result = await pool.query(
+        `SELECT al.*, au.first_name, au.last_name, au.role
+         FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'} al
+         LEFT JOIN ${process.env.DATABASE_ADMIN_USERS_TABLE} au ON al.user_id = au.id
+         WHERE al.user_id = $1
+         ORDER BY al.created_at DESC
+         LIMIT $2`,
+        [userId, limit]
+      );
+
+      return {
+        success: true,
+        data: result.rows
+      };
+    } catch (error) {
+      console.error('Error getting audit logs by user:', error);
+      return {
+        success: false,
+        error: 'Failed to get user audit logs'
+      };
     }
   }
 

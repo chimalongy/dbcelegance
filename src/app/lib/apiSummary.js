@@ -8,6 +8,11 @@ export const apiSummary = {
       get_all_users: "/api/admin/users/get-all-users",
       update_user_data: "/api/admin/users/update-user-data",
     },
+    audit: {
+      get_logs: "/api/admin/audit-logs",
+      create_log: "/api/admin/audit-logs",
+      get_stats: "/api/admin/audit-logs/stats",
+    },
     stores: {
       categories: {
         add_category:"/api/admin/stores/categories/add",
@@ -40,5 +45,10 @@ export const apiSummary = {
       }
     },
   },
+  store:{
+    get_store_categories:"/api/store/get_store_categories",
+    get_store_products:"/api/store/get_store_products",
+
+  }
 };
  

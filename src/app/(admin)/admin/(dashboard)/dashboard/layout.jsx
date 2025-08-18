@@ -58,6 +58,13 @@ export default function AdminLayout({ children }) {
                 Users
               </a>
             </li>
+            {/* Users Section - Added this new section */}
+            <li>
+              <a href="/admin/dashboard/audits" className="flex items-center p-2 rounded hover:bg-blue-700">
+                <FiUser className="mr-3" />
+                Audit Logs
+              </a>
+            </li>
 
             {/* Male Fashion */}
             <li className="mt-4 text-sm font-semibold text-blue-200 uppercase">Male Fashion</li>

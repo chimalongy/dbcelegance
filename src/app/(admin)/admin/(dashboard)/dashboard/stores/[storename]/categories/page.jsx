@@ -370,10 +370,10 @@ export default function CategoriesPage() {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredCategories.length > 0 ? (
-                  filteredCategories.map((category) => (
-                    <tr key={category.category_id} className="hover:bg-gray-50">
+                  filteredCategories.map((category,index) => (
+                    <tr key={index} className="hover:bg-gray-50">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {category.category_id}
+                        {index+1}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="w-12 h-12 rounded-md overflow-hidden">
