@@ -102,7 +102,7 @@ const AccessoryManagement = () => {
 
   useEffect(() => {
     if (admin_user?.id) {
-      if (!admin_user.accessiblepages.some((accessible_page) => accessible_page === "stores")) {
+      if (admin_user.role !=="admin" &&(!admin_user.accessiblepages.some((accessible_page) => accessible_page === "stores"))) {
         toast.error("You don't have access to this page.");
         router.push("/admin/dashboard/");
       } else {

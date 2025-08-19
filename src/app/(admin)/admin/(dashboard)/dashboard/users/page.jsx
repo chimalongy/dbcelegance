@@ -12,6 +12,7 @@ import DeleteConfirmationModal from '../AdminDashboardComponents/Modals/DeleteCo
 import { apiSummary } from '@/app/lib/apiSummary.js';
 import axios from 'axios';
 import toast from 'react-hot-toast';
+import { useAdminUserStore } from '@/app/lib/store/adminuserstore.js';
 
 export default function UsersPage() {
   const [users, setUsers] = useState([]);
@@ -21,6 +22,7 @@ export default function UsersPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
+  const admin_user = useAdminUserStore(state => state.adminuser);
   const [newUser, setNewUser] = useState({
     first_name: '',
     last_name: '',
@@ -34,13 +36,24 @@ export default function UsersPage() {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [refreshing, setRefreshing] = useState(false);
 
+  
+
   useEffect(() => {
-    fetchUsers();
-  }, []);
+    setLoading(true);
+    if (admin_user?.id) {
+      if (admin_user.role !=="admin" &&(!admin_user.accessiblepages.some((accessible_page) => accessible_page === "stores"))) {
+        toast.error("You don't have access to this page.");
+        router.push("/admin/dashboard/");
+      } else {
+       fetchUsers();
+      }
+    }
+  }, [admin_user?.id]);
+
 
   const fetchUsers = async () => {
     try {
-      setLoading(true);
+      
       const result = await axios.get(apiSummary.admin.users.get_all_users);
       // Ensure each user has accessiblePages array initialized
       console.log(result.data.data)
