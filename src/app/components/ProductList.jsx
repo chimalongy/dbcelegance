@@ -4,7 +4,7 @@ import React, { useState, useRef } from "react";
 import { useSelectedProductStore } from "../lib/store/selectedproductstore";
 
 const ProductList = ({ gender, products = [] }) => {
-  let setsetelctedProduct= useSelectedProductStore((state)=>state.setsetelctedProduct)
+  const setSelectedProduct = useSelectedProductStore((state) => state.setSelectedProduct);
   const itemsPerPage = 8;
   const totalPages = Math.ceil(products.length / itemsPerPage);
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,14 +15,26 @@ const ProductList = ({ gender, products = [] }) => {
 
   const paginate = (pageNumber) => setCurrentPage(pageNumber);
 
+  const handleProductClick = (product) => {
+    // Ensure we're storing the complete product data
+    setSelectedProduct({
+      ...product,
+      // Make sure variants is properly formatted
+      variants: product.variants?.map(variant => ({
+        ...variant,
+        variant_gallery: variant.variant_gallery || []
+      })) || []
+    });
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="grid grid-cols-2 gap-2 lg:gap-10 sm:grid-cols-2 lg:grid-cols-4">
         {currentProducts.map((product) => (
           <Link
-            href={`/store/${gender}/${product.product_id}`}
+            href={`/store/${gender}/${product.product_name}`}
             key={product.product_id}
-            onClick={()=>{setsetelctedProduct(product)}}
+            onClick={() => handleProductClick(product)}
           >
             <div className="bg-white shadow hover:shadow-lg transition duration-300 overflow-hidden">
               <ImageCarousel product={product} />
@@ -123,14 +135,14 @@ const ProductList = ({ gender, products = [] }) => {
   );
 };
 
-// 👇 Carousel Component with Drag Effect
 const ImageCarousel = ({ product }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const startX = useRef(0);
   const currentX = useRef(0);
 
-  const images = product.product_gallery
-    .filter((media) => media.type === "image")
+  // Safely handle product_gallery being undefined
+  const images = (product.product_gallery || [])
+    .filter((media) => media?.type === "image")
     .slice(0, 3);
 
   const handleTouchStart = (e) => {
@@ -142,6 +154,8 @@ const ImageCarousel = ({ product }) => {
   };
 
   const handleTouchEnd = () => {
+    if (images.length <= 1) return;
+    
     const diff = startX.current - currentX.current;
     const threshold = window.innerWidth * 0.2; // 20% swipe threshold
 
@@ -163,14 +177,20 @@ const ImageCarousel = ({ product }) => {
         className="flex h-full transition-transform duration-300 ease-in-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
-        {images.map((img, idx) => (
-          <img
-            key={idx}
-            src={img.url}
-            alt={`${product.product_name} - ${idx + 1}`}
-            className="w-full h-full object-cover flex-shrink-0"
-          />
-        ))}
+        {images.length > 0 ? (
+          images.map((img, idx) => (
+            <img
+              key={idx}
+              src={img.url}
+              alt={`${product.product_name} - ${idx + 1}`}
+              className="w-full h-full object-cover flex-shrink-0"
+            />
+          ))
+        ) : (
+          <div className="w-full h-full bg-gray-200 flex items-center justify-center flex-shrink-0">
+            <span className="text-gray-500">No images available</span>
+          </div>
+        )}
       </div>
     </div>
   );
