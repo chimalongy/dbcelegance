@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { useEffect, useState } from 'react';
-import Loader from '../components/Loader';
+
 import { useRouter } from 'next/navigation';
 
 export default function WelcomePage() {
@@ -44,7 +44,7 @@ export default function WelcomePage() {
   }, []);
 
   return (
-    <div className="h-screen bg-white flex items-center justify-center overflow-hidden">
+   <div className="h-full bg-amber-50 flex items-center justify-center overflow-hidden">
       <div className="text-center w-full px-4 max-w-md">
         <AnimatePresence>
           {showWelcome && (
@@ -78,7 +78,7 @@ export default function WelcomePage() {
             animate={{ opacity: 1 }}
             className="my-8"
           >
-            <Loader />
+           
           </motion.div>
         ) : (
           <AnimatePresence>
@@ -122,12 +122,12 @@ export default function WelcomePage() {
               transition={{ delay: 2.8, duration: 0 }}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              className="mt-8 px-6 py-3 bg-black text-white rounded-full hover:bg-gray-800 transition-all font-medium shadow-lg"
+              className="mt-8 px-6 py-3 bg-black text-white rounded-sm hover:bg-gray-800 transition-all font-medium shadow-lg"
                 onClick={()=>{
                     router.push("/home")
                 }}
             >
-              Continue
+              Explore
             </motion.button>
           )}
         {/* </AnimatePresence> */}
