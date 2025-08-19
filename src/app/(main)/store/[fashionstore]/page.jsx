@@ -16,18 +16,18 @@ import Image from 'next/image';
 
 export default function FashionPage() {
     const store_categories = useSelectedStoreCategories((state) => state.selectedstorecategories);
-    const store_products = useSelectedStoreProducts((state)=>state.selectedstoreproducts)
+    const store_products = useSelectedStoreProducts((state) => state.selectedstoreproducts)
     const { selectednavtab, setSelectedNavTab, clearSelectedNavTab, showmodal, setShowModal } = useNavStore();
     const params = useParams();
     const gender = params.fashionstore;
     const [selected_category, setSelectedCategory] = useState(null);
-    const [selected_products, setsetelctedProducts]= useState([])
+    const [selected_products, setsetelctedProducts] = useState([])
 
     useEffect(() => {
-        if( (store_categories && store_categories.length > 0)&& (store_products && store_products.length > 0) ) {
+        if ((store_categories && store_categories.length > 0) && (store_products && store_products.length > 0)) {
             let sel_category = store_categories[0]
             setSelectedCategory(sel_category); // set default to first category
-            let selectedproducts = store_products.filter((product)=> product.product_category==sel_category.category_id)
+            let selectedproducts = store_products.filter((product) => product.product_category == sel_category.category_id)
             setsetelctedProducts(selectedproducts)
         }
     }, [store_categories]);
@@ -78,12 +78,14 @@ export default function FashionPage() {
                         {store_categories && store_categories.map((category, index) => (
                             <div
                                 key={index}
-                                className={`flex flex-col items-center p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer ${
-                                    selected_category?.category_id === category?.category_id ? "border border-yellow-400" : ""
-                                }`}
+                                className={`flex flex-col items-center p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer ${selected_category?.category_id === category?.category_id ? "border border-yellow-400" : ""
+                                    }`}
                                 onClick={() => {
                                     setSelectedCategory(category);
-                                    
+
+                                    let selectedproducts = store_products.filter((product) => product.product_category == category.category_id)
+                                    setsetelctedProducts(selectedproducts)
+
 
                                 }}
                             >
@@ -107,7 +109,7 @@ export default function FashionPage() {
                     <ProductList gender={gender} products={selected_products} />
 
 
-                    
+
                 </div>
 
                 {showmodal && <ModalMain />}
