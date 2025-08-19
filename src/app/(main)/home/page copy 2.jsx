@@ -48,7 +48,7 @@ const categories = [
 
 export default function Home() {
   const router = useRouter();
-  const [loadingCategory, setLoadingCategory] = useState(null);
+   const [loadingCategory, setLoadingCategory] = useState(null);
   const setSelectedStoreCategories = useSelectedStoreCategories(
     (state) => state.setSelectedStoreCategories
   );
@@ -56,7 +56,7 @@ export default function Home() {
     (state) => state.setSelectedStoreProducts
   );
 
-  async function fetch_collections(category) {
+    async function fetch_collections(category) {
     if (!category.store_name) {
       router.push(category.link);
       return;
@@ -66,8 +66,8 @@ export default function Home() {
 
     try {
       // fetch categories & products at the same time
-      setSelectedStoreCategories([]);
-      setSelectedStoreProducts([]);
+       setSelectedStoreCategories([]);
+        setSelectedStoreProducts([]);
       const [categoriesRes, productsRes] = await Promise.all([
         axios.post(apiSummary.store.get_store_categories, { store_name: category.store_name }),
         axios.post(apiSummary.store.get_store_products, { store_name: category.store_name })
@@ -90,17 +90,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative">
-      {/* Simple Loading Overlay */}
-      {loadingCategory && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="flex flex-col items-center">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-2"></div>
-            <p className="text-white text-sm">Loading</p>
-          </div>
-        </div>
-      )}
-      
+    <div className="min-h-screen flex flex-col">
       {/* Main content */}
       <main className="flex-1 flex flex-col lg:flex-row">
         {categories.map((category, index) => (
