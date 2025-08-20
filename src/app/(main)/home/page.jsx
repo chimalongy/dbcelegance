@@ -13,11 +13,11 @@ import { apiSummary } from '@/app/lib/apiSummary';
 import axios from 'axios';
 import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
+import { Noto_Serif } from 'next/font/google';
 
 const categories = [
   {
     label: "Women's Collection",
-    tag: "Elegance Redefined",
     image: womensfashionbg,
     link: "/store/womensfashion",
     color: "from-gray-900/30 to-gray-800/20",
@@ -27,7 +27,6 @@ const categories = [
   },
   {
     label: "Men's Essentials",
-    tag: "Sharp & Sophisticated",
     image: mensfashionbg,
     link: "/store/mensfashion",
     color: "from-gray-900/30 to-gray-800/20",
@@ -37,7 +36,7 @@ const categories = [
   },
   {
     label: "Custom Designs",
-    tag: "Uniquely Yours",
+   
     image: customfashion,
     link: "/store/customfashion",
     color: "from-gray-900/30 to-gray-800/20",
@@ -45,6 +44,13 @@ const categories = [
     actionText: "Contact Us"
   },
 ];
+
+// Correct font configuration
+const notoSerif = Noto_Serif({ 
+  subsets: ['latin'],
+  weight: ['400', '700'],
+  variable: '--font-noto-serif'
+});
 
 export default function Home() {
   const router = useRouter();
@@ -103,6 +109,9 @@ export default function Home() {
       
       {/* Main content */}
       <main className="flex-1 flex flex-col lg:flex-row">
+       <div className='absolute fixed flex justify-center text-center z-50 text-white text-3xl mx-auto w-full'>
+         <h1 className={`${notoSerif.className} border p-3 font-extrabold`}>DBC ELEGANCE</h1>
+       </div>
         {categories.map((category, index) => (
           <motion.div
             key={index}
@@ -133,24 +142,17 @@ export default function Home() {
               >
                 {category.label}
               </motion.h2>
-              <motion.p
-                className="text-sm md:text-base mb-4 font-light text-center"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.3 }}
-              >
-                {category.tag}
-              </motion.p>
+           
               <motion.div
                 className="flex items-center gap-2 mt-2 group-hover:underline"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5, delay: index * 0.4 }}
               >
-                <span className="text-sm md:text-base font-medium tracking-wide">
+                <span className="text-sm md:text-base font-medium tracking-wide underline">
                   {category.actionText}
                 </span>
-                <FiArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" />
+                {/* <FiArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" /> */}
               </motion.div>
             </div>
           </motion.div>

@@ -1,39 +1,48 @@
 'use client';
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import mensfashionbg from '../../../../../public/images/malefashion.jpg';
-import womensfashionbg from '../../../../../public/images/femalefashion.jpg';
 import { FaChevronDown } from 'react-icons/fa';
 import ProductList from '@/app/components/ProductList';
 import Footer from '@/app/components/Footer';
 import Navbar from '@/app/components/Nav';
 import ModalMain from '@/app/components/modalpages.jsx/ModalMain';
 import { useNavStore } from '../../../lib/store/navmodalstore';
-import CategoryList from '@/app/components/CategoryList';
 import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
 import Image from 'next/image';
 
 export default function FashionPage() {
     const store_categories = useSelectedStoreCategories((state) => state.selectedstorecategories);
-    const store_products = useSelectedStoreProducts((state) => state.selectedstoreproducts)
-    const { selectednavtab, setSelectedNavTab, clearSelectedNavTab, showmodal, setShowModal } = useNavStore();
+    const store_products = useSelectedStoreProducts((state) => state.selectedstoreproducts);
+    const { showmodal } = useNavStore();
     const params = useParams();
     const gender = params.fashionstore;
+
     const [selected_category, setSelectedCategory] = useState(null);
-    const [selected_products, setsetelctedProducts] = useState([])
+    const [selected_products, setSelectedProducts] = useState([]);
+    const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
-        if ((store_categories && store_categories.length > 0) && (store_products && store_products.length > 0)) {
-            let sel_category = store_categories[0]
+        if (store_categories?.length > 0 && store_products?.length > 0) {
+            let sel_category = store_categories[0];
             setSelectedCategory(sel_category); // set default to first category
-            let selectedproducts = store_products.filter((product) => product.product_category == sel_category.category_id)
-            setsetelctedProducts(selectedproducts)
+            let selectedproducts = store_products.filter(
+                (product) => product.product_category == sel_category.category_id
+            );
+            setSelectedProducts(selectedproducts);
         }
-    }, [store_categories]);
+    }, [store_categories, store_products]);
 
-    const backgroundImage =
-        gender === 'mensfashion' ? mensfashionbg.src : womensfashionbg.src;
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 50);
+        };
+        window.addEventListener('scroll', handleScroll);
+        return () => window.removeEventListener('scroll', handleScroll);
+    }, []);
+
+    const backgroundVideo =
+        gender === 'mensfashion' ? '/videos/menintro.mp4' : '/videos/womenintro.mp4';
 
     const handleScroll = () => {
         const section = document.getElementById('scrollTarget');
@@ -44,22 +53,35 @@ export default function FashionPage() {
         <div className="w-full">
             <Navbar />
             <div className="relative">
-
                 {/* Parallax Section */}
-                <div
-                    className="min-h-[60vh] lg:min-h-screen bg-fixed bg-cover bg-center relative"
-                    style={{ backgroundImage: `url(${backgroundImage})` }}
-                >
-                    {/* Hero Text */}
-                    <div className="flex items-center justify-center text-center py-20 px-4">
-                        <h1 className="text-yellow-300 text-4xl md:text-6xl font-bold drop-shadow-lg">
-                            {gender === 'mensfashion' ? "Men's Fashion" : "Women's Fashion"}
+                <div className="relative h-[60vh] lg:h-screen w-full">
+                    <video
+                        src={backgroundVideo}
+                        className="absolute top-0 left-0 w-full h-full object-cover"
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                    />
+                    {/* Overlay with gradient */}
+                    <div className="absolute inset-0 bg-gradient-to-b from-black/30 to-black/70"></div>
+
+                    {/* Hero text */}
+                    <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-4">
+                        <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-4">
+                            {gender === 'mensfashion' ? "Men's Collection" : "Women's Collection"}
                         </h1>
+                        <p className="text-lg md:text-xl text-white max-w-2xl mb-8">
+                            Discover our latest styles and exclusive pieces
+                        </p>
                     </div>
 
                     {/* Scroll Arrow */}
                     <div className="absolute bottom-6 w-full flex justify-center">
-                        <button onClick={handleScroll} className="animate-bounce text-white text-3xl">
+                        <button
+                            onClick={handleScroll}
+                            className="animate-bounce text-white text-3xl bg-black/30 p-2 rounded-full hover:bg-black/50 transition-all"
+                        >
                             <FaChevronDown />
                         </button>
                     </div>
@@ -70,46 +92,67 @@ export default function FashionPage() {
                     id="scrollTarget"
                     className="min-h-screen bg-gray-50 py-10 flex flex-col items-center"
                 >
-                    <p className="text-gray-600 mb-8">
-                        {`Browse our ${gender === 'mensfashion' ? 'Men' : 'Women'} Collections`}
-                    </p>
+                    <div className="w-full max-w-7xl px-4">
+                        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">
+                            {`Browse our ${gender === 'mensfashion' ? 'Men' : 'Women'} Collections`}
+                        </h2>
+                        <p className="text-gray-600 text-center mb-10 max-w-3xl mx-auto">
+                            Explore our carefully curated categories to find the perfect pieces for your style
+                        </p>
 
-                    <div className="w-[80%] p-4 md:p-8 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-                        {store_categories && store_categories.map((category, index) => (
-                            <div
-                                key={index}
-                                className={`flex flex-col items-center p-2 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer ${selected_category?.category_id === category?.category_id ? "border border-yellow-400" : ""
+                        {/* Categories Grid */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+                            {store_categories?.map((category, index) => (
+                                <div
+                                    key={index}
+                                    className={`group relative overflow-hidden cursor-pointer transition-all duration-500 ${
+                                        selected_category?.category_id === category.category_id
+                                            ? ''
+                                            : 'hover:scale-[1.02]'
                                     }`}
-                                onClick={() => {
-                                    setSelectedCategory(category);
+                                    onClick={() => {
+                                        setSelectedCategory(category);
+                                        let selectedproducts = store_products.filter(
+                                            (product) =>
+                                                product.product_category == category.category_id
+                                        );
+                                        setSelectedProducts(selectedproducts);
+                                    }}
+                                >
+                                    <div className="h-[450px] md:h-[500px] flex flex-col">
+                                        {/* Category Title */}
+                                        <h3 className="text-xl font-bold mb-2 text-black">
+                                            {category.category_name}
+                                        </h3>
 
-                                    let selectedproducts = store_products.filter((product) => product.product_category == category.category_id)
-                                    setsetelctedProducts(selectedproducts)
+                                        {/* Image Container */}
+                                        <div className="relative h-[400px] md:h-[450px] p-8 ">
+                                            <Image
+                                                src={category.category_image}
+                                                fill
+                                                style={{ objectFit: 'cover' }}
+                                                alt={`DBC - ${category.category_name}`}
+                                                className="group-hover:scale-105 transition-transform duration-700"
+                                            />
 
+                                            {/* Gradient overlay */}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
 
-                                }}
-                            >
-                                <div className="relative w-16 h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 mb-2">
-                                    <Image
-                                        src={category.category_image}
-                                        fill
-                                        style={{ objectFit: 'cover' }}
-                                        alt={`DBC - ${category.category_name}`}
-                                        className="rounded-full"
-                                    />
+                                            {/* Overlay text */}
+                                            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
+                                                <p className="text-sm opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    Explore collection
+                                                </p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <span className="text-xs md:text-sm text-center font-medium text-gray-700">
-                                    {category.category_name}
-                                </span>
-                            </div>
+                            ))}
+                        </div>
 
-                        ))}
+                       
+                        
                     </div>
-
-                    <ProductList gender={gender} products={selected_products} />
-
-
-
                 </div>
 
                 {showmodal && <ModalMain />}

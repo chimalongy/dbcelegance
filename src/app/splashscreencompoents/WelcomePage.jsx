@@ -65,7 +65,7 @@ export default function WelcomePage() {
               transition={{ duration: 0.7, type: 'spring' }}
               className="text-4xl font-serif font-light tracking-wide mb-8 text-gray-900"
             >
-              DBC Elegance
+              DBC ELEGANCE
             </motion.h1>
           )}
         </AnimatePresence>
