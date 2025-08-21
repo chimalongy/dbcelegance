@@ -95,7 +95,7 @@ export default function FashionPage() {
                     className="min-h-screen bg-gray-50 py-10 flex flex-col items-center"
                 >
                     <div className="w-full max-w-7xl px-4">
-                        <p className="text-gray-600 text-center mb-10 max-w-3xl mx-auto text-2xl">
+                        <p className="text-gray-600 text-center mb-10 max-w-3xl mx-auto text-2xl w-[80%]">
                             Explore our carefully curated categories to find the perfect pieces for your style
                         </p>
 
@@ -107,11 +107,7 @@ export default function FashionPage() {
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
                                     transition={{ duration: 0.5, delay: index * 0.1 }}
-                                    className={`group relative overflow-hidden cursor-pointer transition-all duration-500 ${
-                                        selected_category?.category_id === category.category_id
-                                            ? 'ring-2 ring-black'
-                                            : 'hover:scale-[1.02]'
-                                    }`}
+                                    className={`group relative overflow-hidden cursor-pointer transition-all duration-500`}
                                     onClick={() => {
                                         setSelectedCategory(category);
                                         let selectedproducts = store_products.filter(
@@ -151,15 +147,7 @@ export default function FashionPage() {
                             ))}
                         </div>
 
-                        {/* Selected Products Section */}
-                        {selected_category && selected_products.length > 0 && (
-                            <div className="mt-12">
-                                <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
-                                    {selected_category.category_name}
-                                </h2>
-                                <ProductList products={selected_products} />
-                            </div>
-                        )}
+                       
                     </div>
                 </div>
 

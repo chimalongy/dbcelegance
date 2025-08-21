@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavStore } from '../lib/store/navmodalstore';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import { CiSearch, CiHeart, CiUser, CiShoppingCart } from 'react-icons/ci';
@@ -8,9 +8,13 @@ import { HiOutlineEquals } from "react-icons/hi2";
 import Link from 'next/link';
 import DbcEleganceLogo from './DBCEleganceLogo';
 import { IoMdClose } from "react-icons/io";
+import { usePathname, useRouter } from "next/navigation";
 
 export default function Navbar() {
+   const pathname = usePathname(); // gives the current path
+  const router = useRouter();     // lets you navigate programmatically
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showrightnavoptions, setshowrightnavoptions]= useState(false)
   const {
     selectednavtab,
     setSelectedNavTab,
@@ -23,6 +27,18 @@ export default function Navbar() {
     setSelectedNavTab(tab);
     setShowModal(true);
   };
+
+
+  useEffect(()=>{
+   if (pathname =="/store/womensfashion" || pathname=="/store/mensfashion"){
+  setshowrightnavoptions(false)
+   }
+   else{
+     setshowrightnavoptions(true)
+   }
+  },[pathname])
+
+
 
   return (
     // <nav className=" w-full border-b border-gray-100 px-4 py-3 md:px-6 md:py-4 flex justify-between items-center bg-white z-50 shadow-sm relative">
@@ -44,12 +60,14 @@ export default function Navbar() {
       </div>
 
       {/* Center - Logo */}
-      <div className="absolute left-1/3 lg:left-1/2 transform -translate-x-1/2 text-lg md:text-2xl font-serif font-medium tracking-wide text-white">
+      <div className={`  ${showrightnavoptions?"":"mx-auto"} text-white`}>
         <DbcEleganceLogo/>
       </div>
 
       {/* Right - Icons */}
-      <div className="flex items-center space-x-4 ml-auto">
+      {
+          showrightnavoptions &&
+          <div className="flex items-center space-x-4 ml-auto">
         <button
           className="text-white hover:text-white transition-colors p-1"
           onClick={() => handleIconClick('search')}
@@ -75,6 +93,7 @@ export default function Navbar() {
           <CiShoppingCart className=" w-5 h-5 lg:w-7 lg:h-7" />
         </button>
       </div>
+      }
 
       {/* Mobile Menu */}
       {menuOpen && (
