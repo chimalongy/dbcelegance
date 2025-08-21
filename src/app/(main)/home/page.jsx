@@ -35,13 +35,13 @@ const categories = [
     store_name: "male"
   },
   {
-    label: "Custom Designs",
+    label: "DBC Custom Piece",
    
     image: customfashion,
     link: "/store/customfashion",
     color: "from-gray-900/30 to-gray-800/20",
     icon: <FiMail className="text-white" size={18} />,
-    actionText: "Contact Us"
+    actionText: "Request"
   },
 ];
 

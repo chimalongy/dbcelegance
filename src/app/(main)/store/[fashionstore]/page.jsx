@@ -95,7 +95,7 @@ export default function FashionPage() {
                     className="min-h-screen bg-gray-50 py-10 flex flex-col items-center"
                 >
                     <div className="w-full max-w-7xl px-4">
-                        <p className="text-gray-600 text-center mb-10 max-w-3xl mx-auto text-2xl w-[80%]">
+                        <p className="text-gray-600 text-center mb-10 max-w-3xl mx-auto text-xl w-[80%]">
                             Explore our carefully curated categories to find the perfect pieces for your style
                         </p>
 
