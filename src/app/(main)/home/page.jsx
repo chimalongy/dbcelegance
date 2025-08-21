@@ -26,7 +26,7 @@ const categories = [
     store_name: "female"
   },
   {
-    label: "Men's Essentials",
+    label: "Men's Collection",
     image: mensfashionbg,
     link: "/store/mensfashion",
     color: "from-gray-900/30 to-gray-800/20",
@@ -110,7 +110,7 @@ export default function Home() {
       {/* Main content */}
       <main className="flex-1 flex flex-col lg:flex-row">
        <div className='absolute fixed flex justify-center text-center z-50 text-white text-3xl mx-auto w-full'>
-         <h1 className={`${notoSerif.className} border p-3 font-extrabold`}>DBC ELEGANCE</h1>
+         <h1 className={`${notoSerif.className} p-3 font-extrabold`}>DBC ELEGANCE</h1>
        </div>
         {categories.map((category, index) => (
           <motion.div

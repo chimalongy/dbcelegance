@@ -4,7 +4,10 @@ import React, { useState } from 'react';
 import { useNavStore } from '../lib/store/navmodalstore';
 import { FaBars, FaTimes } from 'react-icons/fa';
 import { CiSearch, CiHeart, CiUser, CiShoppingCart } from 'react-icons/ci';
+import { HiOutlineEquals } from "react-icons/hi2";
 import Link from 'next/link';
+import DbcEleganceLogo from './DBCEleganceLogo';
+import { IoMdClose } from "react-icons/io";
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -22,59 +25,61 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="w-full border-b border-gray-100 px-4 py-3 md:px-6 md:py-4 flex justify-between items-center bg-white z-50 shadow-sm relative">
+    // <nav className=" w-full border-b border-gray-100 px-4 py-3 md:px-6 md:py-4 flex justify-between items-center bg-white z-50 shadow-sm relative">
+    <nav className="  absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center  z-50 shadow-sm">
       {/* Left - Hamburger */}
-      <div className="md:hidden">
+      <div >
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="p-2 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
           aria-label="Toggle menu"
         >
           {menuOpen ? (
-            <FaTimes className="text-2xl text-gray-700" />
+            <IoMdClose className="text-2xl text-white" />
           ) : (
-            <FaBars className="text-2xl text-gray-700" />
+         
+            <HiOutlineEquals className="text-2xl text-white" />
           )}
         </button>
       </div>
 
       {/* Center - Logo */}
-      <div className="absolute left-1/3 lg:left-1/2 transform -translate-x-1/2 text-lg md:text-2xl font-serif font-medium tracking-wide text-gray-900">
-        DBC ELEGANCE
+      <div className="absolute left-1/3 lg:left-1/2 transform -translate-x-1/2 text-lg md:text-2xl font-serif font-medium tracking-wide text-white">
+        <DbcEleganceLogo/>
       </div>
 
       {/* Right - Icons */}
       <div className="flex items-center space-x-4 ml-auto">
         <button
-          className="text-gray-700 hover:text-gray-900 transition-colors p-1"
+          className="text-white hover:text-white transition-colors p-1"
           onClick={() => handleIconClick('search')}
         >
-          <CiSearch className=" w-4 h-4 lg:w-7 lg:h-7" />
+          <CiSearch className=" w-5 h-5 lg:w-7 lg:h-7" />
         </button>
         <button
-          className="text-gray-700 hover:text-gray-900 transition-colors p-1"
+          className="text-white hover:text-white transition-colors p-1"
           onClick={() => handleIconClick('wishlist')}
         >
-          <CiHeart className=" w-4 h-4 lg:w-7 lg:h-7" />
+          <CiHeart className=" w-5 h-5 lg:w-7 lg:h-7" />
         </button>
         <button
-          className="text-gray-700 hover:text-gray-900 transition-colors p-1"
+          className="text-white hover:text-white transition-colors p-1"
           onClick={() => handleIconClick('user')}
         >
-          <CiUser className=" w-4 h-4 lg:w-7 lg:h-7" />
+          <CiUser className=" w-5 h-5 lg:w-7 lg:h-7" />
         </button>
         <button
-          className="text-gray-700 hover:text-gray-900 transition-colors p-1"
+          className="text-white hover:text-white transition-colors p-1"
           onClick={() => handleIconClick('cart')}
         >
-          <CiShoppingCart className=" w-4 h-4 lg:w-7 lg:h-7" />
+          <CiShoppingCart className=" w-5 h-5 lg:w-7 lg:h-7" />
         </button>
       </div>
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="absolute top-full left-0 w-full bg-white shadow-lg z-40 animate-fadeIn md:hidden">
-          <ul className="space-y-3 p-5 text-gray-800 text-sm">
+        <div className="absolute top-full left-0 w-full bg-white shadow-lg z-40 animate-fadeIn ">
+          <ul className="space-y-3 p-5 text-gray-600 ">
             <li className="py-2 hover:text-gray-900 hover:bg-gray-50 px-3 rounded-md transition-colors">
               What's New
             </li>

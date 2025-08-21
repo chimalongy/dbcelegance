@@ -10,6 +10,8 @@ import { useNavStore } from '../../../lib/store/navmodalstore';
 import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
 import Image from 'next/image';
+import { motion } from 'framer-motion';
+import { FiArrowRight } from 'react-icons/fi';
 
 export default function FashionPage() {
     const store_categories = useSelectedStoreCategories((state) => state.selectedstorecategories);
@@ -93,21 +95,21 @@ export default function FashionPage() {
                     className="min-h-screen bg-gray-50 py-10 flex flex-col items-center"
                 >
                     <div className="w-full max-w-7xl px-4">
-                        <h2 className="text-3xl md:text-4xl font-bold text-center text-gray-800 mb-4">
-                            {`Browse our ${gender === 'mensfashion' ? 'Men' : 'Women'} Collections`}
-                        </h2>
-                        <p className="text-gray-600 text-center mb-10 max-w-3xl mx-auto">
+                        <p className="text-gray-600 text-center mb-10 max-w-3xl mx-auto text-2xl">
                             Explore our carefully curated categories to find the perfect pieces for your style
                         </p>
 
-                        {/* Categories Grid */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
+                        {/* Redesigned Categories Grid with Headers Inside Images */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 mb-16">
                             {store_categories?.map((category, index) => (
-                                <div
+                                <motion.div
                                     key={index}
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.5, delay: index * 0.1 }}
                                     className={`group relative overflow-hidden cursor-pointer transition-all duration-500 ${
                                         selected_category?.category_id === category.category_id
-                                            ? ''
+                                            ? 'ring-2 ring-black'
                                             : 'hover:scale-[1.02]'
                                     }`}
                                     onClick={() => {
@@ -120,13 +122,8 @@ export default function FashionPage() {
                                     }}
                                 >
                                     <div className="h-[450px] md:h-[500px] flex flex-col">
-                                        {/* Category Title */}
-                                        <h3 className="text-xl font-bold mb-2 text-black">
-                                            {category.category_name}
-                                        </h3>
-
-                                        {/* Image Container */}
-                                        <div className="relative h-[400px] md:h-[450px] p-8 ">
+                                        {/* Image Container with Header Inside */}
+                                        <div className="relative h-full w-full">
                                             <Image
                                                 src={category.category_image}
                                                 fill
@@ -136,22 +133,33 @@ export default function FashionPage() {
                                             />
 
                                             {/* Gradient overlay */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent opacity-80 group-hover:opacity-60 transition-opacity"></div>
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
 
-                                            {/* Overlay text */}
-                                            <div className="absolute bottom-0 left-0 right-0 p-6 text-white">
-                                                <p className="text-sm opacity-0 group-hover:opacity-100 transition-opacity">
-                                                    Explore collection
-                                                </p>
+                                            {/* Category Title positioned inside image */}
+                                            <div className="absolute bottom-0 left-0 right-0 text-white  flex flex-col items-center justify-center pb-3">
+                                                <h3 className="text-2xl font-bold ">
+                                                    {category.category_name}
+                                                </h3>
+                                                <p className='underline'>Shop now</p>
+                                                
+                                               
+                                               
                                             </div>
                                         </div>
                                     </div>
-                                </div>
+                                </motion.div>
                             ))}
                         </div>
 
-                       
-                        
+                        {/* Selected Products Section */}
+                        {selected_category && selected_products.length > 0 && (
+                            <div className="mt-12">
+                                <h2 className="text-3xl font-bold text-gray-800 mb-8 text-center">
+                                    {selected_category.category_name}
+                                </h2>
+                                <ProductList products={selected_products} />
+                            </div>
+                        )}
                     </div>
                 </div>
 
