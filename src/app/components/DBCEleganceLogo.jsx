@@ -4,7 +4,7 @@ import React from "react";
 export default function DbcEleganceLogo() {
     return (
         <div className="flex flex-col items-center justify-center">
-            <div className="flex flex-row  gap-3 items-center text-white">
+            <div className="flex flex-row text-xl  gap-3 items-center text-white">
                 <p>DBC ELEGANCE</p>
                 {/* DBC stacked */}
                 {/* <span className="text-[25px] font-serif leading-none">D</span>

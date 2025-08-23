@@ -122,7 +122,7 @@ export default function Home() {
             onClick={() => !loadingCategory && fetch_collections(category)}
           >
             <div className="relative w-full h-full">
-              <Image
+              <Image  
                 src={category.image}
                 alt={category.label}
                 className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105"
