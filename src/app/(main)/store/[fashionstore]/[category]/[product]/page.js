@@ -3,7 +3,7 @@ import Navbar from "@/app/components/Nav";
 import React, { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import Footer from "@/app/components/Footer";
-import { useNavStore } from "../../../../lib/store/navmodalstore";
+import { useNavStore } from "../../../../../lib/store/navmodalstore";
 import ModalMain from "@/app/components/modalpages.jsx/ModalMain";
 import { useSelectedProductStore } from "@/app/lib/store/selectedproductstore";
 
