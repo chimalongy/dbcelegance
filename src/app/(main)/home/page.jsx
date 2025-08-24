@@ -61,7 +61,6 @@ export default function Home() {
   const setSelectedStoreProducts = useSelectedStoreProducts(
     (state) => state.setSelectedStoreProducts
   );
-
   async function fetch_collections(category) {
     if (!category.store_name) {
       router.push(category.link);

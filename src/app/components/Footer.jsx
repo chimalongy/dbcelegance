@@ -67,7 +67,6 @@ export default function Footer() {
             </button>
             <ul className={`${openSections['house'] ? 'block' : 'hidden'} md:block space-y-3 text-gray-600`}>
               <li><a href="#" className="hover:text-black transition-colors">DBC Elegance Couture</a></li>
-              <li><a href="#" className="hover:text-black transition-colors">Fragrances</a></li>
               <li><a href="#" className="hover:text-black transition-colors">Heritage</a></li>
               <li><a href="#" className="hover:text-black transition-colors">Sustainability</a></li>
             </ul>
@@ -113,7 +112,7 @@ export default function Footer() {
           
           <div className="text-center md:text-right">
             <div className="text-2xl  font-bold mb-2">DBC ELEGANCE</div>
-            <p className="text-sm text-gray-600">© {new Date().getFullYear()} DBC ELEGANCE. All rights reserved.</p>
+            {/* <p className="text-sm text-gray-600">© {new Date().getFullYear()} DBC ELEGANCE. All rights reserved.</p> */}
           </div>
         </div>
       </div>

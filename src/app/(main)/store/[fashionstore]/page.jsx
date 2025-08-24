@@ -9,15 +9,18 @@ import ModalMain from '@/app/components/modalpages.jsx/ModalMain';
 import { useNavStore } from '../../../lib/store/navmodalstore';
 import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
+import { useUserSelectedCategory } from '@/app/lib/store/UserSelectedCategory';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiArrowRight } from 'react-icons/fi';
+import Loader from '@/app/components/Loader';
 
 export default function FashionPage() {
     const router = useRouter();
     const params = useParams();
     const store_categories = useSelectedStoreCategories((state) => state.selectedstorecategories);
     const store_products = useSelectedStoreProducts((state) => state.selectedstoreproducts);
+    let setUserSelectedStoreCategory= useUserSelectedCategory((state)=>state.setUserSelectedStoreCategory)
     const { showmodal } = useNavStore();
     const gender = params.fashionstore;
     const [isLoading, setIsLoading] = useState(true);
@@ -45,10 +48,12 @@ export default function FashionPage() {
         section?.scrollIntoView({ behavior: 'smooth' });
     };
 
-    const handleCategoryClick = (categoryName) => {
+    const handleCategoryClick = (category) => {
         // Sanitize category name for URL
-        const sanitizedCategory = categoryName.toLowerCase().replace(/\s+/g, '-');
-        router.push(`/${gender}/${sanitizedCategory}`);
+        const sanitizedCategory = category.category_name.toLowerCase().replace(/\s+/g, '-');
+        setUserSelectedStoreCategory(category)
+        router.push(`/store/${gender}/${sanitizedCategory}`);
+
     };
 
     return (
@@ -102,10 +107,11 @@ export default function FashionPage() {
 
                         {/* Loading State */}
                         {isLoading ? (
-                            <div className="flex justify-center items-center h-96">
-                                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
-                                <span className="ml-3 text-gray-600">Loading categories...</span>
-                            </div>
+                            // <div className="flex justify-center items-center h-96">
+                            //     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
+                            //     <span className="ml-3 text-gray-600">Loading categories...</span>
+                            // </div>
+                            <Loader/>
                         ) : (
                             <>
                                 {/* Categories Grid */}
@@ -116,8 +122,8 @@ export default function FashionPage() {
                                             initial={{ opacity: 0, y: 20 }}
                                             animate={{ opacity: 1, y: 0 }}
                                             transition={{ duration: 0.5, delay: index * 0.1 }}
-                                            className="group relative overflow-hidden cursor-pointer transition-all duration-500 rounded-lg shadow-md hover:shadow-xl"
-                                            onClick={() => handleCategoryClick(category.category_name)}
+                                            className="group relative overflow-hidden cursor-pointer transition-all duration-500  shadow-md hover:shadow-xl"
+                                            onClick={() => handleCategoryClick(category)}
                                         >
                                             <div className="h-[450px] md:h-[500px] flex flex-col">
                                                 {/* Image Container with Header Inside */}

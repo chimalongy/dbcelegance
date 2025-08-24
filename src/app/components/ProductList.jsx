@@ -2,12 +2,14 @@
 import Link from "next/link";
 import React, { useState, useRef } from "react";
 import { useSelectedProductStore } from "../lib/store/selectedproductstore";
+import { FaHeart } from "react-icons/fa";
 
-const ProductList = ({ gender, products = [] }) => {
+const ProductList = ({ gender, products = [], selected_category }) => {
   const setSelectedProduct = useSelectedProductStore((state) => state.setSelectedProduct);
   const itemsPerPage = 8;
   const totalPages = Math.ceil(products.length / itemsPerPage);
   const [currentPage, setCurrentPage] = useState(1);
+  const [wishlist, setWishlist] = useState([]); // Store entire product objects
 
   const indexOfLastItem = currentPage * itemsPerPage;
   const indexOfFirstItem = indexOfLastItem - itemsPerPage;
@@ -27,16 +29,53 @@ const ProductList = ({ gender, products = [] }) => {
     });
   };
 
+  const handleWishlistClick = (product, e) => {
+    e.preventDefault(); // Prevent navigation when clicking the heart
+    e.stopPropagation(); // Prevent event bubbling
+    
+    // Check if product is already in wishlist
+    const isInWishlist = wishlist.some(item => item.product_id === product.product_id);
+    
+    if (isInWishlist) {
+      // Remove from wishlist
+      setWishlist(prev => prev.filter(item => item.product_id !== product.product_id));
+    } else {
+      // Add to wishlist
+      setWishlist(prev => [...prev, product]);
+    }
+    
+    // Here you would typically make an API call to update wishlist on the server
+    console.log(`Product ${product.product_id} wishlist status: ${!isInWishlist}`);
+  };
+
+  // Check if a product is in the wishlist
+  const isInWishlist = (productId) => {
+    return wishlist.some(item => item.product_id === productId);
+  };
+
   return (
     <div className="container mx-auto py-8">
       <div className="grid grid-cols-2 gap-2 lg:gap-10 sm:grid-cols-2 lg:grid-cols-4">
         {currentProducts.map((product) => (
           <Link
-            href={`/store/${gender}/${product.product_name}`}
+            href={`/store/${gender}/${selected_category.category_name}/${product.product_name}`}
             key={product.product_id}
             onClick={() => handleProductClick(product)}
           >
-            <div className="bg-white shadow hover:shadow-lg transition duration-300 overflow-hidden">
+            <div className="bg-white shadow hover:shadow-lg transition duration-300 overflow-hidden relative">
+              {/* Heart icon for wishlist */}
+              <div 
+                className="absolute top-2 right-2 z-10 p-2 rounded-full shadow-md transition-colors"
+                onClick={(e) => handleWishlistClick(product, e)}
+                style={{
+                  backgroundColor: isInWishlist(product.product_id) ? 'black' : 'white'
+                }}
+              >
+                <FaHeart 
+                  className={isInWishlist(product.product_id) ? "text-white" : "text-black"} 
+                />
+              </div>
+
               <ImageCarousel product={product} />
 
               <div className="p-4">
@@ -93,7 +132,7 @@ const ProductList = ({ gender, products = [] }) => {
                 onClick={() => paginate(pageNumber)}
                 className={`px-3 py-1 sm:px-4 sm:py-2 border rounded-md text-sm ${
                   currentPage === pageNumber
-                    ? "bg-amber-300 text-white"
+                    ? "bg-black text-white"
                     : "bg-white text-gray-700 hover:bg-gray-50 border border-amber-500"
                 }`}
               >

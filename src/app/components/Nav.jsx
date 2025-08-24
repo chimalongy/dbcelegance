@@ -9,12 +9,22 @@ import Link from 'next/link';
 import DbcEleganceLogo from './DBCEleganceLogo';
 import { IoMdClose } from "react-icons/io";
 import { usePathname, useRouter } from "next/navigation";
+import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
+import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
+import axios from 'axios';
+import { apiSummary } from '../lib/apiSummary';
 
 export default function Navbar() {
-   const pathname = usePathname(); // gives the current path
+  const setSelectedStoreCategories = useSelectedStoreCategories(
+    (state) => state.setSelectedStoreCategories
+  );
+  const setSelectedStoreProducts = useSelectedStoreProducts(
+    (state) => state.setSelectedStoreProducts
+  );
+  const pathname = usePathname(); // gives the current path
   const router = useRouter();     // lets you navigate programmatically
   const [menuOpen, setMenuOpen] = useState(false);
-  const [showrightnavoptions, setshowrightnavoptions]= useState(false)
+  const [showrightnavoptions, setshowrightnavoptions] = useState(false)
   const {
     selectednavtab,
     setSelectedNavTab,
@@ -29,22 +39,65 @@ export default function Navbar() {
   };
 
 
-  useEffect(()=>{
-   if (pathname =="/store/womensfashion" || pathname=="/store/mensfashion"){
-  setshowrightnavoptions(false)
-   }
-   else{
-     setshowrightnavoptions(true)
-   }
-  },[pathname])
+  useEffect(() => {
+    console.log(pathname)
+    if (pathname == "/store/womensfashion" || pathname == "/store/mensfashion") {
+      setshowrightnavoptions(false)
+    }
+    else {
+      setshowrightnavoptions(true)
+    }
+  }, [pathname])
 
+
+  async function fetch_collections(store_name) {
+    console.log("hello")
+    if (!store_name) {
+      console.log("no stpre name")
+      return false;
+    }
+
+    // setLoadingCategory(category.label);
+
+    try {
+      // fetch categories & products at the same time
+
+      const [categoriesRes, productsRes] = await Promise.all([
+        axios.post(apiSummary.store.get_store_categories, { store_name: store_name }),
+        axios.post(apiSummary.store.get_store_products, { store_name: store_name })
+      ]);
+
+      if (categoriesRes.data.success && productsRes.data.success) {
+        setSelectedStoreCategories([]);
+        setSelectedStoreProducts([]);
+        setSelectedStoreCategories(categoriesRes.data.data);
+        setSelectedStoreProducts(productsRes.data.data);
+        console.log(categoriesRes.data.data)
+        console.log(productsRes.data.data)
+        return true
+
+      }
+
+
+
+
+
+    } catch (error) {
+      console.error("Error fetching collections:", error);
+      console.log(error)
+      return false
+    } finally {
+      //setLoadingCategory(null);
+    }
+  }
 
 
   return (
     // <nav className=" w-full border-b border-gray-100 px-4 py-3 md:px-6 md:py-4 flex justify-between items-center bg-white z-50 shadow-sm relative">
-    <nav className="  absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center  z-50 shadow-sm">
+    // <nav className={`${showrightnavoptions ? "bg-black/20 " : ""} absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center  z-50 shadow-sm`}>
+    <nav className={`${showrightnavoptions ? "bg-black/20 " : ""} absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center  z-50 shadow-sm`}>
       {/* Left - Hamburger */}
-      <div >
+      <div className=' flex ' >
         <button
           onClick={() => setMenuOpen(!menuOpen)}
           className="p-2 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
@@ -53,46 +106,54 @@ export default function Navbar() {
           {menuOpen ? (
             <IoMdClose className="text-2xl text-white" />
           ) : (
-         
+
             <HiOutlineEquals className="text-2xl text-white" />
           )}
         </button>
-      </div>
 
-      {/* Center - Logo */}
-      <div className={`  ${showrightnavoptions?"":"mx-auto"} text-white`}>
-        <DbcEleganceLogo/>
-      </div>
-
-      {/* Right - Icons */}
-      {
-          showrightnavoptions &&
-          <div className="flex items-center space-x-4 ml-auto">
         <button
           className="text-white hover:text-white transition-colors p-1"
           onClick={() => handleIconClick('search')}
         >
-          <CiSearch className=" w-5 h-5 lg:w-7 lg:h-7" />
-        </button>
-        <button
-          className="text-white hover:text-white transition-colors p-1"
-          onClick={() => handleIconClick('wishlist')}
-        >
-          <CiHeart className=" w-5 h-5 lg:w-7 lg:h-7" />
-        </button>
-        <button
-          className="text-white hover:text-white transition-colors p-1"
-          onClick={() => handleIconClick('user')}
-        >
-          <CiUser className=" w-5 h-5 lg:w-7 lg:h-7" />
-        </button>
-        <button
-          className="text-white hover:text-white transition-colors p-1"
-          onClick={() => handleIconClick('cart')}
-        >
-          <CiShoppingCart className=" w-5 h-5 lg:w-7 lg:h-7" />
+          <CiSearch className=" w-4 h-4 lg:w-7 lg:h-7 text-xl" />
         </button>
       </div>
+
+      {/* Center - Logo */}
+      {/* <div className={`  ${showrightnavoptions?"":"mx-auto"} text-white`}> */}
+      <div className={` mx-auto text-white`}>
+        <DbcEleganceLogo />
+      </div>
+
+      {/* Right - Icons */}
+      {
+        showrightnavoptions &&
+        <div className="flex items-center lg:space-x-4 ml-auto">
+          {/* <button
+            className="text-white hover:text-white transition-colors p-1"
+            onClick={() => handleIconClick('search')}
+          >
+            <CiSearch className=" w-4 h-4 lg:w-7 lg:h-7" />
+          </button> */}
+          <button
+            className="text-white hover:text-white transition-colors p-1"
+            onClick={() => handleIconClick('wishlist')}
+          >
+            <CiHeart className=" w-4 h-4 lg:w-7 lg:h-7" />
+          </button>
+          <button
+            className="text-white hover:text-white transition-colors p-1"
+            onClick={() => handleIconClick('user')}
+          >
+            <CiUser className=" w-4 h-4 lg:w-7 lg:h-7" />
+          </button>
+          <button
+            className="text-white hover:text-white transition-colors p-1"
+            onClick={() => handleIconClick('cart')}
+          >
+            <CiShoppingCart className=" w-4 h-4 lg:w-7 lg:h-7" />
+          </button>
+        </div>
       }
 
       {/* Mobile Menu */}
@@ -102,11 +163,31 @@ export default function Navbar() {
             <li className="py-2 hover:text-gray-900 hover:bg-gray-50 px-3 rounded-md transition-colors">
               What's New
             </li>
-            <li className="py-2 hover:text-gray-900 hover:bg-gray-50 px-3 rounded-md transition-colors">
-              <Link href="/store/mensfashion">Men's Fashion</Link>
+            <li className="py-2 hover:text-gray-900 hover:bg-gray-50 px-3 rounded-md transition-colors"
+              onClick={async () => {
+                let result = await fetch_collections("male")
+                if (result) {
+                  console.log(result)
+                  router.push("/store/mensfashion")
+                }
+
+              }}
+            >
+              {/* <Link href="/store/mensfashion">Men's Fashion</Link> */}
+              Men's Fashion
             </li>
-            <li className="py-2 hover:text-gray-900 hover:bg-gray-50 px-3 rounded-md transition-colors">
-              <Link href="/store/femalefashion">Women's Fashion</Link>
+            <li className="py-2 hover:text-gray-900 hover:bg-gray-50 px-3 rounded-md transition-colors"
+              onClick={async () => {
+                let result = await fetch_collections("female")
+                if (result) {
+                  console.log(result)
+                  router.push("/store/womensfashion")
+                }
+
+              }}
+            >
+              {/* <Link href="/store/femalefashion">Women's Fashion</Link> */}
+              Women's Fashion
             </li>
           </ul>
         </div>

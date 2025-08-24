@@ -270,9 +270,9 @@ const ProductPage = () => {
                 <label htmlFor="size" className="block text-sm font-medium">
                   Select your size
                 </label>
-                <button className="text-xs text-gray-500 hover:underline">
+                {/* <button className="text-xs text-gray-500 hover:underline">
                   Size guide
-                </button>
+                </button> */}
               </div>
               <div className="flex flex-wrap gap-2">
                 {productSizes.map((size, index) => (
