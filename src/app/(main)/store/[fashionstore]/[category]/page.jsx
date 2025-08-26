@@ -13,8 +13,8 @@ import Image from 'next/image';
 
 
 export default function CategoryPage() {
-   
-      
+
+
   const userselectedcategory = useUserSelectedCategory(
     (state) => state.userselectedstorecategory
   );
@@ -23,27 +23,27 @@ export default function CategoryPage() {
   );
   const { showmodal } = useNavStore();
   const params = useParams();
- const gender = params.fashionstore;
+  const gender = params.fashionstore;
 
   const [selected_category, setSelectedCategory] = useState(null);
   const [selected_products, setSelectedProducts] = useState([]);
 
-useEffect(() => {
-  if (userselectedcategory?.category_id) {
-    const foundCategory = userselectedcategory;
-    if (foundCategory) {
-      setSelectedCategory(foundCategory);
-      const selectedproducts = store_products.filter(
-        (product) => product.product_category === foundCategory.category_id
-      );
-      setSelectedProducts(selectedproducts);
+  useEffect(() => {
+    if (userselectedcategory?.category_id) {
+      const foundCategory = userselectedcategory;
+      if (foundCategory) {
+        setSelectedCategory(foundCategory);
+        const selectedproducts = store_products.filter(
+          (product) => product.product_category === foundCategory.category_id
+        );
+        setSelectedProducts(selectedproducts);
+      }
     }
-  }
-}, [userselectedcategory?.category_id, store_products]);
+  }, [userselectedcategory?.category_id, store_products]);
 
-useEffect(() => {
-  console.log("Updated Category: ", selected_category);
-}, [selected_category]);
+  useEffect(() => {
+    console.log("Updated Category: ", selected_category);
+  }, [selected_category]);
 
 
   const handleScroll = () => {
@@ -56,49 +56,21 @@ useEffect(() => {
       <Navbar />
       <div className="relative">
         {/* Hero Section with Category Image */}
-        {selected_category!==null && (
-          <div className="relative min-h-[60vh] lg:min-h-screen bg-fixed bg-cover bg-center">
-            <Image
-              src={selected_category.category_image}
-              fill
-              style={{ objectFit: 'cover' }}
-              alt={`DBC - ${selected_category?.category_name}`}
-              className="z-0"
-            />
 
-          
-          
+        <div className='lg:pt-[200px] pt-[150px] flex flex-col gap-6 mb-3'>
 
-            {/* Hero Text */}
-            <div className=" flex absolute bottom-0 items-center justify-center text-center py-20 px-4  w-full z-2">
-              <h1 className="text-white text-4xl md:text-6xl font-bold drop-shadow-lg text-shadow-2xs text-shadow-amber-950">
-                {selected_category.category_name}
-              </h1>
-            </div>
-
-            {/* Scroll Arrow */}
-            <div className="absolute bottom-6 w-full flex justify-center z-2">
-              <button
-                onClick={handleScroll}
-                className="animate-bounce text-white text-3xl"
-              >
-                <FaChevronDown />
-              </button>
-            </div>
-          </div>
-        )}
+          <h1 className='w-full text-center text-2xl'>{selected_category?.category_name}</h1>
+          <p className='text-base lg:text-2xl lg:w-[45%] text-center w-[80%] m-auto text-gray-500'>
+            Rooted in heritage, designed for the modern era. Discover the essential collection of shirts and overshirts, meticulously crafted from the House's archives to become the defining staples of a sophisticated wardrobe.
+          </p>
+        </div>
 
         {/* Content Section */}
         <div
           id="scrollTarget"
-          className="min-h-screen bg-gray-50 py-10 flex flex-col items-center"
+          className="min-h-screen  py-10 flex flex-col items-center"
         >
-          <p className="text-gray-600 mb-8 text-lg">
-            Browse our {selected_category?.category_name} Collection
-          </p>
-          {/* <button onClick={()=>{console.log(selected_category)}}>
-            cllick
-          </button> */}
+         
 
           {/* Products List */}
           <ProductList

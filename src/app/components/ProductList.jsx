@@ -79,7 +79,7 @@ const ProductList = ({ gender, products = [], selected_category }) => {
               <ImageCarousel product={product} />
 
               <div className="p-4">
-                <h3 className="text-md font-semibold text-gray-800 mb-2">
+                <h3 className="text-md font-extralight text-gray-500 mb-2">
                   {product.product_name}
                 </h3>
                 <p className="text-gray-700 font-bold">
