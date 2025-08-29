@@ -63,6 +63,9 @@ export default function CategoryPage() {
           <p className='text-base lg:text-2xl lg:w-[45%] text-center w-[80%] m-auto text-gray-500'>
             Rooted in heritage, designed for the modern era. Discover the essential collection of shirts and overshirts, meticulously crafted from the House's archives to become the defining staples of a sophisticated wardrobe.
           </p>
+          <p className='text-base lg:text-2xl lg:w-[45%] text-center w-[80%] m-auto text-gray-500'>
+           {selected_products && selected_products.length} {selected_products&& selected_products.length ==1?"item":"items"}
+          </p>
         </div>
 
         {/* Content Section */}

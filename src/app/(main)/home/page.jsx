@@ -14,6 +14,7 @@ import axios from 'axios';
 import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
 import { Noto_Serif } from 'next/font/google';
+import CategoryLoader from '@/app/components/CategoryModal';
 
 const categories = [
   {
@@ -97,14 +98,7 @@ export default function Home() {
   return (
     <div className="min-h-screen flex flex-col relative">
       {/* Simple Loading Overlay */}
-      {loadingCategory && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="flex flex-col items-center">
-            <div className="w-8 h-8 border-2 border-white border-t-transparent rounded-full animate-spin mb-2"></div>
-            <p className="text-white text-sm">Loading</p>
-          </div>
-        </div>
-      )}
+      {loadingCategory && (<CategoryLoader/>)}
       
       {/* Main content */}
       <main className="flex-1 flex flex-col lg:flex-row">

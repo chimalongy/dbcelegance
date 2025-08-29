@@ -6,16 +6,16 @@ import { FaHeart } from "react-icons/fa";
 
 const ProductList = ({ gender, products = [], selected_category }) => {
   const setSelectedProduct = useSelectedProductStore((state) => state.setSelectedProduct);
-  const itemsPerPage = 8;
-  const totalPages = Math.ceil(products.length / itemsPerPage);
-  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerLoad = 8; // Number of products to load each time
+  const [visibleCount, setVisibleCount] = useState(itemsPerLoad);
   const [wishlist, setWishlist] = useState([]); // Store entire product objects
 
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentProducts = products.slice(indexOfFirstItem, indexOfLastItem);
+  // Get the currently visible products
+  const visibleProducts = products.slice(0, visibleCount);
 
-  const paginate = (pageNumber) => setCurrentPage(pageNumber);
+  const handleLoadMore = () => {
+    setVisibleCount(prevCount => prevCount + itemsPerLoad);
+  };
 
   const handleProductClick = (product) => {
     // Ensure we're storing the complete product data
@@ -56,7 +56,7 @@ const ProductList = ({ gender, products = [], selected_category }) => {
   return (
     <div className="container mx-auto py-8">
       <div className="grid grid-cols-2 gap-2 lg:gap-10 sm:grid-cols-2 lg:grid-cols-4">
-        {currentProducts.map((product) => (
+        {visibleProducts.map((product) => (
           <Link
             href={`/store/${gender}/${selected_category.category_name}/${product.product_name}`}
             key={product.product_id}
@@ -91,85 +91,31 @@ const ProductList = ({ gender, products = [], selected_category }) => {
         ))}
       </div>
 
-      {/* Pagination */}
-      <div className="mt-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div className="text-sm text-gray-700 text-center sm:text-left">
-          Showing <span className="font-medium">{indexOfFirstItem + 1}</span> to{" "}
-          <span className="font-medium">
-            {Math.min(indexOfLastItem, products.length)}
-          </span>{" "}
-          of <span className="font-medium">{products.length}</span> products
-        </div>
-
-        <div className="flex flex-wrap justify-center gap-2">
+    <div className="mt-[160px]">
+        {/* Show "See More" button only if there are more products to show */}
+      {visibleCount < products.length && (
+        <div className="mt-10 flex justify-center">
           <button
-            onClick={() => paginate(Math.max(1, currentPage - 1))}
-            disabled={currentPage === 1}
-            className={`px-3 py-1 sm:px-4 sm:py-2 border rounded-md text-sm ${
-              currentPage === 1
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
+            onClick={handleLoadMore}
+            className="px-6 py-3 bg-black text-white rounded-3xl hover:bg-gray-800 transition-colors duration-300"
           >
-            Previous
-          </button>
-
-          {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-            let pageNumber;
-            if (totalPages <= 5) {
-              pageNumber = i + 1;
-            } else if (currentPage <= 3) {
-              pageNumber = i + 1;
-            } else if (currentPage >= totalPages - 2) {
-              pageNumber = totalPages - 4 + i;
-            } else {
-              pageNumber = currentPage - 2 + i;
-            }
-
-            return (
-              <button
-                key={pageNumber}
-                onClick={() => paginate(pageNumber)}
-                className={`px-3 py-1 sm:px-4 sm:py-2 border rounded-md text-sm ${
-                  currentPage === pageNumber
-                    ? "bg-black text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-amber-500"
-                }`}
-              >
-                {pageNumber}
-              </button>
-            );
-          })}
-
-          {totalPages > 5 && currentPage < totalPages - 2 && (
-            <>
-              <span className="px-2 py-1 text-sm text-gray-500">...</span>
-              <button
-                onClick={() => paginate(totalPages)}
-                className={`px-3 py-1 sm:px-4 sm:py-2 border rounded-md text-sm ${
-                  currentPage === totalPages
-                    ? "bg-amber-300 text-white"
-                    : "bg-white text-gray-700 hover:bg-gray-50 border border-amber-500"
-                }`}
-              >
-                {totalPages}
-              </button>
-            </>
-          )}
-
-          <button
-            onClick={() => paginate(Math.min(totalPages, currentPage + 1))}
-            disabled={currentPage === totalPages}
-            className={`px-3 py-1 sm:px-4 sm:py-2 border rounded-md text-sm ${
-              currentPage === totalPages
-                ? "bg-gray-100 text-gray-400 cursor-not-allowed"
-                : "bg-white text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            Next
+            See More
           </button>
         </div>
-      </div>
+      )}
+
+      {/* Show disabled button when all products are visible */}
+      {visibleCount >= products.length && products.length > 0 && (
+        <div className="mt-10 flex justify-center">
+          <button
+            disabled
+            className="px-6 py-3 bg-gray-300 text-gray-500 rounded-3xl cursor-not-allowed"
+          >
+            See More
+          </button>
+        </div>
+      )}
+    </div>
     </div>
   );
 };
