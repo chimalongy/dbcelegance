@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { FiX, FiTrash2 } from 'react-icons/fi';
 import { FaImage, FaVideo } from 'react-icons/fa';
-
+import { RiLoader2Line } from "react-icons/ri";
 export default function EditProductModal({
   setShowEditModal,
   currentProduct,
   handleEditProduct,
-  categories
+  categories,
+  isEditing
 }) {
   const [editedProduct, setEditedProduct] = useState({
     ...currentProduct,
@@ -127,7 +128,7 @@ export default function EditProductModal({
               </div>
 
               {/* Description */}
-              <div className="md:col-span-2">
+              {/* <div className="md:col-span-2">
                 <label htmlFor="edit-product_description" className="block text-sm font-medium text-gray-700">
                   Description
                 </label>
@@ -140,7 +141,7 @@ export default function EditProductModal({
                     setEditedProduct({ ...editedProduct, product_description: e.target.value })
                   }
                 />
-              </div>
+              </div> */}
 
               {/* Category */}
               <div>
@@ -189,10 +190,10 @@ export default function EditProductModal({
 
             {/* Product Media */}
             <div>
-              <label className="block text-sm font-medium text-gray-700">Product Media</label>
+              {/* <label className="block text-sm font-medium text-gray-700">Product Media</label> */}
               
               {/* Error messages */}
-              {fileErrors.length > 0 && (
+              {/* {fileErrors.length > 0 && (
                 <div className="mt-2 p-3 bg-red-50 rounded-md text-sm text-red-600">
                   {fileErrors.map((error, index) => (
                     <p key={index} className="flex items-start">
@@ -200,10 +201,10 @@ export default function EditProductModal({
                     </p>
                   ))}
                 </div>
-              )}
+              )} */}
               
               {/* Media Preview */}
-              <div className="mt-2 flex flex-wrap gap-3">
+              {/* <div className="mt-2 flex flex-wrap gap-3">
                 {editedProduct.product_gallery?.length > 0 ? (
                   editedProduct.product_gallery.map((file, index) => (
                     <div key={index} className="relative group h-24 w-24 rounded-md overflow-hidden border border-gray-200">
@@ -243,10 +244,10 @@ export default function EditProductModal({
                 ) : (
                   <div className="text-sm text-gray-500">No media uploaded</div>
                 )}
-              </div>
+              </div> */}
 
               {/* Upload Area */}
-              <div className="mt-4 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
+              {/* <div className="mt-4 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-md">
                 <div className="space-y-1 text-center">
                   <div className="flex text-sm text-gray-600 justify-center">
                     <label
@@ -272,7 +273,8 @@ export default function EditProductModal({
                     Supports: JPG, PNG, GIF, MP4 (Images: 2MB max, Videos: 3MB max)
                   </p>
                 </div>
-              </div>
+              </div> */}
+
             </div>
 
             {/* Action Buttons */}
@@ -281,14 +283,16 @@ export default function EditProductModal({
                 type="button"
                 className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-100"
                 onClick={() => setShowEditModal(false)}
+                disabled={isEditing}
               >
                 Cancel
               </button>
               <button
                 type="submit"
                 className="px-4 py-2 rounded-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700"
+                disabled={isEditing}
               >
-                Save Changes
+                {isEditing ? (<p className='flex gap-2 justify-center items-center'><RiLoader2Line size={14} className='bold animate-spin'/> Saving</p>):"Save"}
               </button>
             </div>
           </form>

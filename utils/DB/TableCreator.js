@@ -103,12 +103,25 @@ async function createProductsTable() {
       product_id SERIAL PRIMARY KEY,
       product_name VARCHAR(255) NOT NULL,
       product_description TEXT,
+      product_sizes JSONB, -- Array of objects {size, sku, price, inventory}
       product_category INT NOT NULL REFERENCES ${process.env.DATABASE_CATEGORY_TABLE}(category_id) ON DELETE CASCADE,
       product_status VARCHAR(20) NOT NULL CHECK (product_status IN ('active', 'inactive')),
       product_gallery JSONB, -- Array of objects {url, type}
       product_store VARCHAR(255),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
+    
+    CREATE INDEX IF NOT EXISTS idx_products_store 
+    ON ${process.env.DATABASE_PRODUCTS_TABLE}(product_store);
+    
+    CREATE INDEX IF NOT EXISTS idx_products_category 
+    ON ${process.env.DATABASE_PRODUCTS_TABLE}(product_category);
+    
+    CREATE INDEX IF NOT EXISTS idx_products_status 
+    ON ${process.env.DATABASE_PRODUCTS_TABLE}(product_status);
+    
+    CREATE INDEX IF NOT EXISTS idx_products_sizes 
+    ON ${process.env.DATABASE_PRODUCTS_TABLE} USING GIN (product_sizes);
   `;
 
   try {
@@ -120,32 +133,7 @@ async function createProductsTable() {
   }
 }
 
-async function createProductVariantTable() {
-  const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS ${process.env.DATABASE_PRODUCT_VARIANT_TABLE} (
-      variant_id SERIAL PRIMARY KEY,
-      product_id INT NOT NULL REFERENCES ${process.env.DATABASE_PRODUCTS_TABLE}(product_id) ON DELETE CASCADE,
-      product_store VARCHAR(255),
-      sku VARCHAR(255) NOT NULL,
-      variant_status VARCHAR(20) NOT NULL CHECK (variant_status IN ('active', 'inactive')),
-      variant_price NUMERIC(10, 2) NOT NULL,
-      stock_quantity INT DEFAULT 0,
-      variant_gallery JSONB, -- Array of objects {url, type}
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-    );
-    
-    CREATE INDEX IF NOT EXISTS idx_variant_product_id 
-    ON ${process.env.DATABASE_PRODUCT_VARIANT_TABLE}(product_id);
-  `;
 
-  try {
-    await pool.query(createTableQuery);
-    console.log('Product variant table created successfully');
-  } catch (error) {
-    console.error('Error creating product variant table:', error);
-    throw error;
-  }
-}
 
 async function createAccessoryCategoryTable() {
   const createTableQuery = `
@@ -294,7 +282,7 @@ export async function TableCreator(){
     await createAdminUsersTable();
     await createCategoryTable();
     await createProductsTable()
-    await createProductVariantTable();
+  
     await createAccessoryCategoryTable();
     await createAccessoryProductsTable();
     await createAuditLogsTable();

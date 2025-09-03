@@ -1,16 +1,15 @@
 "use client"
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
+import { useAdminSelectedProductStore } from '@/app/lib/store/adminselectedproductstore';
 import {
   FiPlus, FiEdit, FiTrash2, FiChevronDown, FiChevronUp,
   FiPackage, FiLayers, FiSearch, FiFilter, FiX, FiLoader,
   FiChevronLeft, FiChevronRight, FiXCircle
 } from 'react-icons/fi';
 import AddProductModal from './components/AddProductModal';
-import AddVariantModal from './components/AddVariantModal';
-import EditVariantModal from './components/EditVariantModal';
 import EditProductModal from './components/EditProductModal';
 import DeleteProduct from './components/DeleteProduct';
-import DeleteProductVariantModal from './components/DeleteProductVariantModal';
 import { useParams } from 'next/navigation';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -130,57 +129,15 @@ const MediaGalleryModal = ({ media, currentIndex, onClose, onNext, onPrev }) => 
   );
 };
 
-// Variant item component
-const VariantItem = ({ variant, productId, product, openDeleteVariantModal, openEditVariant, isDeletingVariant }) => (
-  <div className="flex justify-between items-center py-3 px-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-    <div className="min-w-0">
-      <p className="font-medium text-gray-800 truncate">{variant.sku}</p>
-      <div className="flex items-center mt-1 space-x-3">
-        <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${variant.variant_status === 'active'
-          ? 'bg-green-100 text-green-800'
-          : 'bg-gray-100 text-gray-800'
-          }`}>
-          {variant.variant_status}
-        </span>
-        <span className="text-xs text-gray-500">
-          Added {new Date(variant.created_at).toLocaleDateString()}
-        </span>
-      </div>
-    </div>
-    <div className="flex space-x-2">
-      <button
-        onClick={() => openEditVariant(variant, product)}
-        className="text-blue-500 hover:text-blue-700 p-1 hover:bg-blue-50 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-        aria-label={`Edit variant ${variant.sku}`}
-      >
-        <FiEdit size={16} />
-      </button>
-      <button
-        onClick={() => openDeleteVariantModal(variant, product)}
-        className="text-red-500 hover:text-red-700 p-1 hover:bg-red-50 rounded transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
-        aria-label={`Delete variant ${variant.sku}`}
-        disabled={isDeletingVariant}
-      >
-        {isDeletingVariant ? <FiLoader className="animate-spin" size={16} /> : <FiTrash2 size={16} />}
-      </button>
-    </div>
-  </div>
-);
-
 // Product item component
 const ProductItem = ({
   product,
   categories,
-  expandedProducts,
-  toggleProductExpansion,
-  openVariantModal,
   handleDeleteProduct,
-  openDeleteVariantModal,
   openEditProduct,
-  openEditVariant,
   isDeletingProduct,
-  isDeletingVariant,
-  openMediaGallery
+  openMediaGallery,
+  setAdminSelectedProduct
 }) => {
   const category = categories.find(c => c.category_id === product.product_category);
 
@@ -209,10 +166,15 @@ const ProductItem = ({
             </div>
             <div className="min-w-0">
               <div className="flex items-center">
-                <h3 className="text-lg font-medium text-gray-800 truncate">{product.product_name}</h3>
-                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                  {product.variants?.length || 0} variants
-                </span>
+                <Link 
+                  href={`${window.location.pathname}/${product.product_name}`}
+                  className="text-lg font-medium text-gray-800 truncate hover:text-blue-600 transition-colors"
+                  onClick={() => {
+                    console.log(`${window.location.pathname}/${product.product_name}`)
+                    setAdminSelectedProduct(product)}}
+                >
+                  {product.product_name}
+                </Link>
               </div>
               <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                 {product.product_description}
@@ -230,6 +192,22 @@ const ProductItem = ({
                   {product.product_status}
                 </span>
               </div>
+              
+             {/* Product Sizes
+               {product.sizes && product.sizes.length > 0 && (
+                <div className="mt-3">
+                  <h4 className="text-sm font-medium text-gray-700 mb-2">Available Sizes:</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {product.sizes.map((size, index) => (
+                      <div key={index} className="flex items-center space-x-2 bg-blue-50 px-3 py-1 rounded-md">
+                        <span className="text-sm font-medium text-blue-800">{size.size}</span>
+                        <span className="text-xs text-blue-600">${size.price}</span>
+                        <span className="text-xs text-blue-500">({size.inventory} in stock)</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )} */}
             </div>
           </div>
           <div className="flex items-center space-x-2">
@@ -240,20 +218,7 @@ const ProductItem = ({
             >
               <FiEdit size={18} />
             </button>
-            <button
-              onClick={() => toggleProductExpansion(product.product_id)}
-              className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-1"
-              aria-label={expandedProducts[product.product_id] ? 'Collapse variants' : 'Expand variants'}
-            >
-              {expandedProducts[product.product_id] ? <FiChevronUp size={18} /> : <FiChevronDown size={18} />}
-            </button>
-            <button
-              onClick={() => openVariantModal(product)}
-              className="p-2 text-blue-500 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1"
-              aria-label={`Add variant to ${product.product_name}`}
-            >
-              <FiLayers size={18} />
-            </button>
+
             <button
               onClick={() => handleDeleteProduct(product.product_id)}
               className="p-2 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1"
@@ -265,50 +230,14 @@ const ProductItem = ({
           </div>
         </div>
       </div>
-
-      {expandedProducts[product.product_id] && (
-        <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 transition-all duration-200">
-          <div className="flex justify-between items-center mb-3">
-            <h4 className="text-sm font-medium text-gray-700">Product Variants</h4>
-            <button
-              onClick={() => openVariantModal(product)}
-              className="flex items-center text-sm text-blue-600 hover:text-blue-800 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
-            >
-              <FiPlus className="mr-1" /> Add Variant
-            </button>
-          </div>
-          {product.variants && product.variants.length > 0 ? (
-            <div className="border rounded-md bg-white divide-y divide-gray-100 shadow-sm">
-              {product.variants.map(variant => (
-                <VariantItem
-                  key={variant.variant_id}
-                  variant={variant}
-                  productId={product.product_id}
-                  product={product}
-                  openDeleteVariantModal={openDeleteVariantModal}
-                  openEditVariant={openEditVariant}
-                  isDeletingVariant={isDeletingVariant}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-4 bg-white rounded-md border border-gray-200 shadow-sm">
-              <p className="text-sm text-gray-500">No variants added yet.</p>
-              <button
-                onClick={() => openVariantModal(product)}
-                className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 rounded"
-              >
-                <FiPlus className="inline mr-1" /> Add your first variant
-              </button>
-            </div>
-          )}
-        </div>
-      )}
     </li>
   );
 };
 
 const ProductsManagement = () => {
+  const setAdminSelectedProduct = useAdminSelectedProductStore(state => state.setadminselectedproduct);
+  const clearAdminSelectedProduct = useAdminSelectedProductStore(state => state.clearadminselectedproduct);
+  const adminselectedproduct = useAdminSelectedProductStore(state => state.adminselectedproduct);
   const router = useRouter();
   const admin_user = useAdminUserStore(state => state.adminuser);
   const params = useParams();
@@ -322,11 +251,8 @@ const ProductsManagement = () => {
 
   // Modal states
   const [showAddModal, setShowAddModal] = useState(false);
-  const [showVariantModal, setShowVariantModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
-  const [showEditVariantModal, setShowEditVariantModal] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [showDeleteVariantModal, setShowDeleteVariantModal] = useState(false);
   const [showMediaGallery, setShowMediaGallery] = useState(false);
   const [currentMediaIndex, setCurrentMediaIndex] = useState(0);
   const [currentMedia, setCurrentMedia] = useState([]);
@@ -335,28 +261,14 @@ const ProductsManagement = () => {
   const [isAdding, setIsAdding] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isDeletingVariant, setIsDeletingVariant] = useState(false);
 
   // Selected items
   const [selectedProduct, setSelectedProduct] = useState(null);
-  const [selectedVariant, setSelectedVariant] = useState(null);
-  const [selectedVariantToDelete, setSelectedVariantToDelete] = useState(null);
-  const [expandedProducts, setExpandedProducts] = useState({});
 
   // Filter states
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedStatus, setSelectedStatus] = useState('all');
-
-  // Form data
-  const [newProduct, setNewProduct] = useState({
-    product_name: '',
-    product_description: '',
-    product_category: 0,
-    product_status: 'active',
-    product_gallery: [],
-    product_store: store_name
-  });
 
   // Fetch store categories
   async function fetchstorecategories() {
@@ -393,7 +305,7 @@ const ProductsManagement = () => {
 
   useEffect(() => {
     if (admin_user?.id) {
-      if (admin_user.role !=="admin" &&(!admin_user.accessiblepages.some((accessible_page) => accessible_page === "stores"))) {
+      if (admin_user.role !== "admin" && (!admin_user.accessiblepages.some((accessible_page) => accessible_page === "stores"))) {
         toast.error("You don't have access to this page.");
         router.push("/admin/dashboard/");
       } else {
@@ -428,13 +340,6 @@ const ProductsManagement = () => {
     setFilteredProducts(result);
   }, [searchTerm, selectedCategory, selectedStatus, products]);
 
-  const toggleProductExpansion = (productId) => {
-    setExpandedProducts(prev => ({
-      ...prev,
-      [productId]: !prev[productId]
-    }));
-  };
-
   const openMediaGallery = (media, index = 0) => {
     if (!media || media.length === 0) return;
     
@@ -451,21 +356,24 @@ const ProductsManagement = () => {
     setCurrentMediaIndex(prev => (prev > 0 ? prev - 1 : prev));
   };
 
-  const handleAddProduct = async (e) => {
-    e.preventDefault();
+  // Handle adding a new product
+  const handleAddProduct = async (productData) => {
     setIsAdding(true);
 
     try {
       const formData = new FormData();
-      formData.append("product_name", newProduct.product_name);
-      formData.append("product_description", newProduct.product_description || "");
-      formData.append("product_category", newProduct.product_category);
-      formData.append("product_status", newProduct.product_status);
+      formData.append("product_name", productData.product_name);
+      formData.append("product_description", productData.product_description || "");
+      formData.append("product_category", productData.product_category);
+      formData.append("product_status", productData.product_status);
+      formData.append("product_sizes", JSON.stringify(productData.sizes));
       formData.append("product_store", store_name);
 
       // Append actual File objects
-      newProduct.product_gallery.forEach((item) => {
-        formData.append("product_gallery", item.file);
+      productData.product_gallery.forEach((item) => {
+        if (item.file) {
+          formData.append("product_gallery", item.file);
+        }
       });
 
       const res = await axios.post(
@@ -476,14 +384,6 @@ const ProductsManagement = () => {
 
       if (res.data.success) {
         toast.success(res.data.message || "Product created successfully!");
-        setNewProduct({
-          product_name: "",
-          product_description: "",
-          product_category: 0,
-          product_status: "active",
-          product_gallery: [],
-          product_store: store_name
-        });
         setShowAddModal(false);
         await fetchStoreProducts();
       } else {
@@ -497,6 +397,7 @@ const ProductsManagement = () => {
     }
   };
 
+  // Handle updating a product
   const handleUpdateProduct = async (updatedProduct) => {
     setIsEditing(true);
 
@@ -537,6 +438,7 @@ const ProductsManagement = () => {
     }
   };
 
+  // Handle deleting a product
   const handleDeleteProduct = async (productId) => {
     setIsDeleting(true);
 
@@ -561,70 +463,15 @@ const ProductsManagement = () => {
     }
   };
 
-  const handleDeleteVariant = async (productId, variantId) => {
-    setIsDeletingVariant(true);
-
-    try {
-      const response = await axios.post(
-        apiSummary.admin.stores.products.delete_variant,
-        { variant_id: variantId }
-      );
-
-      if (response.data.success) {
-        toast.success(response.data.message || "Variant deleted successfully!");
-        await fetchStoreProducts();
-        setShowDeleteVariantModal(false);
-        setSelectedVariantToDelete(null);
-      } else {
-        throw new Error(response.data.message || "Failed to delete variant.");
-      }
-    } catch (error) {
-      console.error("Error deleting variant:", error);
-      toast.error(error.response?.data?.message || "Failed to delete variant.");
-    } finally {
-      setIsDeletingVariant(false);
-    }
-  };
-
-  const handleAddVariant = async (productId, newVariant) => {
-    // This function is now handled by the AddVariantModal component
-    // We just need to refresh the products list
-    await fetchStoreProducts();
-    setShowVariantModal(false);
-  };
-
-  const handleUpdateVariant = async (productId, updatedVariant) => {
-    // This function is now handled by the AddVariantModal component
-    // We just need to refresh the products list
-    await fetchStoreProducts();
-    setShowEditVariantModal(false);
-  };
-
-  const openVariantModal = (product) => {
-    setSelectedProduct(product);
-    setShowVariantModal(true);
-  };
-
+  // Modal handlers
   const openEditProduct = (product) => {
     setSelectedProduct(product);
     setShowEditModal(true);
   };
 
-  const openEditVariant = (variant, product) => {
-    setSelectedVariant(variant);
-    setSelectedProduct(product);
-    setShowEditVariantModal(true);
-  };
-
   const openDeleteModal = (product) => {
     setSelectedProduct(product);
     setShowDeleteModal(true);
-  };
-
-  const openDeleteVariantModal = (variant, product) => {
-    setSelectedVariantToDelete(variant);
-    setSelectedProduct(product);
-    setShowDeleteVariantModal(true);
   };
 
   const clearFilters = () => {
@@ -654,7 +501,7 @@ const ProductsManagement = () => {
         <div>
           <h1 className="text-2xl font-bold text-gray-800">Fashion Products</h1>
           <p className="text-sm text-gray-500">
-            Manage your fashion products and variants
+            Manage your fashion products
           </p>
         </div>
         <button
@@ -784,16 +631,11 @@ const ProductsManagement = () => {
                 key={product.product_id}
                 product={product}
                 categories={categories}
-                expandedProducts={expandedProducts}
-                toggleProductExpansion={toggleProductExpansion}
-                openVariantModal={openVariantModal}
                 handleDeleteProduct={() => openDeleteModal(product)}
-                openDeleteVariantModal={openDeleteVariantModal}
                 openEditProduct={openEditProduct}
-                openEditVariant={openEditVariant}
                 isDeletingProduct={isDeleting}
-                isDeletingVariant={isDeletingVariant}
                 openMediaGallery={openMediaGallery}
+                setAdminSelectedProduct={setAdminSelectedProduct}
               />
             ))}
           </ul>
@@ -804,11 +646,10 @@ const ProductsManagement = () => {
       {showAddModal && (
         <AddProductModal
           setShowAddModal={setShowAddModal}
-          setNewProduct={setNewProduct}
           handleAddProduct={handleAddProduct}
           categories={categories}
-          newProduct={newProduct}
           isAdding={isAdding}
+          storeName={store_name}
         />
       )}
 
@@ -823,25 +664,6 @@ const ProductsManagement = () => {
         />
       )}
 
-      {/* Add Variant Modal */}
-      {showVariantModal && selectedProduct && (
-        <AddVariantModal
-          product={selectedProduct}
-          setShowVariantModal={setShowVariantModal}
-          onVariantAdded={handleAddVariant}
-        />
-      )}
-
-      {/* Edit Variant Modal */}
-      {showEditVariantModal && selectedVariant && (
-        <EditVariantModal
-          variant={selectedVariant}
-          product={selectedProduct}
-          setShowEditVariantModal={setShowEditVariantModal}
-          onVariantUpdated={handleUpdateVariant}
-        />
-      )}
-
       {/* Delete Confirmation Modal */}
       {showDeleteModal && selectedProduct && (
         <DeleteProduct
@@ -849,17 +671,6 @@ const ProductsManagement = () => {
           handleDeleteProduct={() => handleDeleteProduct(selectedProduct.product_id)}
           currentProduct={selectedProduct}
           isDeleting={isDeleting}
-        />
-      )}
-
-      {/* Delete Variant Confirmation Modal */}
-      {showDeleteVariantModal && selectedVariantToDelete && selectedProduct && (
-        <DeleteProductVariantModal
-          setShowDeleteVariantModal={setShowDeleteVariantModal}
-          handleDeleteVariant={handleDeleteVariant}
-          currentVariant={selectedVariantToDelete}
-          currentProduct={selectedProduct}
-          isDeletingVariant={isDeletingVariant}
         />
       )}
     </div>

@@ -14,7 +14,7 @@ import axios from 'axios';
 import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
 import { Noto_Serif } from 'next/font/google';
-import CategoryLoader from '@/app/components/CategoryModal';
+import CategoryLoader from '@/app/components/CategoryLoader';
 
 const categories = [
   {

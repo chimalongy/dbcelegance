@@ -9,9 +9,9 @@ export const apiSummary = {
       update_user_data: "/api/admin/users/update-user-data",
     },
     audit: {
-      get_logs: "/api/admin/audit-logs",
-      create_log: "/api/admin/audit-logs",
-      get_stats: "/api/admin/audit-logs/stats",
+      get_logs: "/api/admin/Audits/get_audit",
+      create_log: "/api/admin/Audits/add",
+      get_stats: "/api/admin/Audits/get_audit",
     },
     stores: {
       categories: {
@@ -25,11 +25,7 @@ export const apiSummary = {
         get_all_products:"/api/admin/stores/products/get-all-products",
         update_product:"/api/admin/stores/products/update",
         delete_product:"/api/admin/stores/products/delete",
-        // Variant endpoints
-        add_variant:"/api/admin/stores/products/variants/add",
-        update_variant:"/api/admin/stores/products/variants/update",
-        delete_variant:"/api/admin/stores/products/variants/delete",
-        get_variants:"/api/admin/stores/products/variants/get",
+        
       },
       accessories: {
         // Accessory Category endpoints

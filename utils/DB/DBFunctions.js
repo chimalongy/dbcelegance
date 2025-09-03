@@ -568,9 +568,10 @@ async createProduct(product) {
       product_description,
       product_category,
       product_status,
+      product_sizes,
       product_gallery,
       product_store
-    ) VALUES ($1, $2, $3, $4, $5, $6)
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *;
   `;
 
@@ -579,6 +580,7 @@ async createProduct(product) {
     product.product_description || null,
     product.product_category,
     product.product_status,
+    JSON.stringify(product.product_sizes || []), // store as JSONB
     JSON.stringify(product.product_gallery || []), // store as JSONB
     product.product_store
   ];
@@ -596,20 +598,7 @@ async createProduct(product) {
 async getProductById(productId) {
   const query = `
     SELECT p.*, 
-           COALESCE(
-             (SELECT json_agg(
-               json_build_object(
-                 'variant_id', v.variant_id,
-                 'sku', v.sku,
-                 'variant_status', v.variant_status,
-                 'variant_gallery', v.variant_gallery,
-                 'created_at', v.created_at
-               )
-             )
-             FROM ${process.env.DATABASE_PRODUCT_VARIANT_TABLE} v 
-             WHERE v.product_id = p.product_id), 
-             '[]'::json
-           ) as variants
+           p.product_sizes as sizes
     FROM ${process.env.DATABASE_PRODUCTS_TABLE} p
     WHERE p.product_id = $1;
   `;
@@ -622,7 +611,12 @@ async getProductById(productId) {
       return { success: false, data: null };
     }
 
-    return { success: true, data: result.rows[0] };
+    const product = result.rows[0];
+    
+    // Parse JSONB sizes if they exist
+    this.parseProductSizes(product);
+
+    return { success: true, data: product };
   } catch (error) {
     console.log("❌ Error fetching product:", error.message);
     return { success: false, data: null };
@@ -682,7 +676,8 @@ async updateProductFields(product_id, fields) {
     "product_category",
     "product_status",
     "product_gallery",
-    "product_store"
+    "product_store",
+    "product_sizes"
   ];
 
   const keys = Object.keys(fields).filter(key => allowedFields.includes(key));
@@ -693,9 +688,12 @@ async updateProductFields(product_id, fields) {
 
   // Build dynamic query
   const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
-  const values = keys.map(key => 
-    key === "product_gallery" ? JSON.stringify(fields[key]) : fields[key]
-  );
+  const values = keys.map(key => {
+    if (key === "product_gallery" || key === "product_sizes") {
+      return JSON.stringify(fields[key]);
+    }
+    return fields[key];
+  });
   values.push(product_id); // last param for WHERE
 
   const query = `
@@ -710,32 +708,57 @@ async updateProductFields(product_id, fields) {
     if (result.rows.length === 0) {
       return { success: false, message: "Product not found" };
     }
-    return { success: true, data: result.rows[0] };
+    
+    const updatedProduct = result.rows[0];
+    
+    // Parse JSONB sizes if they exist
+    this.parseProductSizes(updatedProduct);
+    
+    return { success: true, data: updatedProduct };
   } catch (error) {
     console.error("❌ Error updating product:", error.message);
     return { success: false, message: error.message };
   }
 }
 
+  // Helper function to parse product sizes from JSONB
+  parseProductSizes(product) {
+    if (product.product_sizes) {
+      try {
+        product.sizes = typeof product.product_sizes === 'string' 
+          ? JSON.parse(product.product_sizes) 
+          : product.product_sizes;
+      } catch (e) {
+        console.warn("⚠️ Could not parse product sizes JSON:", e);
+        product.sizes = [];
+      }
+    } else {
+      product.sizes = [];
+    }
+    return product;
+  }
+
+  // Helper function to validate size data
+  validateSizeData(size) {
+    if (!size.size || !size.sku || !size.price || size.inventory === undefined) {
+      return { valid: false, error: 'Each size must have size, SKU, price, and inventory' };
+    }
+    
+    if (isNaN(size.price) || parseFloat(size.price) <= 0) {
+      return { valid: false, error: 'Price must be a positive number' };
+    }
+    
+    if (!Number.isInteger(size.inventory) || size.inventory < 0) {
+      return { valid: false, error: 'Inventory must be a non-negative integer' };
+    }
+    
+    return { valid: true };
+  }
+
 async getAllStoreProducts(product_store) {
   const query = `
     SELECT p.*, 
-           COALESCE(
-             (SELECT json_agg(
-               json_build_object(
-                 'variant_id', v.variant_id,
-                 'sku', v.sku,
-                 'variant_price', v.variant_price,
-                 'stock_quantity', v.stock_quantity,    
-                 'variant_status', v.variant_status,
-                 'variant_gallery', v.variant_gallery,
-                 'created_at', v.created_at
-               )
-             )
-             FROM ${process.env.DATABASE_PRODUCT_VARIANT_TABLE} v 
-             WHERE v.product_id = p.product_id), 
-             '[]'::json
-           ) as variants
+           p.product_sizes as sizes
     FROM ${process.env.DATABASE_PRODUCTS_TABLE} p
     WHERE p.product_store = $1
     ORDER BY p.created_at DESC;
@@ -743,154 +766,30 @@ async getAllStoreProducts(product_store) {
 
   try {
     const result = await pool.query(query, [product_store]);
-    console.log("✅ Fetched products with variants:", result.rows.length);
-    return { success: true, data: result.rows };
+    
+    // Parse JSONB sizes for each product
+    const products = result.rows.map(product => this.parseProductSizes(product));
+    
+    console.log("✅ Fetched products:", products.length);
+    return { success: true, data: products };
   } catch (error) {
     console.log("❌ Error fetching products:", error.message);
     return { success: false, data: [] };
   }
 }
 
-// Variant Management Functions
-async createVariant(variantData) {
-  const { product_id, product_store, sku, variant_status, variant_price, stock_quantity, variant_gallery } = variantData;
-  
-  try {
-    const result = await pool.query(
-      `INSERT INTO ${process.env.DATABASE_PRODUCT_VARIANT_TABLE} 
-       (product_id, product_store, sku, variant_status, variant_price, stock_quantity, variant_gallery) 
-       VALUES ($1, $2, $3, $4, $5, $6, $7) 
-       RETURNING *`,
-      [product_id, product_store, sku, variant_status, variant_price, stock_quantity, JSON.stringify(variant_gallery)]
-    );
 
-    console.log("✅ Variant created:", result.rows[0]);
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error creating variant:", error.message);
-    return { success: false, error: error.message };
-  }
-}
 
-async getVariantById(variantId) {
-  try {
-    const result = await pool.query(
-      `SELECT * FROM ${process.env.DATABASE_PRODUCT_VARIANT_TABLE} WHERE variant_id = $1`,
-      [variantId]
-    );
 
-    if (result.rows.length > 0) {
-      return { success: true, data: result.rows[0] };
-    }
-    return { success: false, data: null };
-  } catch (error) {
-    console.error("❌ Error fetching variant:", error.message);
-    return { success: false, error: error.message };
-  }
-}
 
-async getProductVariants(productId) {
-  try {
-    const result = await pool.query(
-      `SELECT * FROM ${process.env.DATABASE_PRODUCT_VARIANT_TABLE} 
-       WHERE product_id = $1 
-       ORDER BY created_at DESC`,
-      [productId]
-    );
 
-    console.log("✅ Fetched variants:", result.rows.length);
-    return { success: true, data: result.rows };
-  } catch (error) {
-    console.error("❌ Error fetching product variants:", error.message);
-    return { success: false, data: [] };
-  }
-}
 
-async updateVariant(variantId, updateData) {
-  const allowedFields = [
-    "sku",
-    "variant_status",
-    "variant_price",
-    "stock_quantity",
-    "variant_gallery"
-  ];
 
-  const keys = Object.keys(updateData).filter(key => allowedFields.includes(key));
 
-  if (keys.length === 0) {
-    return { success: false, message: "No valid fields provided" };
-  }
 
-  // Build dynamic query
-  const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
-  const values = keys.map(key => 
-    key === "variant_gallery" ? JSON.stringify(updateData[key]) : updateData[key]
-  );
-  values.push(variantId); // last param for WHERE
 
-  const query = `
-    UPDATE ${process.env.DATABASE_PRODUCT_VARIANT_TABLE}
-    SET ${setClauses}
-    WHERE variant_id = $${values.length}
-    RETURNING *;
-  `;
 
-  try {
-    const result = await pool.query(query, values);
-    if (result.rows.length === 0) {
-      return { success: false, message: "Variant not found" };
-    }
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error updating variant:", error.message);
-    return { success: false, message: error.message };
-  }
-}
 
-async deleteVariant(variantId) {
-  const query = `
-    DELETE FROM ${process.env.DATABASE_PRODUCT_VARIANT_TABLE}
-    WHERE variant_id = $1
-    RETURNING *;
-  `;
-
-  try {
-    const result = await pool.query(query, [variantId]);
-
-    if (result.rows.length === 0) {
-      console.log(`⚠️ No variant found with id: ${variantId}`);
-      return { success: false, data: null };
-    }
-
-    console.log("✅ Variant deleted:", result.rows[0]);
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.log("❌ Error deleting variant:", error.message);
-    return { success: false, data: null };
-  }
-}
-
-async checkVariantSkuExists(sku, productId, excludeVariantId = null) {
-  try {
-    let query = `
-      SELECT COUNT(*) as count 
-      FROM ${process.env.DATABASE_PRODUCT_VARIANT_TABLE} 
-      WHERE sku = $1 AND product_id = $2
-    `;
-    let params = [sku, productId];
-
-    if (excludeVariantId) {
-      query += ` AND variant_id != $3`;
-      params.push(excludeVariantId);
-    }
-
-    const result = await pool.query(query, params);
-    return { success: true, exists: parseInt(result.rows[0].count) > 0 };
-  } catch (error) {
-    console.error("❌ Error checking variant SKU:", error.message);
-    return { success: false, error: error.message };
-  }
-}
 
 // ========================= ACCESSORY CATEGORIES =========================
 async createAccessoryCategory(category) {

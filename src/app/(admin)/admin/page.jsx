@@ -59,7 +59,13 @@ const {clearAdminUser,adminuser,setAdminUser}= useAdminUserStore()
     setError('');
     
     try {
-      let response = await axios.post(apiSummary.admin.login, {email, password, last_login_ip:location.ip, last_login_location:location.country+", "+location.state});
+      let response = await axios.post(apiSummary.admin.login, {
+        email, 
+        password, 
+        last_login_ip: location.ip, 
+        last_login_location: location.country+", "+location.state,
+        user_agent: navigator.userAgent
+      });
       console.log(response.data);
 
       if (response.data.data.status=="inactive"){

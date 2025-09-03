@@ -20,12 +20,7 @@ const ProductList = ({ gender, products = [], selected_category }) => {
   const handleProductClick = (product) => {
     // Ensure we're storing the complete product data
     setSelectedProduct({
-      ...product,
-      // Make sure variants is properly formatted
-      variants: product.variants?.map(variant => ({
-        ...variant,
-        variant_gallery: variant.variant_gallery || []
-      })) || []
+      ...product
     });
   };
 
@@ -82,9 +77,7 @@ const ProductList = ({ gender, products = [], selected_category }) => {
                 <h3 className="text-md font-extralight text-gray-500 mb-2">
                   {product.product_name}
                 </h3>
-                <p className="text-gray-700 font-bold">
-                  ${product.variants[0]?.variant_price?.toFixed(2) || "0.00"}
-                </p>
+
               </div>
             </div>
           </Link>

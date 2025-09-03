@@ -13,8 +13,10 @@ import { apiSummary } from '@/app/lib/apiSummary.js';
 import axios from 'axios';
 import toast from 'react-hot-toast';
 import { useAdminUserStore } from '@/app/lib/store/adminuserstore.js';
+import { useRouter } from 'next/navigation.js';
 
 export default function UsersPage() {
+  let router = useRouter()
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -53,8 +55,13 @@ export default function UsersPage() {
 
   const fetchUsers = async () => {
     try {
+      // Pass admin user details as query parameters
+      const adminUserParams = new URLSearchParams({
+        admin_user_id: admin_user?.id || '',
+        admin_user_email: admin_user?.email || ''
+      });
       
-      const result = await axios.get(apiSummary.admin.users.get_all_users);
+      const result = await axios.get(`${apiSummary.admin.users.get_all_users}?${adminUserParams}`);
       // Ensure each user has accessiblePages array initialized
       console.log(result.data.data)
       const usersWithAccess = result.data.data.map(user => ({
@@ -85,7 +92,14 @@ export default function UsersPage() {
         email: newUser.email,
         role: newUser.role,
         status: newUser.status,
-        accessiblePages: newUser.role === 'user' ? newUser.accessiblePages : []
+        accessiblePages: newUser.role === 'user' ? newUser.accessiblePages : [],
+        admin_user: {
+          id: admin_user?.id,
+          email: admin_user?.email,
+          first_name: admin_user?.first_name,
+          last_name: admin_user?.last_name,
+          role: admin_user?.role
+        }
       };
 
       const response = await axios.post(apiSummary.admin.users.add_new_user, payload);
@@ -112,6 +126,9 @@ export default function UsersPage() {
 
   const handleEditUser = async (updatedUser) => {
     try {
+      // Get the current user data for comparison
+      const currentUser = users.find(user => user.id === updatedUser.id);
+      
       const payload = {
         id: updatedUser.id,
         first_name: updatedUser.first_name,
@@ -119,7 +136,15 @@ export default function UsersPage() {
         email: updatedUser.email,
         role: updatedUser.role,
         status: updatedUser.status,
-        accessiblePages: updatedUser.role === 'user' ? updatedUser.accessiblePages : []
+        accessiblePages: updatedUser.role === 'user' ? updatedUser.accessiblePages : [],
+        admin_user: {
+          id: admin_user?.id,
+          email: admin_user?.email,
+          first_name: admin_user?.first_name,
+          last_name: admin_user?.last_name,
+          role: admin_user?.role
+        },
+        old_user_data: currentUser || null
       };
 
       const response = await axios.post(apiSummary.admin.users.update_user_data, payload);
@@ -140,7 +165,22 @@ export default function UsersPage() {
 
   const handleDeleteConfirmation = async (id) => {
     try {
-      const response = await axios.post(apiSummary.admin.users.delete_user, { id });
+      // Get the user data to be deleted for audit logging
+      const userToDelete = users.find(user => user.id === id);
+      
+      const payload = {
+        id,
+        admin_user: {
+          id: admin_user?.id,
+          email: admin_user?.email,
+          first_name: admin_user?.first_name,
+          last_name: admin_user?.last_name,
+          role: admin_user?.role
+        },
+        user_to_delete: userToDelete || null
+      };
+      
+      const response = await axios.post(apiSummary.admin.users.delete_user, payload);
       const result = response.data;
 
       if (result.success) {
