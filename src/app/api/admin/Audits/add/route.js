@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import DBFunctions from "../../../../../../../utils/DB/DBFunctions";
+import DBFunctions from "../../../../../../utils/DB/DBFunctions";
 
 export const dynamic = 'force-dynamic';
 
