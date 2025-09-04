@@ -26,34 +26,71 @@ export default function MediaGallery({ media, onPreview, onDelete, onAdd }) {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [uploading, setUploading] = useState(false);
+  const [fileErrors, setFileErrors] = useState([]);
 
   const handleFileSelect = (e) => {
     const files = Array.from(e.target.files);
-    const validFiles = files.filter(file => 
-      file.type.startsWith('image/') || file.type.startsWith('video/')
-    );
+    const errors = [];
+    const validFiles = [];
+    
+    files.forEach(file => {
+      // Check if file is image or video
+      if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+        errors.push({
+          fileName: file.name,
+          error: "Invalid file type. Only images and videos are allowed."
+        });
+        return;
+      }
+      
+      // Check file size based on type
+      if (file.type.startsWith('image/') && file.size > 2 * 1024 * 1024) {
+        errors.push({
+          fileName: file.name,
+          error: "Image size exceeds 2MB limit."
+        });
+        return;
+      }
+      
+      if (file.type.startsWith('video/') && file.size > 3 * 1024 * 1024) {
+        errors.push({
+          fileName: file.name,
+          error: "Video size exceeds 3MB limit."
+        });
+        return;
+      }
+      
+      validFiles.push(file);
+    });
+    
     setSelectedFiles(validFiles);
+    setFileErrors(errors);
   };
 
   const handleUpload = async () => {
     setUploading(true);
-    // Simulate upload process
-    setTimeout(() => {
+   
+   
       const newMediaItems = selectedFiles.map(file => ({
-        url: URL.createObjectURL(file),
+          url:URL.createObjectURL(file),
         type: file.type.startsWith('video/') ? 'video' : 'image',
-        name: file.name
-      }));
+        file
+      }))
       
       onAdd(newMediaItems);
       setSelectedFiles([]);
+      setFileErrors([]);
       setShowUploadModal(false);
       setUploading(false);
-    }, 1500);
+    
   };
 
   const removeSelectedFile = (index) => {
     setSelectedFiles(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const removeError = (index) => {
+    setFileErrors(prev => prev.filter((_, i) => i !== index));
   };
 
   if (!media || media.length === 0) {
@@ -77,12 +114,18 @@ export default function MediaGallery({ media, onPreview, onDelete, onAdd }) {
         {/* Upload Modal */}
         {showUploadModal && (
           <UploadModal
-            onClose={() => setShowUploadModal(false)}
+            onClose={() => {
+              setShowUploadModal(false);
+              setSelectedFiles([]);
+              setFileErrors([]);
+            }}
             onFileSelect={handleFileSelect}
             selectedFiles={selectedFiles}
             onUpload={handleUpload}
             onRemoveFile={removeSelectedFile}
             uploading={uploading}
+            fileErrors={fileErrors}
+            onRemoveError={removeError}
           />
         )}
       </div>
@@ -116,12 +159,18 @@ export default function MediaGallery({ media, onPreview, onDelete, onAdd }) {
       {/* Upload Modal */}
       {showUploadModal && (
         <UploadModal
-          onClose={() => setShowUploadModal(false)}
+          onClose={() => {
+            setShowUploadModal(false);
+            setSelectedFiles([]);
+            setFileErrors([]);
+          }}
           onFileSelect={handleFileSelect}
           selectedFiles={selectedFiles}
           onUpload={handleUpload}
           onRemoveFile={removeSelectedFile}
           uploading={uploading}
+          fileErrors={fileErrors}
+          onRemoveError={removeError}
         />
       )}
     </div>
@@ -176,7 +225,7 @@ function MediaItem({ item, index, onPreview, onDelete }) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onDelete(index);
+              onDelete(item, index);
             }}
             className="bg-red-100/90 backdrop-blur-sm rounded-full p-1.5 shadow-sm"
             title="Delete media"
@@ -202,7 +251,7 @@ function MediaItem({ item, index, onPreview, onDelete }) {
           <button
             onClick={(e) => {
               e.stopPropagation();
-              onDelete(index);
+              onDelete(item, index);
             }}
             className="bg-red-100/90 backdrop-blur-sm rounded-full p-1.5 shadow-sm hover:bg-red-200 transition-colors"
             title="Delete media"
@@ -216,7 +265,16 @@ function MediaItem({ item, index, onPreview, onDelete }) {
 }
 
 // Upload Modal Component
-function UploadModal({ onClose, onFileSelect, selectedFiles, onUpload, onRemoveFile, uploading }) {
+function UploadModal({ 
+  onClose, 
+  onFileSelect, 
+  selectedFiles, 
+  onUpload, 
+  onRemoveFile, 
+  uploading, 
+  fileErrors, 
+  onRemoveError 
+}) {
   return (
     <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
@@ -243,8 +301,37 @@ function UploadModal({ onClose, onFileSelect, selectedFiles, onUpload, onRemoveF
               <FiImage className="h-10 w-10 text-gray-400 mx-auto mb-4" />
               <p className="text-gray-700 font-medium">Click to upload or drag and drop</p>
               <p className="text-gray-500 text-sm mt-1">SVG, PNG, JPG, GIF or MP4</p>
+              <p className="text-gray-400 text-xs mt-2">
+                Max: 2MB for images, 3MB for videos
+              </p>
             </label>
           </div>
+          
+          {/* Error messages */}
+          {fileErrors.length > 0 && (
+            <div className="mt-6">
+              <h3 className="font-medium text-red-600 mb-3">Invalid Files</h3>
+              <div className="space-y-3">
+                {fileErrors.map((error, index) => (
+                  <div key={index} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                    <div className="flex items-center">
+                      <FiX className="h-4 w-4 text-red-500 mr-2" />
+                      <div className="text-sm">
+                        <div className="font-medium text-red-800">{error.fileName}</div>
+                        <div className="text-red-600">{error.error}</div>
+                      </div>
+                    </div>
+                    <button 
+                      onClick={() => onRemoveError(index)}
+                      className="p-1 text-red-500 hover:text-red-700"
+                    >
+                      <FiX className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           
           {/* Selected files preview */}
           {selectedFiles.length > 0 && (
@@ -259,7 +346,12 @@ function UploadModal({ onClose, onFileSelect, selectedFiles, onUpload, onRemoveF
                       ) : (
                         <FiVideo className="h-5 w-5 text-purple-500 mr-3" />
                       )}
-                      <span className="text-sm truncate max-w-xs">{file.name}</span>
+                      <div className="text-sm">
+                        <div className="truncate max-w-xs">{file.name}</div>
+                        <div className="text-gray-500 text-xs">
+                          {(file.size / 1024 / 1024).toFixed(2)} MB
+                        </div>
+                      </div>
                     </div>
                     <button 
                       onClick={() => onRemoveFile(index)}
@@ -306,7 +398,7 @@ function UploadModal({ onClose, onFileSelect, selectedFiles, onUpload, onRemoveF
   );
 }
 
-// FiVideo icon component (since it wasn't in the original import)
+// FiVideo icon component
 function FiVideo(props) {
   return (
     <svg

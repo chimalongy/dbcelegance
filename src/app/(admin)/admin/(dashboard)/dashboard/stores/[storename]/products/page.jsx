@@ -176,9 +176,9 @@ const ProductItem = ({
                   {product.product_name}
                 </Link>
               </div>
-              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+              {/* <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                 {product.product_description}
-              </p>
+              </p> */}
               <div className="mt-2 flex flex-wrap items-center gap-2">
                 {category && (
                   <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
@@ -359,7 +359,6 @@ const ProductsManagement = () => {
   // Handle adding a new product
   const handleAddProduct = async (productData) => {
     setIsAdding(true);
-
     try {
       const formData = new FormData();
       formData.append("product_name", productData.product_name);

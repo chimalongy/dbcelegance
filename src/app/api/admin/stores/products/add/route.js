@@ -11,7 +11,7 @@ export async function POST(request) {
   const storage = new StorageFunctions();
 
   try {
-    const formData = await request.formData();
+    const formData = await request.formData(); 
 
     const product_name = formData.get("product_name");
     const product_sizes = formData.get("product_sizes");

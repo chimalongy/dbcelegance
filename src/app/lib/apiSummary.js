@@ -25,6 +25,8 @@ export const apiSummary = {
         get_all_products:"/api/admin/stores/products/get-all-products",
         update_product:"/api/admin/stores/products/update",
         delete_product:"/api/admin/stores/products/delete",
+        delete_product_gallery_item:"/api/admin/stores/products/delete-gallery-item",
+        add_product_gallery_item:"/api/admin/stores/products/add-gallery-item"
         
       },
       accessories: {

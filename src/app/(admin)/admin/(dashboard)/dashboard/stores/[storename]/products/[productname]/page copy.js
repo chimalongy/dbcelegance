@@ -71,7 +71,7 @@ const MediaViewer = ({ media, currentIndex, onClose, onNext, onPrev }) => {
           {currentIndex > 0 && (
             <button
               onClick={onPrev}
-              className="absolute left-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white backdrop-blur-sm"
+              className="absolute left-4 z-10 p-3 rounded-full bg-white/10 hover:white/20 transition-colors text-white backdrop-blur-sm"
               aria-label="Previous media"
             >
               <FiChevronLeft size={28} />
@@ -98,7 +98,7 @@ const MediaViewer = ({ media, currentIndex, onClose, onNext, onPrev }) => {
           {currentIndex < media.length - 1 && (
             <button
               onClick={onNext}
-              className="absolute right-4 z-10 p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors text-white backdrop-blur-sm"
+              className="absolute right-4 z-10 p-3 rounded-full bg-white/10 hover:white/20 transition-colors text-white backdrop-blur-sm"
               aria-label="Next media"
             >
               <FiChevronLeft size={28} className="transform rotate-180" />
@@ -117,39 +117,9 @@ const MediaViewer = ({ media, currentIndex, onClose, onNext, onPrev }) => {
   );
 };
 
-// Helper function to parse product description
-const parseProductDescription = (descriptionString) => {
-  try {
-    if (!descriptionString) {
-      return {
-        description: "",
-        product_features: []
-      };
-    }
 
-    // If it's already an object, return it
-    if (typeof descriptionString === 'object') {
-      return {
-        description: descriptionString.description || "",
-        product_features: descriptionString.product_features || []
-      };
-    }
 
-    // Try to parse as JSON
-    const parsed = JSON.parse(descriptionString);
-    return {
-      description: parsed.description || "",
-      product_features: parsed.product_features || []
-    };
-  } catch (error) {
-    console.warn("Failed to parse product description as JSON, treating as plain text:", error);
-    // Fallback: treat as plain text description
-    return {
-      description: typeof descriptionString === 'string' ? descriptionString : "",
-      product_features: []
-    };
-  }
-};
+// Improved SizeManager component with auto-generated SKUs
 
 const ProductDetailsPage = () => {
   const { adminselectedproduct } = useAdminSelectedProductStore();
@@ -174,9 +144,6 @@ const ProductDetailsPage = () => {
   // Loading states
   const [isDeleting, setIsDeleting] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-
-  // Parse description when product changes
-  const parsedDescription = product ? parseProductDescription(product.product_description) : { description: "", product_features: [] };
 
   useEffect(() => {
     if (admin_user?.id) {
@@ -280,27 +247,27 @@ const ProductDetailsPage = () => {
 
   const handleUpdateDescription = async (updatedData) => {
     try {
-      const description = {
-        description: updatedData.product_description,
-        product_features: updatedData.product_features
-      };
-      
-      const formData = new FormData();
-      formData.append("product_description", JSON.stringify(description));
-      formData.append("product_id", product.product_id);
-      formData.append("product_store", store_name);
-      
+
+        let description = {
+          description: updatedData.product_description,
+          product_features: updatedData.product_features
+        }
+        let formData= new FormData()
+
+        formData.append("product_description", JSON.stringify(description))
+        formData.append("product_id",product.product_id)
+        formData.append("product_store", store_name);
       const response = await axios.post(
         apiSummary.admin.stores.products.update_product,
-        formData,
+       formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
       if (response.data.success) {
-        // Update the product state with the new JSON stringified description
         setProduct((prev) => ({
           ...prev,
-          product_description: JSON.stringify(description),
+          product_description: updatedData.product_description,
+          product_features: updatedData.product_features,
         }));
         toast.success("Description updated successfully");
         setShowDescriptionModal(false);
@@ -318,31 +285,38 @@ const ProductDetailsPage = () => {
   };
 
   const handleUpdateSizes = async (updatedSizes) => {
-    console.log("SIZES TO UPDATE", updatedSizes);
-    setSavingSizes(true);
-    
-    const formData = new FormData();
-    formData.append("product_id", product.product_id);
-    formData.append("product_store", product.product_store);
-    formData.append("product_sizes", JSON.stringify(updatedSizes));
+
+ console.log("SIZES TO UPDATE"+updatedSizes)
+  //  setSavingSizes(true);
+     const formData = new FormData();
+      formData.append("product_id", product.product_id);        // add this
+      formData.append("product_store", product.product_store);  // add this
+  
+      formData.append("product_sizes", JSON.stringify(product.sizes));
+   
+      console.log(JSON.stringify(formData))
 
     try {
-      const response = await axios.post(
-        apiSummary.admin.stores.products.update_product,
+      const response =  await axios.post(
+         apiSummary.admin.stores.products.update_product,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       );
 
+         console.log(response)
       if (response.data.success) {
+        console.log()
         setProduct((prev) => ({ ...prev, sizes: updatedSizes }));
-        toast.success("Sizes updated successfully");
         return true;
       } else {
+        console.log(response.data)
+       
         throw new Error(response.data.message || "Failed to update sizes");
       }
     } catch (error) {
-      console.error("Error updating sizes:", error);
-      toast.error(error.response?.data?.message || "Failed to update sizes");
+      console.log("Error updating sizes:", error);
+     
+      //toast.error(error.response?.data?.message || "Failed to update sizes");
       return false;
     } finally {
       setSavingSizes(false);
@@ -357,6 +331,9 @@ const ProductDetailsPage = () => {
     try {
       const mediaItem = product.product_gallery[index];
 
+      console.log (mediaItem)
+
+      //return
       const response = await axios.post(
         apiSummary.admin.stores.products.delete_product_gallery_item,
         {
@@ -367,6 +344,7 @@ const ProductDetailsPage = () => {
       );
 
       if (response.data.success) {
+        // Update the product state by removing the deleted media item
         const updatedGallery = product.product_gallery.filter(
           (_, i) => i !== index
         );
@@ -380,7 +358,7 @@ const ProductDetailsPage = () => {
         throw new Error(response.data.message || "Failed to delete media item");
       }
     } catch (error) {
-      console.error("Error deleting media item:", error);
+      console.log("Error deleting media item:", error);
       toast.error(
         error.response?.data?.message || "Failed to delete media item"
       );
@@ -389,27 +367,28 @@ const ProductDetailsPage = () => {
     }
   };
 
-  const addProductGalleryItems = async (items) => {
-    for (const galleryItem of items) {
-      if (galleryItem.file) {
-        const formData = new FormData();
-        formData.append("product_id", product.product_id);
-        formData.append("product_gallery", galleryItem.file);
+ const addProductGalleryItems = async (items) => {
+  for (const galleryItem of items) {
+    if (galleryItem.file) {
+      const formData = new FormData();
+      formData.append("product_id", product.product_id);
+      formData.append("product_gallery", galleryItem.file);
 
-        try {
-          const res = await axios.post(
-            apiSummary.admin.stores.products.add_product_gallery_item,
-            formData,
-            { headers: { "Content-Type": "multipart/form-data" } }
-          );
+      try {
+        const res = await axios.post(
+          apiSummary.admin.stores.products.add_product_gallery_item,
+          formData,
+          { headers: { "Content-Type": "multipart/form-data" } }
+        );
 
-          console.log("Uploaded:", res.data);
-        } catch (err) {
-          console.error("Upload failed:", err);
-        }
+        console.log("Uploaded:", res.data);
+      } catch (err) {
+        console.error("Upload failed:", err);
       }
     }
-  };
+  }
+};
+
 
   const openMediaViewer = (index = 0) => {
     if (!product?.product_gallery || product.product_gallery.length === 0)
@@ -550,18 +529,8 @@ const ProductDetailsPage = () => {
                 Description
               </h3>
               <p className="text-gray-700 whitespace-pre-line leading-relaxed">
-                {parsedDescription.description || "No description provided."}
+                {product.product_description || "No description provided."}
               </p>
-              {parsedDescription.product_features && parsedDescription.product_features.length > 0 && (
-                <div className="mt-4">
-                  <h4 className="text-sm font-medium text-gray-500 mb-2">Features</h4>
-                  <ul className="list-disc list-inside text-gray-600 space-y-1">
-                    {parsedDescription.product_features.map((feature, index) => (
-                      <li key={index} className="text-sm">{feature}</li>
-                    ))}
-                  </ul>
-                </div>
-              )}
               <button
                 onClick={() => setShowDescriptionModal(true)}
                 className="absolute top-4 right-4 p-2 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200 transition-colors"
@@ -686,12 +655,7 @@ const ProductDetailsPage = () => {
       {showDescriptionModal && (
         <DescriptionModal
           setShowDescriptionModal={setShowDescriptionModal}
-          currentProduct={{
-            ...product,
-            // Pass the parsed description data
-            product_description: parsedDescription.description,
-            product_features: parsedDescription.product_features
-          }}
+          currentProduct={product}
           handleUpdateDescription={handleUpdateDescription}
         />
       )}
