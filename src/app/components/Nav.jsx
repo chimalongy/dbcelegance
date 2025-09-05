@@ -11,6 +11,7 @@ import { IoMdClose } from "react-icons/io";
 import { usePathname, useRouter } from "next/navigation";
 import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
+import { useUserSelectedCategory } from '../lib/store/UserSelectedCategory';
 import axios from 'axios';
 import { apiSummary } from '../lib/apiSummary';
 
@@ -21,7 +22,20 @@ export default function Navbar() {
   const setSelectedStoreProducts = useSelectedStoreProducts(
     (state) => state.setSelectedStoreProducts
   );
+
+  const selectedstorecategories = useSelectedStoreCategories(
+    (state) => state.selectedstorecategories
+  );
+
+  const selectedstoreproducts = useSelectedStoreProducts(   // ✅ correct hook
+    (state) => state.selectedstoreproducts
+  );
+
+    let setUserSelectedStoreCategory= useUserSelectedCategory((state)=>state.setUserSelectedStoreCategory)
+    let userselectedstorecategory = useUserSelectedCategory((state)=>state.userselectedstorecategory)
+
   const pathname = usePathname(); // gives the current path
+  let gender = pathname=="/store/womensfashion"?"women":"men"
   const router = useRouter();     // lets you navigate programmatically
   const [menuOpen, setMenuOpen] = useState(false);
   const [showrightnavoptions, setshowrightnavoptions] = useState(false)
@@ -53,7 +67,7 @@ export default function Navbar() {
   async function fetch_collections(store_name) {
     console.log("hello")
     if (!store_name) {
-      console.log("no stpre name")
+      console.log("no storre name")
       return false;
     }
 
@@ -91,6 +105,14 @@ export default function Navbar() {
     }
   }
 
+   const handleCategoryClick = (category) => {
+        // Sanitize category name for URL
+        const sanitizedCategory = category.category_name.toLowerCase().replace(/\s+/g, '-');
+        setUserSelectedStoreCategory(category)
+        router.push(`/store/${gender}/${sanitizedCategory}`);
+        setMenuOpen(false)
+
+    };
 
   return (
     // <nav className=" w-full border-b border-gray-100 px-4 py-3 md:px-6 md:py-4 flex justify-between items-center bg-white z-50 shadow-sm relative">
@@ -189,6 +211,59 @@ export default function Navbar() {
               {/* <Link href="/store/femalefashion">Women's Fashion</Link> */}
               Women's Fashion
             </li>
+
+            <h1 className='text-xl font-bold '>Store</h1>
+
+            <div className="pl-4 py-3 border-t border-gray-100">
+              <h1 className="text-lg font-semibold text-gray-800 mb-3">Categories</h1>
+              <div className="ml-2 flex flex-col gap-2">
+                {selectedstorecategories && selectedstorecategories.map((category, index) => (
+                  <div key={index} className="group">
+                    <p
+                      className={`block py-2 px-4 rounded-md transition-all duration-200 
+                     group-hover:bg-gray-50 group-hover:text-gray-900 
+                     group-hover:font-medium text-gray-700 ${category.category_name==userselectedstorecategory.category_name ?"font-bold":""}`}
+                      onClick={() => handleCategoryClick(category)}
+                    >
+                      {category.category_name}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <h1 className="text-lg font-semibold text-gray-800 mt-6 mb-3">Products</h1>
+              <div className="ml-2 flex flex-col gap-2">
+                {selectedstoreproducts && <div>
+                  {selectedstoreproducts.length>0? (<div>
+                    {
+                       selectedstoreproducts.map((product, index) => (
+                  <div key={index} className="group">
+                    <Link
+                      href={
+                        pathname === "/store/mensfashion"
+                          ? `/store/mensfashion/${product.product_name}`
+                          : `/store/mensfashion/${product.product_name}`
+                      }
+                      className={`block py-2 px-4 rounded-md transition-all duration-200 
+                     group-hover:bg-gray-50 group-hover:text-gray-900 
+                     group-hover:font-medium text-gray-700 `}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {product.product_name}
+                    </Link>
+                  </div>))
+                    }
+                  </div>):
+                  
+                  <div>
+                    <p className='p-6'>No products available</p>
+                  </div>
+                  }
+                </div>
+                }
+              </div>
+            </div>
+
           </ul>
         </div>
       )}
