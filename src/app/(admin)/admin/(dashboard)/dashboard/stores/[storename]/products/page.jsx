@@ -16,6 +16,7 @@ import toast from 'react-hot-toast';
 import { useAdminUserStore } from '@/app/lib/store/adminuserstore';
 import { useRouter } from 'next/navigation';
 import { apiSummary } from '@/app/lib/apiSummary';
+import { makeAdminFormDataPost, makeAdminJsonPost } from '@/app/lib/apiHelper';
 
 // Loading spinner component
 const LoadingSpinner = () => (
@@ -375,10 +376,9 @@ const ProductsManagement = () => {
         }
       });
 
-      const res = await axios.post(
+      const res = await makeAdminFormDataPost(
         apiSummary.admin.stores.products.add_product,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
       );
 
       if (res.data.success) {
@@ -416,10 +416,9 @@ const ProductsManagement = () => {
           formData.append("product_gallery", item.file);
         });
 
-      const res = await axios.post(
+      const res = await makeAdminFormDataPost(
         apiSummary.admin.stores.products.update_product,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
       );
 
       if (res.data.success) {
@@ -442,7 +441,7 @@ const ProductsManagement = () => {
     setIsDeleting(true);
 
     try {
-      const response = await axios.post(
+      const response = await makeAdminJsonPost(
         apiSummary.admin.stores.products.delete_product,
         { product_id: productId }
       );

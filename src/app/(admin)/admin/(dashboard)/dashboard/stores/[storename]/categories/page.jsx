@@ -11,6 +11,7 @@ import { useParams } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAdminUserStore } from '@/app/lib/store/adminuserstore';
 import { useRouter } from 'next/navigation';
+import { makeAdminFormDataPost, makeAdminJsonPost } from '@/app/lib/apiHelper';
 
 export default function CategoriesPage() {
   const router = useRouter();
@@ -113,14 +114,9 @@ export default function CategoriesPage() {
       formData.append("category_image", newCategory.image);
     }
 
-    const response = await axios.post(
+    const response = await makeAdminFormDataPost(
       apiSummary.admin.stores.categories.add_category,
-      formData,
-      {
-        headers: {
-          "Content-Type": "multipart/form-data",
-        },
-      }
+      formData
     );
 
     if (response.data.success) {
@@ -161,14 +157,9 @@ export default function CategoriesPage() {
         formData.append("category_image", currentCategory.image);
       }
 
-      const response = await axios.post(
+      const response = await makeAdminFormDataPost(
         apiSummary.admin.stores.categories.update_category,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
 
       if (response.data.success) {
@@ -195,7 +186,7 @@ export default function CategoriesPage() {
     setIsDeleting(true);
 
     try {
-      const response = await axios.post(
+      const response = await makeAdminJsonPost(
         apiSummary.admin.stores.categories.delete_category,
         { category_id: currentCategory.category_id }
       );

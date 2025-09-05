@@ -19,6 +19,13 @@ export async function POST(request) {
     const product_category = parseInt(formData.get("product_category"));
     const product_status = formData.get("product_status");
     const product_store = formData.get("product_store");
+    
+    // Get admin user details from request headers
+    const adminUserId = request.headers.get('x-admin-user-id');
+    const adminUserEmail = request.headers.get('x-admin-user-email');
+    const adminUserName = request.headers.get('x-admin-user-name');
+    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
+    const userAgent = request.headers.get('user-agent') || 'unknown';
 
     console.log("Product sizes received:", product_sizes);
 
@@ -26,6 +33,36 @@ export async function POST(request) {
     const files = formData.getAll("product_gallery");
 
     if (!product_name || !product_category || !product_status || !product_store || files.length === 0 ) {
+      // Log failed product creation attempt - missing fields
+      try {
+        await auditHelper.logProductAction(
+          'create',
+          adminUserId,
+          adminUserEmail,
+          null,
+          product_name || 'unknown',
+          {
+            status: 'failure',
+            error_message: 'Missing required fields for product creation',
+            ip_address: ipAddress,
+            user_agent: userAgent,
+            metadata: {
+              attempt_type: 'validation_failure',
+              missing_fields: {
+                product_name: !product_name,
+                product_category: !product_category,
+                product_status: !product_status,
+                product_store: !product_store,
+                product_gallery: files.length === 0
+              },
+              admin_user_name: adminUserName
+            }
+          }
+        );
+      } catch (auditError) {
+        console.error('Failed to create audit log for failed product creation:', auditError);
+      }
+
       return NextResponse.json(
         { success: false, message: "All fields and at least one media file are required." },
         { status: 400 }
@@ -34,6 +71,31 @@ export async function POST(request) {
 
     // Validate product_sizes
     if (!product_sizes) {
+      // Log failed product creation attempt - missing sizes
+      try {
+        await auditHelper.logProductAction(
+          'create',
+          adminUserId,
+          adminUserEmail,
+          null,
+          product_name,
+          {
+            status: 'failure',
+            error_message: 'Product sizes are required',
+            ip_address: ipAddress,
+            user_agent: userAgent,
+            metadata: {
+              attempt_type: 'validation_failure',
+              missing_field: 'product_sizes',
+              product_name,
+              admin_user_name: adminUserName
+            }
+          }
+        );
+      } catch (auditError) {
+        console.error('Failed to create audit log for missing sizes:', auditError);
+      }
+
       return NextResponse.json(
         { success: false, message: "Product sizes are required." },
         { status: 400 }
@@ -155,18 +217,21 @@ export async function POST(request) {
       try {
         await auditHelper.logProductAction(
           'create',
-          null, // adminId - would need to be passed from request
-          null, // adminEmail - would need to be passed from request
+          adminUserId,
+          adminUserEmail,
           null, // productId - creation failed
           product_name,
           {
             status: 'failure',
             error_message: 'Product creation failed in database',
+            ip_address: ipAddress,
+            user_agent: userAgent,
             metadata: {
               product_name,
               product_category,
               product_store,
-              gallery_count: gallery.length
+              gallery_count: gallery.length,
+              admin_user_name: adminUserName
             }
           }
         );
@@ -184,24 +249,28 @@ export async function POST(request) {
     try {
       await auditHelper.logProductAction(
         'create',
-        null, // adminId - would need to be passed from request
-        null, // adminEmail - would need to be passed from request
-        product_data.data.id,
+        adminUserId,
+        adminUserEmail,
+        product_data.data.product_id,
         product_name,
         {
           status: 'success',
           new_values: {
-            name: product_name,
-            description: product_description,
-            category: product_category,
-            status: product_status,
-            store: product_store,
+            product_id: product_data.data.product_id,
+            product_name,
+            product_description,
+            product_category,
+            product_status,
+            product_store,
             gallery_count: gallery.length
           },
+          ip_address: ipAddress,
+          user_agent: userAgent,
           metadata: {
             product_store,
             category_id: product_category,
-            files_uploaded: gallery.length
+            files_uploaded: gallery.length,
+            admin_user_name: adminUserName
           }
         }
       );
@@ -225,17 +294,20 @@ export async function POST(request) {
     try {
       await auditHelper.logProductAction(
         'create',
-        null, // adminId - would need to be passed from request
-        null, // adminEmail - would need to be passed from request
+        adminUserId,
+        adminUserEmail,
         null, // productId - creation failed
         product_name || 'unknown',
         {
           status: 'failure',
           error_message: `System error: ${error.message}`,
+          ip_address: ipAddress,
+          user_agent: userAgent,
           metadata: {
             error_type: error.constructor.name,
             error_stack: error.stack,
-            timestamp: new Date().toISOString()
+            timestamp: new Date().toISOString(),
+            admin_user_name: adminUserName
           }
         }
       );

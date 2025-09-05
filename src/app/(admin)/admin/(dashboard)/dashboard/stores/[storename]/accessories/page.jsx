@@ -8,6 +8,7 @@ import { apiSummary } from '@/app/lib/apiSummary';
 import { toast } from 'react-hot-toast';
 import { useAdminUserStore } from '@/app/lib/store/adminuserstore';
 import { useRouter } from 'next/navigation';
+import { makeAdminFormDataPost, makeAdminJsonPost } from '@/app/lib/apiHelper';
 import AddAccessoryCategoryModal from './components/AddAccessoryCategoryModal';
 import AddAccessoryProductModal from './components/AddAccessoryProductModal';
 import EditAccessoryCategoryModal from './components/EditAccessoryCategoryModal';
@@ -144,14 +145,9 @@ const AccessoryManagement = () => {
         formData.append("accessory_category_image", newCategory.image);
       }
 
-      const response = await axios.post(
+      const response = await makeAdminFormDataPost(
         apiSummary.admin.stores.accessories.add_category,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
 
       if (response.data.success) {
@@ -189,14 +185,9 @@ const AccessoryManagement = () => {
         formData.append("accessory_category_image", currentCategory.image);
       }
 
-      const response = await axios.post(
+      const response = await makeAdminFormDataPost(
         apiSummary.admin.stores.accessories.update_category,
-        formData,
-        {
-          headers: {
-            "Content-Type": "multipart/form-data",
-          },
-        }
+        formData
       );
 
       if (response.data.success) {
@@ -230,7 +221,7 @@ const AccessoryManagement = () => {
     setIsDeletingCategory(true);
 
     try {
-      const response = await axios.post(
+      const response = await makeAdminJsonPost(
         apiSummary.admin.stores.accessories.delete_category,
         { accessory_category_id: currentCategory.accessory_category_id }
       );
@@ -278,10 +269,9 @@ const AccessoryManagement = () => {
         formData.append("accessory_gallery", item.file);
       });
 
-      const response = await axios.post(
+      const response = await makeAdminFormDataPost(
         apiSummary.admin.stores.accessories.add_product,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
       );
 
       if (response.data.success) {
@@ -336,10 +326,9 @@ const AccessoryManagement = () => {
         }
       });
 
-      const response = await axios.post(
+      const response = await makeAdminFormDataPost(
         apiSummary.admin.stores.accessories.update_product,
-        formData,
-        { headers: { "Content-Type": "multipart/form-data" } }
+        formData
       );
 
       if (response.data.success) {
@@ -373,7 +362,7 @@ const AccessoryManagement = () => {
     setIsDeletingProduct(true);
 
     try {
-      const response = await axios.post(
+      const response = await makeAdminJsonPost(
         apiSummary.admin.stores.accessories.delete_product,
         { accessory_id: currentProduct.accessory_id }
       );
