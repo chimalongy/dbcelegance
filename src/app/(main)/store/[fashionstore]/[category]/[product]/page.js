@@ -8,9 +8,17 @@ import ModalMain from "@/app/components/modalpages.jsx/ModalMain";
 import { useSelectedProductStore } from "@/app/lib/store/selectedproductstore";
 
 const ProductPage = () => {
-  const selectedProductMem = useSelectedProductStore((state) => state.selectedproduct);
+  const selectedProductMem = useSelectedProductStore(
+    (state) => state.selectedproduct
+  );
   const [selectedProduct, setSelectedProduct] = useState({});
-  const { selectednavtab, setSelectedNavTab, clearSelectedNavTab, showmodal, setShowModal } = useNavStore();
+  const {
+    selectednavtab,
+    setSelectedNavTab,
+    clearSelectedNavTab,
+    showmodal,
+    setShowModal,
+  } = useNavStore();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isDesktop, setIsDesktop] = useState(false);
   const [activeTab, setActiveTab] = useState("description");
@@ -23,16 +31,65 @@ const ProductPage = () => {
 
   const tabs = [
     { key: "description", label: "Description" },
-    { key: "size", label: "Size & Fit" },
+    { key: "size_and_fit", label: "Size & Fit" },
     { key: "contact", label: "Contact & In-Store Availability" },
     { key: "delivery", label: "Delivery & returns" },
   ];
 
+  const parseProductDescription = (descriptionString) => {
+    try {
+      if (!descriptionString) {
+        return {
+          description: "",
+          product_features: [],
+          product_size_and_fit: [],
+        };
+      }
+
+      // If it's already an object, return it
+      if (typeof descriptionString === "object") {
+        return {
+          description: descriptionString.description || "",
+          product_features: descriptionString.product_features || [],
+          product_size_and_fit: descriptionString.product_size_and_fit || [],
+        };
+      }
+
+      // Try to parse as JSON
+      const parsed = JSON.parse(descriptionString);
+      return {
+        description: parsed.description || "",
+        product_features: parsed.product_features || [],
+        product_size_and_fit: parsed.product_size_and_fit || [],
+      };
+    } catch (error) {
+      console.warn(
+        "Failed to parse product description as JSON, treating as plain text:",
+        error
+      );
+      // Fallback: treat as plain text description
+      return {
+        description:
+          typeof descriptionString === "string" ? descriptionString : "",
+        product_features: [],
+        product_size_and_fit: [],
+      };
+    }
+  };
+
+  // Parse the product description once and store it
+  const parsedDescription = parseProductDescription(
+    selectedProduct?.product_description
+  );
+  console.log(parsedDescription);
+
   const content = {
-    description: selectedProduct?.product_description || "",
-    size: "Model is 6'1\" and wears size M.",
+    description: parsedDescription,
+    size_and_fit: parsedDescription.product_size_and_fit,
+
     contact: "Available in select stores. Please contact customer service.",
-    delivery: "Standard delivery in 3-5 business days. Free returns within 30 days.",
+    delivery:
+      "Standard delivery in 3-5 business days. Free returns within 30 days.",
   };
 
   useEffect(() => {
@@ -64,14 +121,16 @@ const ProductPage = () => {
   }, [currentIndex]);
 
   const productMedia = selectedProduct?.product_gallery || [];
-  const productSizes = ["S", "M", "L", "XL"];
+  const productSizes = selectedProduct.product_sizes || [];
 
   const handleNext = () => {
     setCurrentIndex((prev) => (prev + 1) % productMedia.length);
   };
 
   const handlePrev = () => {
-    setCurrentIndex((prev) => (prev - 1 + productMedia.length) % productMedia.length);
+    setCurrentIndex(
+      (prev) => (prev - 1 + productMedia.length) % productMedia.length
+    );
   };
 
   const handleSizeSelect = (size) => {
@@ -81,17 +140,21 @@ const ProductPage = () => {
 
   const handleAddToCart = () => {
     if (!selectedSize) {
-      console.log(selectedProductMem);
       setSizeError(true);
       return;
     }
-    console.log(`Added to cart: ${selectedProduct?.product_name}, Size ${selectedSize}`);
+    console.log(
+      `Added to cart: ${selectedProduct?.product_name}, Size ${selectedSize}`
+    );
   };
 
   const renderMedia = (mediaItem, index) => {
     if (mediaItem.type === "video") {
       return (
-        <div key={index} className="relative w-full h-[70vh] lg:h-[85vh] bg-black">
+        <div
+          key={index}
+          className="relative w-full h-[70vh] lg:h-[85vh] bg-black"
+        >
           <video
             ref={(el) => (videoRefs.current[index] = el)}
             src={mediaItem.url}
@@ -105,7 +168,10 @@ const ProductPage = () => {
       );
     } else {
       return (
-        <div key={index} className="relative w-full h-[70vh] lg:h-[85vh] bg-white">
+        <div
+          key={index}
+          className="relative w-full h-[70vh] lg:h-[85vh] bg-white"
+        >
           <Image
             src={mediaItem.url}
             alt={`${selectedProduct.product_name} image ${index + 1}`}
@@ -116,6 +182,38 @@ const ProductPage = () => {
         </div>
       );
     }
+  };
+
+  // Function to render features as a list
+  const renderFeaturesList = (features) => {
+    if (!features || features.length === 0) return null;
+
+    return (
+      <div className="mt-4">
+        <h4 className="font-medium mb-2">Features:</h4>
+        <ul className="list-disc pl-5 space-y-1">
+          {features.map((feature, index) => (
+            <li key={index}>{feature}</li>
+          ))}
+        </ul>
+      </div>
+    );
+  };
+  const RenderSizeAndFit = () => {
+    let size_and_fit = parsedDescription.product_size_and_fit;
+    if (!size_and_fit || size_and_fit.length === 0)
+      return <>No data available.</>;
+
+    return (
+      <div className="mt-4">
+        {/* <h4 className="font-medium mb-2">Features:</h4> */}
+        <ul className="list-disc pl-5 space-y-1">
+          {size_and_fit.map((item, index) => (
+            <li key={index}>{item}</li>
+          ))}
+        </ul>
+      </div>
+    );
   };
 
   if (!selectedProduct?.product_id) {
@@ -252,16 +350,17 @@ const ProductPage = () => {
             <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight">
               {selectedProduct.product_name}
             </h1>
-            <p className="text-sm text-gray-600 mt-1">
-              {selectedProduct.variants?.[0]?.sku || "Product variant"}
-            </p>
             <p className="text-xs text-gray-500 mt-1">
-              Reference: {selectedProduct.product_id}
+              Reference:{" "}
+              {selectedSize?.sku ||
+                (productSizes.length > 0 ? productSizes[0]?.sku : "N/A")}
             </p>
 
             {/* Price Display */}
             <div className="mt-4 text-lg font-medium">
-              {selectedProduct.variants?.[0]?.variant_price?.toFixed(2) || "0.00"} €
+              $
+              {selectedSize?.price ||
+                (productSizes.length > 0 ? productSizes[0]?.price : "N/A")}
             </div>
 
             {/* Size Selector */}
@@ -270,28 +369,27 @@ const ProductPage = () => {
                 <label htmlFor="size" className="block text-sm font-medium">
                   Select your size
                 </label>
-                {/* <button className="text-xs text-gray-500 hover:underline">
-                  Size guide
-                </button> */}
               </div>
               <div className="flex flex-wrap gap-2">
-                {productSizes.map((size, index) => (
+                {productSizes.map((product_size, index) => (
                   <button
                     key={index}
-                    onClick={() => handleSizeSelect(size)}
+                    onClick={() => handleSizeSelect(product_size)}
                     className={`border w-14 h-10 flex items-center justify-center text-sm transition-colors
                       ${
-                        selectedSize === size
+                        selectedSize === product_size
                           ? "border-black bg-black text-white"
                           : "border-gray-300 hover:border-gray-500"
                       }`}
                   >
-                    {size}
+                    {product_size.size}
                   </button>
                 ))}
               </div>
               {sizeError && (
-                <p className="mt-2 text-sm text-red-600">Please select a size</p>
+                <p className="mt-2 text-sm text-red-600">
+                  Please select a size
+                </p>
               )}
             </div>
 
@@ -334,26 +432,31 @@ const ProductPage = () => {
               <div className="hidden md:block py-4">
                 {activeTab === "description" && (
                   <div>
-                    <p className="text-sm mb-3">
+                    <p className="text-sm mb-3 whitespace-pre-line">
                       {showMore
-                        ? content.description
-                        : `${content.description.substring(0, 150)}${
-                            content.description.length > 150 ? "..." : ""
+                        ? content.description.description
+                        : `${content.description.description.substring(
+                            0,
+                            150
+                          )}${
+                            content.description.description.length > 150
+                              ? "..."
+                              : ""
                           }`}
                     </p>
-                    {content.description.length > 150 && (
+                    {showMore &&
+                      renderFeaturesList(content.description.product_features)}
+                    {content.description.description.length > 150 && (
                       <button
                         onClick={() => setShowMore(!showMore)}
-                        className="text-sm underline hover:text-gray-600"
+                        className="text-sm underline hover:text-gray-600 mt-2"
                       >
                         {showMore ? "Show less" : "Read more"}
                       </button>
                     )}
                   </div>
                 )}
-                {activeTab === "size" && (
-                  <p className="text-sm">{content.size}</p>
-                )}
+                {activeTab === "size_and_fit" && <RenderSizeAndFit />}
                 {activeTab === "contact" && (
                   <p className="text-sm">{content.contact}</p>
                 )}
@@ -391,26 +494,41 @@ const ProductPage = () => {
                     </button>
                     {activeTab === tab.key && (
                       <div className="mt-2 text-sm text-gray-700">
-                        {tab.key === "description" ? (
-                          <>
-                            <p className="mb-2">
+                        {tab.key === "description" && (
+                          <div>
+                            <p className="mb-2 whitespace-pre-line">
                               {showMore
-                                ? content.description
-                                : `${content.description.substring(0, 150)}${
-                                    content.description.length > 150 ? "..." : ""
+                                ? content.description.description
+                                : `${content.description.description.substring(
+                                    0,
+                                    150
+                                  )}${
+                                    content.description.description.length > 150
+                                      ? "..."
+                                      : ""
                                   }`}
                             </p>
-                            {content.description.length > 150 && (
+                            {showMore &&
+                              renderFeaturesList(
+                                content.description.product_features
+                              )}
+                            {content.description.description.length > 150 && (
                               <button
                                 onClick={() => setShowMore(!showMore)}
-                                className="text-sm underline hover:text-gray-600"
+                                className="text-sm underline hover:text-gray-600 mt-2"
                               >
                                 {showMore ? "Show less" : "Read more"}
                               </button>
                             )}
-                          </>
-                        ) : (
-                          <p>{content[tab.key]}</p>
+                          </div>
+                        )}
+
+                        {tab.key === "size_and_fit" && <RenderSizeAndFit />}
+                        {tab.key === "contact" && (
+                          <p className="text-sm">{content.contact}</p>
+                        )}
+                        {tab.key === "delivery" && (
+                          <p className="text-sm">{content.delivery}</p>
                         )}
                       </div>
                     )}

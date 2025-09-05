@@ -123,7 +123,8 @@ const parseProductDescription = (descriptionString) => {
     if (!descriptionString) {
       return {
         description: "",
-        product_features: []
+        product_features: [],
+        product_size_and_fit: []
       };
     }
 
@@ -131,7 +132,8 @@ const parseProductDescription = (descriptionString) => {
     if (typeof descriptionString === 'object') {
       return {
         description: descriptionString.description || "",
-        product_features: descriptionString.product_features || []
+        product_features: descriptionString.product_features || [],
+        product_size_and_fit: descriptionString.product_size_and_fit || []
       };
     }
 
@@ -139,14 +141,16 @@ const parseProductDescription = (descriptionString) => {
     const parsed = JSON.parse(descriptionString);
     return {
       description: parsed.description || "",
-      product_features: parsed.product_features || []
+      product_features: parsed.product_features || [],
+      product_size_and_fit: parsed.product_size_and_fit || []
     };
   } catch (error) {
     console.warn("Failed to parse product description as JSON, treating as plain text:", error);
     // Fallback: treat as plain text description
     return {
       description: typeof descriptionString === 'string' ? descriptionString : "",
-      product_features: []
+      product_features: [],
+      product_size_and_fit:[]
     };
   }
 };
@@ -176,8 +180,8 @@ const ProductDetailsPage = () => {
   const [isEditing, setIsEditing] = useState(false);
 
   // Parse description when product changes
-  const parsedDescription = product ? parseProductDescription(product.product_description) : { description: "", product_features: [] };
-
+  const parsedDescription = product ? parseProductDescription(product.product_description) : { description: "", product_features: [],product_size_and_fit:[] };
+   console.log(parsedDescription)
   useEffect(() => {
     if (admin_user?.id) {
       if (
@@ -279,10 +283,12 @@ const ProductDetailsPage = () => {
   };
 
   const handleUpdateDescription = async (updatedData) => {
+    console.log(updatedData)
     try {
       const description = {
         description: updatedData.product_description,
-        product_features: updatedData.product_features
+        product_features: updatedData.product_features,
+        product_size_and_fit:updatedData.product_size_and_fit
       };
       
       const formData = new FormData();
@@ -690,7 +696,8 @@ const ProductDetailsPage = () => {
             ...product,
             // Pass the parsed description data
             product_description: parsedDescription.description,
-            product_features: parsedDescription.product_features
+            product_features: parsedDescription.product_features,
+            product_size_and_fit: parsedDescription.product_size_and_fit
           }}
           handleUpdateDescription={handleUpdateDescription}
         />

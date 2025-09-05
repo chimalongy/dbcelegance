@@ -8,16 +8,20 @@ export default function DescriptionModal({
 }) {
   const [editedProduct, setEditedProduct] = useState({
     product_description: currentProduct?.product_description || "",
-    product_features: currentProduct?.product_features || [""]
+    product_features: currentProduct?.product_features || [""],
+    product_size_and_fit: currentProduct?.product_size_and_fit || [""]
   });
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // Filter out empty features before saving
+    // Filter out empty features and size/fit items before saving
     const filteredFeatures = editedProduct.product_features.filter(feature => feature.trim() !== "");
+    const filteredSizeAndFit = editedProduct.product_size_and_fit.filter(item => item.trim() !== "");
+    
     handleUpdateDescription({
       product_description: editedProduct.product_description,
-      product_features: filteredFeatures
+      product_features: filteredFeatures,
+      product_size_and_fit: filteredSizeAndFit
     });
   };
 
@@ -30,10 +34,26 @@ export default function DescriptionModal({
     });
   };
 
+  const handleSizeAndFitChange = (index, value) => {
+    const newSizeAndFit = [...editedProduct.product_size_and_fit];
+    newSizeAndFit[index] = value;
+    setEditedProduct({
+      ...editedProduct,
+      product_size_and_fit: newSizeAndFit
+    });
+  };
+
   const addFeature = () => {
     setEditedProduct({
       ...editedProduct,
       product_features: [...editedProduct.product_features, ""]
+    });
+  };
+
+  const addSizeAndFit = () => {
+    setEditedProduct({
+      ...editedProduct,
+      product_size_and_fit: [...editedProduct.product_size_and_fit, ""]
     });
   };
 
@@ -45,6 +65,17 @@ export default function DescriptionModal({
     setEditedProduct({
       ...editedProduct,
       product_features: newFeatures
+    });
+  };
+
+  const removeSizeAndFit = (index) => {
+    if (editedProduct.product_size_and_fit.length <= 1) return;
+    
+    const newSizeAndFit = [...editedProduct.product_size_and_fit];
+    newSizeAndFit.splice(index, 1);
+    setEditedProduct({
+      ...editedProduct,
+      product_size_and_fit: newSizeAndFit
     });
   };
 
@@ -63,7 +94,7 @@ export default function DescriptionModal({
         {/* Scrollable Content */}
         <div className="max-h-[90vh] overflow-y-auto">
           <div className="flex justify-between items-center px-6 py-4 border-b border-gray-200">
-            <h3 className="text-2xl font-semibold text-gray-800">Edit Description & Features</h3>
+            <h3 className="text-2xl font-semibold text-gray-800">Edit Description, Features & Size/Fit</h3>
             <button
               type="button"
               className="text-gray-400 hover:text-gray-600"
@@ -135,6 +166,53 @@ export default function DescriptionModal({
               
               <p className="text-xs text-gray-500 mt-2">
                 Add key features and specifications of your product
+              </p>
+            </div>
+
+            {/* Size and Fit Section */}
+            <div>
+              <div className="flex justify-between items-center mb-2">
+                <label className="block text-sm font-medium text-gray-700">
+                  Size & Fit Information
+                </label>
+                <button
+                  type="button"
+                  onClick={addSizeAndFit}
+                  className="flex items-center text-sm text-blue-600 hover:text-blue-700"
+                >
+                  <FiPlus className="mr-1" />
+                  Add Size/Fit Info
+                </button>
+              </div>
+              
+              <div className="space-y-3">
+                {editedProduct.product_size_and_fit.map((item, index) => (
+                  <div key={index} className="flex items-center gap-3">
+                    <div className="flex-1 relative">
+                      <input
+                        type="text"
+                        value={item}
+                        onChange={(e) => handleSizeAndFitChange(index, e.target.value)}
+                        className="w-full border border-gray-300 rounded-xl py-2.5 px-4 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                        placeholder={`Size/Fit detail ${index + 1}`}
+                      />
+                      {editedProduct.product_size_and_fit.length > 1 && (
+                        <button
+                          type="button"
+                          onClick={() => removeSizeAndFit(index)}
+                          className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-red-500"
+                          title="Remove size/fit info"
+                        >
+                          <FiTrash2 size={16} />
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              
+              <p className="text-xs text-gray-500 mt-2">
+                Add information about sizing, fit, measurements, or care instructions
               </p>
             </div>
 
