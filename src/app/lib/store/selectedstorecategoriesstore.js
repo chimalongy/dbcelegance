@@ -5,9 +5,9 @@ import { persist } from 'zustand/middleware';
 export const useSelectedStoreCategories = create(
   persist(
     (set) => ({
-      selectedstorecategories: null,
+      selectedstorecategories: [],
       setSelectedStoreCategories: (selectedstorecategories) => set({ selectedstorecategories }),
-      clearSelectedStoreCategories: () => set({ selectedstorecategories: null }),
+      clearSelectedStoreCategories: () => set({ selectedstorecategories: [] }),
     }),
     {
       name: 'selected-store-categories-storage', // Key in localStorage

@@ -6,11 +6,18 @@ import Footer from "@/app/components/Footer";
 import { useNavStore } from "../../../../../lib/store/navmodalstore";
 import ModalMain from "@/app/components/modalpages.jsx/ModalMain";
 import { useSelectedProductStore } from "@/app/lib/store/selectedproductstore";
+import { useUserViewedProducts } from "@/app/lib/store/UserViewedProducts";
+import RecentlyViewd from "@/app/components/RecentlyViewd";
 
 const ProductPage = () => {
   const selectedProductMem = useSelectedProductStore(
     (state) => state.selectedproduct
   );
+
+  const addUniqueUserViewedProduct= useUserViewedProducts((state)=>state.addUniqueUserViewedProduct)
+
+
+
   const [selectedProduct, setSelectedProduct] = useState({});
   const {
     selectednavtab,
@@ -95,6 +102,9 @@ const ProductPage = () => {
   useEffect(() => {
     if (selectedProductMem?.product_id) {
       setSelectedProduct(selectedProductMem);
+
+      // insert as recently viewd
+      addUniqueUserViewedProduct(selectedProductMem)
     }
   }, [selectedProductMem?.product_id]);
 
@@ -540,6 +550,8 @@ const ProductPage = () => {
         </div>
         {showmodal && <ModalMain />}
       </div>
+
+      <RecentlyViewd/>
 
       <Footer />
     </div>

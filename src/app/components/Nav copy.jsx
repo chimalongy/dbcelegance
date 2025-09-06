@@ -14,8 +14,6 @@ import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductss
 import { useUserSelectedCategory } from '../lib/store/UserSelectedCategory';
 import axios from 'axios';
 import { apiSummary } from '../lib/apiSummary';
-import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
-import { useSelectedProductStore } from '../lib/store/selectedproductstore';
 
 export default function Navbar() {
   const setSelectedStoreCategories = useSelectedStoreCategories(
@@ -29,22 +27,18 @@ export default function Navbar() {
     (state) => state.selectedstorecategories
   );
 
-  const selectedstoreproducts = useSelectedStoreProducts(
+  const selectedstoreproducts = useSelectedStoreProducts(   // ✅ correct hook
     (state) => state.selectedstoreproducts
   );
 
-  let setUserSelectedStoreCategory = useUserSelectedCategory((state) => state.setUserSelectedStoreCategory)
-  let userselectedstorecategory = useUserSelectedCategory((state) => state.userselectedstorecategory)
-  const setSelectedProduct = useSelectedProductStore((state) => state.setSelectedProduct)
+    let setUserSelectedStoreCategory= useUserSelectedCategory((state)=>state.setUserSelectedStoreCategory)
+    let userselectedstorecategory = useUserSelectedCategory((state)=>state.userselectedstorecategory)
 
-  const pathname = usePathname();
-  let gender = pathname == "/store/womensfashion" ? "women" : "men"
-  const router = useRouter();
+  const pathname = usePathname(); // gives the current path
+  let gender = pathname=="/store/womensfashion"?"women":"men"
+  const router = useRouter();     // lets you navigate programmatically
   const [menuOpen, setMenuOpen] = useState(false);
   const [showrightnavoptions, setshowrightnavoptions] = useState(false)
-  const [categoriesOpen, setCategoriesOpen] = useState(false);
-  const [productsOpen, setProductsOpen] = useState(false);
-
   const {
     selectednavtab,
     setSelectedNavTab,
@@ -58,6 +52,7 @@ export default function Navbar() {
     setShowModal(true);
   };
 
+
   useEffect(() => {
     console.log(pathname)
     if (pathname == "/store/womensfashion" || pathname == "/store/mensfashion") {
@@ -68,6 +63,7 @@ export default function Navbar() {
     }
   }, [pathname])
 
+
   async function fetch_collections(store_name) {
     console.log("hello")
     if (!store_name) {
@@ -75,7 +71,11 @@ export default function Navbar() {
       return false;
     }
 
+    // setLoadingCategory(category.label);
+
     try {
+      // fetch categories & products at the same time
+
       const [categoriesRes, productsRes] = await Promise.all([
         axios.post(apiSummary.store.get_store_categories, { store_name: store_name }),
         axios.post(apiSummary.store.get_store_products, { store_name: store_name })
@@ -89,22 +89,34 @@ export default function Navbar() {
         console.log(categoriesRes.data.data)
         console.log(productsRes.data.data)
         return true
+
       }
+
+
+
+
+
     } catch (error) {
       console.error("Error fetching collections:", error);
       console.log(error)
       return false
+    } finally {
+      //setLoadingCategory(null);
     }
   }
 
-  const handleCategoryClick = (category) => {
-    const sanitizedCategory = category.category_name.toLowerCase().replace(/\s+/g, '-');
-    setUserSelectedStoreCategory(category)
-    router.push(`/store/${gender}/${sanitizedCategory}`);
-    setMenuOpen(false)
-  };
+   const handleCategoryClick = (category) => {
+        // Sanitize category name for URL
+        const sanitizedCategory = category.category_name.toLowerCase().replace(/\s+/g, '-');
+        setUserSelectedStoreCategory(category)
+        router.push(`/store/${gender}/${sanitizedCategory}`);
+        setMenuOpen(false)
+
+    };
 
   return (
+    // <nav className=" w-full border-b border-gray-100 px-4 py-3 md:px-6 md:py-4 flex justify-between items-center bg-white z-50 shadow-sm relative">
+    // <nav className={`${showrightnavoptions ? "bg-black/20 " : ""} absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center  z-50 shadow-sm`}>
     <nav className={`${showrightnavoptions ? "bg-black/20 " : ""} absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center  z-50 shadow-sm`}>
       {/* Left - Hamburger */}
       <div className=' flex ' >
@@ -116,6 +128,7 @@ export default function Navbar() {
           {menuOpen ? (
             <IoMdClose className="text-2xl text-white" />
           ) : (
+
             <HiOutlineEquals className="text-2xl text-white" />
           )}
         </button>
@@ -124,11 +137,12 @@ export default function Navbar() {
           className="text-white hover:text-white transition-colors p-1"
           onClick={() => handleIconClick('search')}
         >
-          <CiSearch className=" w-5 h-5 lg:w-7 lg:h-7 text-xl" />
+          <CiSearch className=" w-4 h-4 lg:w-7 lg:h-7 text-xl" />
         </button>
       </div>
 
       {/* Center - Logo */}
+      {/* <div className={`  ${showrightnavoptions?"":"mx-auto"} text-white`}> */}
       <div className={` mx-auto text-white`}>
         <DbcEleganceLogo />
       </div>
@@ -137,23 +151,29 @@ export default function Navbar() {
       {
         showrightnavoptions &&
         <div className="flex items-center lg:space-x-4 ml-auto">
+          {/* <button
+            className="text-white hover:text-white transition-colors p-1"
+            onClick={() => handleIconClick('search')}
+          >
+            <CiSearch className=" w-4 h-4 lg:w-7 lg:h-7" />
+          </button> */}
           <button
             className="text-white hover:text-white transition-colors p-1"
             onClick={() => handleIconClick('wishlist')}
           >
-            <CiHeart className=" w-5 h-5 lg:w-7 lg:h-7" />
+            <CiHeart className=" w-4 h-4 lg:w-7 lg:h-7" />
           </button>
           <button
             className="text-white hover:text-white transition-colors p-1"
             onClick={() => handleIconClick('user')}
           >
-            <CiUser className=" w-5 h-5 lg:w-7 lg:h-7" />
+            <CiUser className=" w-4 h-4 lg:w-7 lg:h-7" />
           </button>
           <button
             className="text-white hover:text-white transition-colors p-1"
             onClick={() => handleIconClick('cart')}
           >
-            <CiShoppingCart className=" w-5 h-5 lg:w-7 lg:h-7" />
+            <CiShoppingCart className=" w-4 h-4 lg:w-7 lg:h-7" />
           </button>
         </div>
       }
@@ -172,8 +192,10 @@ export default function Navbar() {
                   console.log(result)
                   router.push("/store/mensfashion")
                 }
+
               }}
             >
+              {/* <Link href="/store/mensfashion">Men's Fashion</Link> */}
               Men's Fashion
             </li>
             <li className="py-2 hover:text-gray-900 hover:bg-gray-50 px-3 rounded-md transition-colors"
@@ -183,115 +205,65 @@ export default function Navbar() {
                   console.log(result)
                   router.push("/store/womensfashion")
                 }
+
               }}
             >
+              {/* <Link href="/store/femalefashion">Women's Fashion</Link> */}
               Women's Fashion
             </li>
 
-            <div className="py-3 border-t border-gray-100">
-              {/* Collapsible Categories Section */}
-              <button
-                className="flex items-center justify-between w-full text-lg font-semibold text-gray-800 mb-3"
-                onClick={() => setCategoriesOpen(!categoriesOpen)}
-              >
-                <span>Categories</span>
-                {categoriesOpen ? <FaChevronUp /> : <FaChevronDown />}
-              </button>
+            <h1 className='text-xl font-bold '>Store</h1>
 
-              {categoriesOpen && (
-                <div className="pl-4">
-                  <div className="ml-2 flex flex-col gap-2">
-                    {selectedstorecategories && selectedstorecategories.map((category, index) => (
-                      <div key={index} className="group">
-                        <p
-                          className={`block py-2 px-4 rounded-md transition-all duration-200 
-                          group-hover:bg-gray-50 group-hover:text-gray-900 
-                          group-hover:font-medium text-gray-700 ${category.category_name == userselectedstorecategory.category_name ? "font-bold" : ""}`}
-                          
-                          
-                          onClick={() => handleCategoryClick(category)}
-                        >
-                          {category.category_name}
-                        </p>
-                      </div>
-                    ))}
+            <div className="pl-4 py-3 border-t border-gray-100">
+              <h1 className="text-lg font-semibold text-gray-800 mb-3">Categories</h1>
+              <div className="ml-2 flex flex-col gap-2">
+                {selectedstorecategories && selectedstorecategories.map((category, index) => (
+                  <div key={index} className="group">
+                    <p
+                      className={`block py-2 px-4 rounded-md transition-all duration-200 
+                     group-hover:bg-gray-50 group-hover:text-gray-900 
+                     group-hover:font-medium text-gray-700 ${category.category_name==userselectedstorecategory.category_name ?"font-bold":""}`}
+                      onClick={() => handleCategoryClick(category)}
+                    >
+                      {category.category_name}
+                    </p>
                   </div>
-                </div>
-              )}
+                ))}
+              </div>
 
-              {/* Collapsible Products Section */}
-              <button
-                className="flex items-center justify-between w-full text-lg font-semibold text-gray-800 mt-6 mb-3"
-                onClick={() => setProductsOpen(!productsOpen)}
-              >
-                <span>Products</span>
-                {productsOpen ? <FaChevronUp /> : <FaChevronDown />}
-              </button>
-
-              {productsOpen && (
-                <div className="pl-4">
-                  <div className="ml-2 flex flex-col gap-2">
-                    {selectedstoreproducts && <div>
-                      {selectedstoreproducts.length > 0 ? (
-                        <div>
-                          {selectedstoreproducts.map((product, index) => (
-                            <div key={index}
-                            
-                            // className="group"
-
-                             className={`block py-2 px-4 rounded-md transition-all duration-200 
-                          group-hover:bg-gray-50 group-hover:text-gray-900 
-                          group-hover:font-medium text-gray-700 `}
-                          
-
-                              onClick={() => {
-                                // console.log(item)
-
-                                // console.log(selectedCategories)
-                                const selected_category = selectedstorecategories.find(
-                                  (category) => String(category.category_id) === String(product.product_category)
-                                );
-                                console.log(selected_category)
-                                if (selected_category) {
-                                  setSelectedProduct(product)
-                                  router.push(
-                                    `/store/${product.product_store === "female" ? "women" : "mens"}/${selected_category.category_name.trim()}/${product.product_name.trim()}`
-                                  );
-                                  setShowModal(false)
-                                } else {
-                                  console.warn("No category found for item:", item);
-                                }
-
-
-
-                                // console.log(selected_category)
-
-                                router.push(`/store/${product.product_store == "female" ? "women" : "mens"}/${selected_category.category_name.trim()}/${product.product_name.trim()}`)
-                              }}
-
-
-
-
-
-                           
-
-
-
-                            >
-                              {product.product_name}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div>
-                          <p className='p-6'>No products available</p>
-                        </div>
-                      )}
-                    </div>}
+              <h1 className="text-lg font-semibold text-gray-800 mt-6 mb-3">Products</h1>
+              <div className="ml-2 flex flex-col gap-2">
+                {selectedstoreproducts && <div>
+                  {selectedstoreproducts.length>0? (<div>
+                    {
+                       selectedstoreproducts.map((product, index) => (
+                  <div key={index} className="group">
+                    <Link
+                      href={
+                        pathname === "/store/mensfashion"
+                          ? `/store/mensfashion/${product.product_name}`
+                          : `/store/mensfashion/${product.product_name}`
+                      }
+                      className={`block py-2 px-4 rounded-md transition-all duration-200 
+                     group-hover:bg-gray-50 group-hover:text-gray-900 
+                     group-hover:font-medium text-gray-700 `}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      {product.product_name}
+                    </Link>
+                  </div>))
+                    }
+                  </div>):
+                  
+                  <div>
+                    <p className='p-6'>No products available</p>
                   </div>
+                  }
                 </div>
-              )}
+                }
+              </div>
             </div>
+
           </ul>
         </div>
       )}

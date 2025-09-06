@@ -69,6 +69,7 @@ export default function Home() {
     }
 
     setLoadingCategory(category.label);
+    let dataloaded =false
 
     try {
       // fetch categories & products at the same time
@@ -79,19 +80,24 @@ export default function Home() {
         axios.post(apiSummary.store.get_store_products, { store_name: category.store_name })
       ]);
 
-      if (categoriesRes.data.success) {
+      if (categoriesRes.data.success && productsRes.data.success) {
         setSelectedStoreCategories(categoriesRes.data.data);
+         setSelectedStoreProducts(productsRes.data.data);
+         dataloaded=true
       }
 
-      if (productsRes.data.success) {
-        setSelectedStoreProducts(productsRes.data.data);
-      }
+      // if (productsRes.data.success) {
+       
+      // }
 
-      router.push(category.link);
+     
     } catch (error) {
       console.error("Error fetching collections:", error);
     } finally {
       setLoadingCategory(null);
+      if(dataloaded){
+         router.push(category.link);
+      }
     }
   }
 

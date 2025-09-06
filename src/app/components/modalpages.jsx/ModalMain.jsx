@@ -5,6 +5,7 @@ import { CiSearch, CiHeart, CiUser, CiShoppingCart, CiCircleMinus } from 'react-
 import Search from './Search';
 import AccountsPage from './AccountsPage';
 import { useNavStore } from '@/app/lib/store/navmodalstore';
+import Wishlist from './WishList';
 
 const ModalMain = () => {
    const { selectednavtab, setSelectedNavTab, clearSelectedNavTab, showmodal,setShowModal } = useNavStore();
@@ -19,7 +20,7 @@ const ModalMain = () => {
       case "search":
         return <Search />;
       case "wishlist":
-        return <Search />; // Replace with actual Wishlist component
+        return <Wishlist setShowModal={setShowModal}/>; // Replace with actual Wishlist component
       case "user":
         return <AccountsPage />; // Replace with actual Profile component
       case "cart":

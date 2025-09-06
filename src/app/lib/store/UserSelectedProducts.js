@@ -2,7 +2,7 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export const useUserSelectedProduct = create(
+export const UserSelectedProducts = create(
   persist(
     (set) => ({
       userselectedproducts: null,
