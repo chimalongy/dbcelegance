@@ -46,6 +46,13 @@ export const apiSummary = {
   store:{
     get_store_categories:"/api/store/get_store_categories",
     get_store_products:"/api/store/get_store_products",
+    
+
+    auth:{
+      register:"/api/store/auth/register",
+      login:"",
+      sendOtp:"/api/store/auth/sendOTP"
+        }
 
   }
 };

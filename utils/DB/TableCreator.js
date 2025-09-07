@@ -133,8 +133,6 @@ async function createProductsTable() {
   }
 }
 
-
-
 async function createAccessoryCategoryTable() {
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE} (
@@ -255,6 +253,53 @@ async function migrateAdminUsersTable() {
   }
 }
 
+
+
+async function createCustomerTable() {
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS ${process.env.DATABASE_USERS_TABLE} (
+      customer_id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      password_hash TEXT NOT NULL,
+      title VARCHAR(10) CHECK (title IN ('Mr', 'Mrs', 'Ms', 'Dr')),
+      first_name VARCHAR(100) NOT NULL,
+      last_name VARCHAR(100) NOT NULL,
+      phone VARCHAR(20) NOT NULL,
+      fashion_news BOOLEAN DEFAULT false,
+      share_preferences BOOLEAN DEFAULT false,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_users_email 
+    ON ${process.env.DATABASE_USERS_TABLE}(email);
+
+    CREATE INDEX IF NOT EXISTS idx_users_phone 
+    ON ${process.env.DATABASE_USERS_TABLE}(phone);
+
+    CREATE INDEX IF NOT EXISTS idx_users_share_preferences 
+    ON ${process.env.DATABASE_USERS_TABLE}(share_preferences);
+
+    CREATE INDEX IF NOT EXISTS idx_users_fashion_news 
+    ON ${process.env.DATABASE_USERS_TABLE}(fashion_news);
+  `;
+
+  try {
+    await pool.query(createTableQuery);
+    console.log('Users table created successfully');
+  } catch (error) {
+    console.error('Error creating users table:', error);
+    throw error;
+  }
+}
+
+
+
+
+
+
+
+
 export async function TableCreator(){
    const placeholderFile = Buffer.from('placeholder')
 
@@ -287,4 +332,5 @@ export async function TableCreator(){
     await createAccessoryProductsTable();
     await createAuditLogsTable();
     await migrateAdminUsersTable();
+    await createCustomerTable()
 }

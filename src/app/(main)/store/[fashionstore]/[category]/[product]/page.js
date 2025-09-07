@@ -88,7 +88,7 @@ const ProductPage = () => {
   const parsedDescription = parseProductDescription(
     selectedProduct?.product_description
   );
-  console.log(parsedDescription);
+// console.log(parsedDescription);
 
   const content = {
     description: parsedDescription,

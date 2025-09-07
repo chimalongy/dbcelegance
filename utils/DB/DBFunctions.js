@@ -1,8 +1,7 @@
-import bcrypt from 'bcrypt';
-import pool from './DBConnect';
+import bcrypt from "bcrypt";
+import pool from "./DBConnect";
 
 class DBFunctions {
- 
   async findAdminUser(email) {
     try {
       const result = await pool.query(
@@ -14,41 +13,49 @@ class DBFunctions {
         return {
           success: true,
           exists: true,
-          data: result.rows[0]
+          data: result.rows[0],
         };
       }
 
       return {
         success: true,
         exists: false,
-        data: null
+        data: null,
       };
     } catch (error) {
-      console.error('Error finding admin user:', error);
+      console.error("Error finding admin user:", error);
       return {
         success: false,
-        error: 'Database error'
+        error: "Database error",
       };
     }
   }
 
   async registerAdminUser(userData) {
-    const { first_name, last_name, email, password, role ,  status, accessiblePages } = userData;
+    const {
+      first_name,
+      last_name,
+      email,
+      password,
+      role,
+      status,
+      accessiblePages,
+    } = userData;
 
     try {
       const userExists = await this.findAdminUser(email);
       if (!userExists.success) {
         return {
           success: false,
-          error: 'Failed to check user existence'
+          error: "Failed to check user existence",
         };
       }
 
       if (userExists.exists) {
         return {
           success: false,
-          error: 'User already exists',
-          data: userExists.data
+          error: "User already exists",
+          data: userExists.data,
         };
       }
 
@@ -60,43 +67,51 @@ class DBFunctions {
          (first_name, last_name, email, password, role, status,accessiblepages) 
          VALUES ($1, $2, $3, $4, $5, $6, $7) 
          RETURNING id, first_name, last_name, email, role, status, accessiblepages,created_at`,
-        [first_name, last_name, email, hashedPassword, role, status, accessiblePages]
+        [
+          first_name,
+          last_name,
+          email,
+          hashedPassword,
+          role,
+          status,
+          accessiblePages,
+        ]
       );
 
       return {
         success: true,
-        data: result.rows[0]
+        data: result.rows[0],
       };
-
     } catch (error) {
-      console.error('Error registering admin user:', error);
+      console.error("Error registering admin user:", error);
       return {
         success: false,
-        error: 'Failed to register user'
+        error: "Failed to register user",
       };
     }
   }
 
   async updateUserData(userId, updateData) {
     try {
-      const { first_name, last_name, email, role, status, accessiblepages } = updateData;
+      const { first_name, last_name, email, role, status, accessiblepages } =
+        updateData;
 
       const result = await pool.query(
         `UPDATE admin_users 
          SET first_name = $1, last_name = $2, email = $3, role = $4, status = $5, accessiblepages= $6
          WHERE id = $7
          RETURNING id, first_name, last_name, email, role, status,accessiblepages, created_at`,
-        [first_name, last_name, email, role, status,accessiblepages, userId]
+        [first_name, last_name, email, role, status, accessiblepages, userId]
       );
 
       if (result.rowCount === 0) {
-        return { success: false, error: 'User not found' };
+        return { success: false, error: "User not found" };
       }
 
       return { success: true, data: result.rows[0] };
     } catch (error) {
-      console.error('Error updating user:', error);
-      return { success: false, error: 'Failed to update user' };
+      console.error("Error updating user:", error);
+      return { success: false, error: "Failed to update user" };
     }
   }
 
@@ -106,39 +121,38 @@ class DBFunctions {
         NEW PASSWORD: ${newPassword}
         CURRENT PASSWORD: ${currentPassword}
         EMAIL: ${email}
-        `)
-    
+        `);
 
       const salt = await bcrypt.genSalt(10);
       const newHashedPassword = await bcrypt.hash(newPassword, salt);
 
       await pool.query(
-        'UPDATE admin_users SET password = $1 WHERE email = $2',
+        "UPDATE admin_users SET password = $1 WHERE email = $2",
         [newHashedPassword, email]
       );
 
-      return { success: true, message: 'Password updated successfully' };
+      return { success: true, message: "Password updated successfully" };
     } catch (error) {
-      console.error('Error updating password:', error);
-      return { success: false, error: 'Failed to update password' };
+      console.error("Error updating password:", error);
+      return { success: false, error: "Failed to update password" };
     }
   }
 
   async deleteUser(userId) {
     try {
       const result = await pool.query(
-        'DELETE FROM admin_users WHERE id = $1 RETURNING id, email',
+        "DELETE FROM admin_users WHERE id = $1 RETURNING id, email",
         [userId]
       );
 
       if (result.rowCount === 0) {
-        return { success: false, error: 'User not found' };
+        return { success: false, error: "User not found" };
       }
 
       return { success: true, data: result.rows[0] };
     } catch (error) {
-      console.error('Error deleting user:', error);
-      return { success: false, error: 'Failed to delete user' };
+      console.error("Error deleting user:", error);
+      return { success: false, error: "Failed to delete user" };
     }
   }
 
@@ -150,8 +164,8 @@ class DBFunctions {
 
       return { success: true, data: result.rows };
     } catch (error) {
-      console.error('Error getting users:', error);
-      return { success: false, error: 'Failed to get users: ' + error };
+      console.error("Error getting users:", error);
+      return { success: false, error: "Failed to get users: " + error };
     }
   }
 
@@ -170,13 +184,13 @@ class DBFunctions {
       );
 
       if (result.rowCount === 0) {
-        return { success: false, error: 'User not found' };
+        return { success: false, error: "User not found" };
       }
 
       return { success: true, data: result.rows[0] };
     } catch (error) {
-      console.error('Error updating admin user login info:', error);
-      return { success: false, error: 'Failed to update login info' };
+      console.error("Error updating admin user login info:", error);
+      return { success: false, error: "Failed to update login info" };
     }
   }
 
@@ -196,32 +210,47 @@ class DBFunctions {
         user_agent,
         location,
         session_id,
-        status = 'success',
+        status = "success",
         error_message,
-        metadata
+        metadata,
       } = auditData;
 
       const result = await pool.query(
-        `INSERT INTO ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'} 
+        `INSERT INTO ${process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"} 
          (user_id, user_email, action_type, action_category, resource_type, resource_id, 
           resource_name, old_values, new_values, ip_address, user_agent, location, 
           session_id, status, error_message, metadata)
          VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16)
          RETURNING audit_id`,
-        [user_id, user_email, action_type, action_category, resource_type, resource_id,
-         resource_name, old_values, new_values, ip_address, user_agent, location,
-         session_id, status, error_message, metadata]
+        [
+          user_id,
+          user_email,
+          action_type,
+          action_category,
+          resource_type,
+          resource_id,
+          resource_name,
+          old_values,
+          new_values,
+          ip_address,
+          user_agent,
+          location,
+          session_id,
+          status,
+          error_message,
+          metadata,
+        ]
       );
 
       return {
         success: true,
-        data: result.rows[0]
+        data: result.rows[0],
       };
     } catch (error) {
-      console.error('Error creating audit log:', error);
+      console.error("Error creating audit log:", error);
       return {
         success: false,
-        error: 'Failed to create audit log'
+        error: "Failed to create audit log",
       };
     }
   }
@@ -230,11 +259,13 @@ class DBFunctions {
     try {
       let query = `
         SELECT al.*, au.first_name, au.last_name, au.role
-        FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'} al
-        LEFT JOIN ${process.env.DATABASE_ADMIN_USERS_TABLE} au ON al.user_id = au.id
+        FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"} al
+        LEFT JOIN ${
+          process.env.DATABASE_ADMIN_USERS_TABLE
+        } au ON al.user_id = au.id
         WHERE 1=1
       `;
-      
+
       const params = [];
       let paramCount = 0;
 
@@ -301,13 +332,13 @@ class DBFunctions {
 
       return {
         success: true,
-        data: result.rows
+        data: result.rows,
       };
     } catch (error) {
-      console.error('Error getting audit logs:', error);
+      console.error("Error getting audit logs:", error);
       return {
         success: false,
-        error: 'Failed to get audit logs'
+        error: "Failed to get audit logs",
       };
     }
   }
@@ -316,8 +347,10 @@ class DBFunctions {
     try {
       const result = await pool.query(
         `SELECT al.*, au.first_name, au.last_name, au.role
-         FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'} al
-         LEFT JOIN ${process.env.DATABASE_ADMIN_USERS_TABLE} au ON al.user_id = au.id
+         FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"} al
+         LEFT JOIN ${
+           process.env.DATABASE_ADMIN_USERS_TABLE
+         } au ON al.user_id = au.id
          WHERE al.audit_id = $1`,
         [auditId]
       );
@@ -325,19 +358,19 @@ class DBFunctions {
       if (result.rows.length === 0) {
         return {
           success: false,
-          error: 'Audit log not found'
+          error: "Audit log not found",
         };
       }
 
       return {
         success: true,
-        data: result.rows[0]
+        data: result.rows[0],
       };
     } catch (error) {
-      console.error('Error getting audit log by ID:', error);
+      console.error("Error getting audit log by ID:", error);
       return {
         success: false,
-        error: 'Failed to get audit log'
+        error: "Failed to get audit log",
       };
     }
   }
@@ -352,10 +385,10 @@ class DBFunctions {
           COUNT(DISTINCT user_id) as unique_users,
           COUNT(DISTINCT action_type) as unique_action_types,
           COUNT(DISTINCT resource_type) as unique_resource_types
-        FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}
+        FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"}
         WHERE 1=1
       `;
-      
+
       const params = [];
       let paramCount = 0;
 
@@ -376,13 +409,13 @@ class DBFunctions {
 
       return {
         success: true,
-        data: result.rows[0]
+        data: result.rows[0],
       };
     } catch (error) {
-      console.error('Error getting audit stats:', error);
+      console.error("Error getting audit stats:", error);
       return {
         success: false,
-        error: 'Failed to get audit stats'
+        error: "Failed to get audit stats",
       };
     }
   }
@@ -391,8 +424,10 @@ class DBFunctions {
     try {
       const result = await pool.query(
         `SELECT al.*, au.first_name, au.last_name, au.role
-         FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'} al
-         LEFT JOIN ${process.env.DATABASE_ADMIN_USERS_TABLE} au ON al.user_id = au.id
+         FROM ${process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"} al
+         LEFT JOIN ${
+           process.env.DATABASE_ADMIN_USERS_TABLE
+         } au ON al.user_id = au.id
          WHERE al.user_id = $1
          ORDER BY al.created_at DESC
          LIMIT $2`,
@@ -401,22 +436,19 @@ class DBFunctions {
 
       return {
         success: true,
-        data: result.rows
+        data: result.rows,
       };
     } catch (error) {
-      console.error('Error getting audit logs by user:', error);
+      console.error("Error getting audit logs by user:", error);
       return {
         success: false,
-        error: 'Failed to get user audit logs'
+        error: "Failed to get user audit logs",
       };
     }
   }
 
-
-
-
-async  createCategory(category) {
-  const query = `
+  async createCategory(category) {
+    const query = `
     INSERT INTO ${process.env.DATABASE_CATEGORY_TABLE} (
       category_name,
       category_store,
@@ -426,143 +458,146 @@ async  createCategory(category) {
     RETURNING *;
   `;
 
-  const values = [
-    category.category_name,
-    category.category_store,
-    category.category_status,
-    category.category_image || null, // optional image
-  ];
+    const values = [
+      category.category_name,
+      category.category_store,
+      category.category_status,
+      category.category_image || null, // optional image
+    ];
 
-  try {
-    const result = await pool.query(query, values);
-    console.log("✅ Category created:", result.rows[0]);
-    return {success:true, data:result.rows[0]}
-  } catch (error) {
-    console.log("❌ Error creating category:", error.message);
-    return {success:false, data:null}
+    try {
+      const result = await pool.query(query, values);
+      console.log("✅ Category created:", result.rows[0]);
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.log("❌ Error creating category:", error.message);
+      return { success: false, data: null };
+    }
   }
-}
-async getCategoryById(categoryId) {
-  const query = `
+  async getCategoryById(categoryId) {
+    const query = `
     SELECT *
     FROM ${process.env.DATABASE_CATEGORY_TABLE}
     WHERE category_id = $1;
   `;
 
-  try {
-    const result = await pool.query(query, [categoryId]);
+    try {
+      const result = await pool.query(query, [categoryId]);
 
-    if (result.rows.length === 0) {
-      console.log(`⚠️ No category found with id: ${categoryId}`);
+      if (result.rows.length === 0) {
+        console.log(`⚠️ No category found with id: ${categoryId}`);
+        return { success: false, data: null };
+      }
+
+      // console.log("✅ Category retrieved:", result.rows[0]);
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.log("❌ Error fetching category:", error.message);
       return { success: false, data: null };
     }
-
-   // console.log("✅ Category retrieved:", result.rows[0]);
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.log("❌ Error fetching category:", error.message);
-    return { success: false, data: null };
   }
-}
-async getCategoryByName(category_name, category_store) {
-  const query = `
+  async getCategoryByName(category_name, category_store) {
+    const query = `
     SELECT *
     FROM ${process.env.DATABASE_CATEGORY_TABLE}
     WHERE category_name = $1
     AND category_store = $2;
   `;
 
-  try {
-    const result = await pool.query(query, [category_name, category_store]);
+    try {
+      const result = await pool.query(query, [category_name, category_store]);
 
-    if (result.rows.length === 0) {
-      console.log(`⚠️ No category found with name "${category_name}" in store "${category_store}"`);
+      if (result.rows.length === 0) {
+        console.log(
+          `⚠️ No category found with name "${category_name}" in store "${category_store}"`
+        );
+        return { success: false, data: null };
+      }
+
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.log("❌ Error fetching category:", error.message);
       return { success: false, data: null };
     }
-
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.log("❌ Error fetching category:", error.message);
-    return { success: false, data: null };
   }
-}
 
-async deleteCategory(categoryId) {
-  const query = `
+  async deleteCategory(categoryId) {
+    const query = `
     DELETE FROM ${process.env.DATABASE_CATEGORY_TABLE}
     WHERE category_id = $1
     RETURNING *;
   `;
 
-  try {
-    const result = await pool.query(query, [categoryId]);
+    try {
+      const result = await pool.query(query, [categoryId]);
 
-    if (result.rows.length === 0) {
-      console.log(`⚠️ No category found with id: ${categoryId}`);
+      if (result.rows.length === 0) {
+        console.log(`⚠️ No category found with id: ${categoryId}`);
+        return { success: false, data: null };
+      }
+
+      console.log("✅ Category deleted:", result.rows[0]);
+      return { success: true, data: result.rows[0] }; // Return deleted row
+    } catch (error) {
+      console.log("❌ Error deleting category:", error.message);
       return { success: false, data: null };
     }
-
-    console.log("✅ Category deleted:", result.rows[0]);
-    return { success: true, data: result.rows[0] }; // Return deleted row
-  } catch (error) {
-    console.log("❌ Error deleting category:", error.message);
-    return { success: false, data: null };
   }
-}
-async updateCategoryFields(category_id, fields) {
-  const allowedFields = [
-    "category_name",
-    "category_store",
-    "category_status",
-    "category_image"
-  ];
+  async updateCategoryFields(category_id, fields) {
+    const allowedFields = [
+      "category_name",
+      "category_store",
+      "category_status",
+      "category_image",
+    ];
 
-  const keys = Object.keys(fields).filter(key => allowedFields.includes(key));
+    const keys = Object.keys(fields).filter((key) =>
+      allowedFields.includes(key)
+    );
 
-  if (keys.length === 0) {
-    return { success: false, message: "No valid fields provided" };
-  }
+    if (keys.length === 0) {
+      return { success: false, message: "No valid fields provided" };
+    }
 
-  // Build dynamic query
-  const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
-  const values = keys.map(key => fields[key]);
-  values.push(category_id); // last param for WHERE
+    // Build dynamic query
+    const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
+    const values = keys.map((key) => fields[key]);
+    values.push(category_id); // last param for WHERE
 
-  const query = `
+    const query = `
     UPDATE ${process.env.DATABASE_CATEGORY_TABLE}
     SET ${setClauses}
     WHERE category_id = $${values.length}
     RETURNING *;
   `;
 
-  try {
-    const result = await pool.query(query, values);
-    if (result.rows.length === 0) {
-      return { success: false, message: "Category not found" };
+    try {
+      const result = await pool.query(query, values);
+      if (result.rows.length === 0) {
+        return { success: false, message: "Category not found" };
+      }
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.error("❌ Error updating category:", error.message);
+      return { success: false, message: error.message };
     }
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error updating category:", error.message);
-    return { success: false, message: error.message };
   }
-}
-async getAllStoreCategories(category_store) {
-  const query = `SELECT * FROM ${process.env.DATABASE_CATEGORY_TABLE} WHERE category_store = $1;`;
+  async getAllStoreCategories(category_store) {
+    const query = `SELECT * FROM ${process.env.DATABASE_CATEGORY_TABLE} WHERE category_store = $1;`;
 
-  try {
-    const result = await pool.query(query, [category_store]);
-    console.log("✅ Fetched categories:", result.rows.length);
-    return { success: true, data: result.rows };
-  } catch (error) {
-    console.log("❌ Error fetching categories:", error.message);
-    return { success: false, data: [] };
+    try {
+      const result = await pool.query(query, [category_store]);
+      console.log("✅ Fetched categories:", result.rows.length);
+      return { success: true, data: result.rows };
+    } catch (error) {
+      console.log("❌ Error fetching categories:", error.message);
+      return { success: false, data: [] };
+    }
   }
-}
 
-
-// ========================= PRODUCTS =========================
-async createProduct(product) {
-  const query = `
+  // ========================= PRODUCTS =========================
+  async createProduct(product) {
+    const query = `
     INSERT INTO ${process.env.DATABASE_PRODUCTS_TABLE} (
       product_name,
       product_description,
@@ -575,159 +610,164 @@ async createProduct(product) {
     RETURNING *;
   `;
 
-  const values = [
-    product.product_name,
-    product.product_description || null,
-    product.product_category,
-    product.product_status,
-    JSON.stringify(product.product_sizes || []), // store as JSONB
-    JSON.stringify(product.product_gallery || []), // store as JSONB
-    product.product_store
-  ];
+    const values = [
+      product.product_name,
+      product.product_description || null,
+      product.product_category,
+      product.product_status,
+      JSON.stringify(product.product_sizes || []), // store as JSONB
+      JSON.stringify(product.product_gallery || []), // store as JSONB
+      product.product_store,
+    ];
 
-  try {
-    const result = await pool.query(query, values);
-    console.log("✅ Product created:", result.rows[0]);
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error creating product:", error.message);
-    return { success: false, data: null };
+    try {
+      const result = await pool.query(query, values);
+      console.log("✅ Product created:", result.rows[0]);
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.error("❌ Error creating product:", error.message);
+      return { success: false, data: null };
+    }
   }
-}
 
-async getProductById(productId) {
-  const query = `
+  async getProductById(productId) {
+    const query = `
     SELECT p.*, 
            p.product_sizes as sizes
     FROM ${process.env.DATABASE_PRODUCTS_TABLE} p
     WHERE p.product_id = $1;
   `;
 
-  try {
-    const result = await pool.query(query, [productId]);
+    try {
+      const result = await pool.query(query, [productId]);
 
-    if (result.rows.length === 0) {
-      console.log(`⚠️ No product found with id: ${productId}`);
+      if (result.rows.length === 0) {
+        console.log(`⚠️ No product found with id: ${productId}`);
+        return { success: false, data: null };
+      }
+
+      const product = result.rows[0];
+
+      // Parse JSONB sizes if they exist
+      this.parseProductSizes(product);
+
+      return { success: true, data: product };
+    } catch (error) {
+      console.log("❌ Error fetching product:", error.message);
       return { success: false, data: null };
     }
-
-    const product = result.rows[0];
-    
-    // Parse JSONB sizes if they exist
-    this.parseProductSizes(product);
-
-    return { success: true, data: product };
-  } catch (error) {
-    console.log("❌ Error fetching product:", error.message);
-    return { success: false, data: null };
   }
-}
 
-async getProductByName(product_name, product_store) {
-  const query = `
+  async getProductByName(product_name, product_store) {
+    const query = `
     SELECT *
     FROM ${process.env.DATABASE_PRODUCTS_TABLE}
     WHERE product_name = $1
     AND product_store = $2;
   `;
 
-  try {
-    const result = await pool.query(query, [product_name, product_store]);
+    try {
+      const result = await pool.query(query, [product_name, product_store]);
 
-    if (result.rows.length === 0) {
-      console.log(`⚠️ No product found with name "${product_name}" in store "${product_store}"`);
+      if (result.rows.length === 0) {
+        console.log(
+          `⚠️ No product found with name "${product_name}" in store "${product_store}"`
+        );
+        return { success: false, data: null };
+      }
+
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.log("❌ Error fetching product:", error.message);
       return { success: false, data: null };
     }
-
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.log("❌ Error fetching product:", error.message);
-    return { success: false, data: null };
   }
-}
 
-async deleteProduct(productId) {
-  const query = `
+  async deleteProduct(productId) {
+    const query = `
     DELETE FROM ${process.env.DATABASE_PRODUCTS_TABLE}
     WHERE product_id = $1
     RETURNING *;
   `;
 
-  try {
-    const result = await pool.query(query, [productId]);
+    try {
+      const result = await pool.query(query, [productId]);
 
-    if (result.rows.length === 0) {
-      console.log(`⚠️ No product found with id: ${productId}`);
+      if (result.rows.length === 0) {
+        console.log(`⚠️ No product found with id: ${productId}`);
+        return { success: false, data: null };
+      }
+
+      console.log("✅ Product deleted:", result.rows[0]);
+      return { success: true, data: result.rows[0] }; // Return deleted row
+    } catch (error) {
+      console.log("❌ Error deleting product:", error.message);
       return { success: false, data: null };
     }
-
-    console.log("✅ Product deleted:", result.rows[0]);
-    return { success: true, data: result.rows[0] }; // Return deleted row
-  } catch (error) {
-    console.log("❌ Error deleting product:", error.message);
-    return { success: false, data: null };
-  }
-}
-
-async updateProductFields(product_id, fields) {
-  const allowedFields = [
-    "product_name",
-    "product_description",
-    "product_category",
-    "product_status",
-    "product_gallery",
-    "product_store",
-    "product_sizes"
-  ];
-
-  const keys = Object.keys(fields).filter(key => allowedFields.includes(key));
-
-  if (keys.length === 0) {
-    return { success: false, message: "No valid fields provided" };
   }
 
-  // Build dynamic query
-  const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
-  const values = keys.map(key => {
-    if (key === "product_gallery" || key === "product_sizes") {
-      return JSON.stringify(fields[key]);
+  async updateProductFields(product_id, fields) {
+    const allowedFields = [
+      "product_name",
+      "product_description",
+      "product_category",
+      "product_status",
+      "product_gallery",
+      "product_store",
+      "product_sizes",
+    ];
+
+    const keys = Object.keys(fields).filter((key) =>
+      allowedFields.includes(key)
+    );
+
+    if (keys.length === 0) {
+      return { success: false, message: "No valid fields provided" };
     }
-    return fields[key];
-  });
-  values.push(product_id); // last param for WHERE
 
-  const query = `
+    // Build dynamic query
+    const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
+    const values = keys.map((key) => {
+      if (key === "product_gallery" || key === "product_sizes") {
+        return JSON.stringify(fields[key]);
+      }
+      return fields[key];
+    });
+    values.push(product_id); // last param for WHERE
+
+    const query = `
     UPDATE ${process.env.DATABASE_PRODUCTS_TABLE}
     SET ${setClauses}
     WHERE product_id = $${values.length}
     RETURNING *;
   `;
 
-  try {
-    const result = await pool.query(query, values);
-    if (result.rows.length === 0) {
-      return { success: false, message: "Product not found" };
+    try {
+      const result = await pool.query(query, values);
+      if (result.rows.length === 0) {
+        return { success: false, message: "Product not found" };
+      }
+
+      const updatedProduct = result.rows[0];
+
+      // Parse JSONB sizes if they exist
+      this.parseProductSizes(updatedProduct);
+
+      return { success: true, data: updatedProduct };
+    } catch (error) {
+      console.error("❌ Error updating product:", error.message);
+      return { success: false, message: error.message };
     }
-    
-    const updatedProduct = result.rows[0];
-    
-    // Parse JSONB sizes if they exist
-    this.parseProductSizes(updatedProduct);
-    
-    return { success: true, data: updatedProduct };
-  } catch (error) {
-    console.error("❌ Error updating product:", error.message);
-    return { success: false, message: error.message };
   }
-}
 
   // Helper function to parse product sizes from JSONB
   parseProductSizes(product) {
     if (product.product_sizes) {
       try {
-        product.sizes = typeof product.product_sizes === 'string' 
-          ? JSON.parse(product.product_sizes) 
-          : product.product_sizes;
+        product.sizes =
+          typeof product.product_sizes === "string"
+            ? JSON.parse(product.product_sizes)
+            : product.product_sizes;
       } catch (e) {
         console.warn("⚠️ Could not parse product sizes JSON:", e);
         product.sizes = [];
@@ -740,23 +780,34 @@ async updateProductFields(product_id, fields) {
 
   // Helper function to validate size data
   validateSizeData(size) {
-    if (!size.size || !size.sku || !size.price || size.inventory === undefined) {
-      return { valid: false, error: 'Each size must have size, SKU, price, and inventory' };
+    if (
+      !size.size ||
+      !size.sku ||
+      !size.price ||
+      size.inventory === undefined
+    ) {
+      return {
+        valid: false,
+        error: "Each size must have size, SKU, price, and inventory",
+      };
     }
-    
+
     if (isNaN(size.price) || parseFloat(size.price) <= 0) {
-      return { valid: false, error: 'Price must be a positive number' };
+      return { valid: false, error: "Price must be a positive number" };
     }
-    
+
     if (!Number.isInteger(size.inventory) || size.inventory < 0) {
-      return { valid: false, error: 'Inventory must be a non-negative integer' };
+      return {
+        valid: false,
+        error: "Inventory must be a non-negative integer",
+      };
     }
-    
+
     return { valid: true };
   }
 
-async getAllStoreProducts(product_store) {
-  const query = `
+  async getAllStoreProducts(product_store) {
+    const query = `
     SELECT p.*, 
            p.product_sizes as sizes
     FROM ${process.env.DATABASE_PRODUCTS_TABLE} p
@@ -764,36 +815,25 @@ async getAllStoreProducts(product_store) {
     ORDER BY p.created_at DESC;
   `;
 
-  try {
-    const result = await pool.query(query, [product_store]);
-    
-    // Parse JSONB sizes for each product
-    const products = result.rows.map(product => this.parseProductSizes(product));
-    
-    console.log("✅ Fetched products:", products.length);
-    return { success: true, data: products };
-  } catch (error) {
-    console.log("❌ Error fetching products:", error.message);
-    return { success: false, data: [] };
+    try {
+      const result = await pool.query(query, [product_store]);
+
+      // Parse JSONB sizes for each product
+      const products = result.rows.map((product) =>
+        this.parseProductSizes(product)
+      );
+
+      console.log("✅ Fetched products:", products.length);
+      return { success: true, data: products };
+    } catch (error) {
+      console.log("❌ Error fetching products:", error.message);
+      return { success: false, data: [] };
+    }
   }
-}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-// ========================= ACCESSORY CATEGORIES =========================
-async createAccessoryCategory(category) {
-  const query = `
+  // ========================= ACCESSORY CATEGORIES =========================
+  async createAccessoryCategory(category) {
+    const query = `
     INSERT INTO ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE} (
       accessory_category_name,
       accessory_category_status,
@@ -803,142 +843,150 @@ async createAccessoryCategory(category) {
     RETURNING *;
   `;
 
-  const values = [
-    category.accessory_category_name,
-    category.accessory_category_status,
-    category.accessory_category_store,
-    category.accessory_category_image
-  ];
+    const values = [
+      category.accessory_category_name,
+      category.accessory_category_status,
+      category.accessory_category_store,
+      category.accessory_category_image,
+    ];
 
-  try {
-    const result = await pool.query(query, values);
-    console.log("✅ Accessory category created:", result.rows[0]);
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error creating accessory category:", error.message);
-    return { success: false, error: error.message };
+    try {
+      const result = await pool.query(query, values);
+      console.log("✅ Accessory category created:", result.rows[0]);
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.error("❌ Error creating accessory category:", error.message);
+      return { success: false, error: error.message };
+    }
   }
-}
 
-async getAccessoryCategoryById(categoryId) {
-  const query = `
+  async getAccessoryCategoryById(categoryId) {
+    const query = `
     SELECT * FROM ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE}
     WHERE accessory_category_id = $1;
   `;
 
-  try {
-    const result = await pool.query(query, [categoryId]);
-    
-    if (result.rows.length === 0) {
-      return { success: false, message: "Accessory category not found" };
+    try {
+      const result = await pool.query(query, [categoryId]);
+
+      if (result.rows.length === 0) {
+        return { success: false, message: "Accessory category not found" };
+      }
+
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.error("❌ Error getting accessory category:", error.message);
+      return { success: false, error: error.message };
     }
-
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error getting accessory category:", error.message);
-    return { success: false, error: error.message };
   }
-}
 
-async getAccessoryCategoryByName(categoryName, categoryStore) {
-  const query = `
+  async getAccessoryCategoryByName(categoryName, categoryStore) {
+    const query = `
     SELECT * FROM ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE}
     WHERE accessory_category_name = $1 AND accessory_category_store = $2;
   `;
 
-  try {
-    const result = await pool.query(query, [categoryName, categoryStore]);
-    
-    if (result.rows.length === 0) {
-      return { success: false, exists: false, data: null };
+    try {
+      const result = await pool.query(query, [categoryName, categoryStore]);
+
+      if (result.rows.length === 0) {
+        return { success: false, exists: false, data: null };
+      }
+
+      return { success: true, exists: true, data: result.rows[0] };
+    } catch (error) {
+      console.error(
+        "❌ Error getting accessory category by name:",
+        error.message
+      );
+      return { success: false, error: error.message };
     }
-
-    return { success: true, exists: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error getting accessory category by name:", error.message);
-    return { success: false, error: error.message };
   }
-}
 
-async deleteAccessoryCategory(categoryId) {
-  const query = `
+  async deleteAccessoryCategory(categoryId) {
+    const query = `
     DELETE FROM ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE}
     WHERE accessory_category_id = $1
     RETURNING *;
   `;
 
-  try {
-    const result = await pool.query(query, [categoryId]);
+    try {
+      const result = await pool.query(query, [categoryId]);
 
-    if (result.rows.length === 0) {
-      console.log(`⚠️ No accessory category found with id: ${categoryId}`);
+      if (result.rows.length === 0) {
+        console.log(`⚠️ No accessory category found with id: ${categoryId}`);
+        return { success: false, data: null };
+      }
+
+      console.log("✅ Accessory category deleted:", result.rows[0]);
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.log("❌ Error deleting accessory category:", error.message);
       return { success: false, data: null };
     }
-
-    console.log("✅ Accessory category deleted:", result.rows[0]);
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.log("❌ Error deleting accessory category:", error.message);
-    return { success: false, data: null };
-  }
-}
-
-async updateAccessoryCategoryFields(categoryId, fields) {
-  const allowedFields = [
-    "accessory_category_name",
-    "accessory_category_status",
-    "accessory_category_image"
-  ];
-
-  const keys = Object.keys(fields).filter(key => allowedFields.includes(key));
-
-  if (keys.length === 0) {
-    return { success: false, message: "No valid fields provided" };
   }
 
-  // Build dynamic query
-  const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
-  const values = keys.map(key => fields[key]);
-  values.push(categoryId); // last param for WHERE
+  async updateAccessoryCategoryFields(categoryId, fields) {
+    const allowedFields = [
+      "accessory_category_name",
+      "accessory_category_status",
+      "accessory_category_image",
+    ];
 
-  const query = `
+    const keys = Object.keys(fields).filter((key) =>
+      allowedFields.includes(key)
+    );
+
+    if (keys.length === 0) {
+      return { success: false, message: "No valid fields provided" };
+    }
+
+    // Build dynamic query
+    const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
+    const values = keys.map((key) => fields[key]);
+    values.push(categoryId); // last param for WHERE
+
+    const query = `
     UPDATE ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE}
     SET ${setClauses}
     WHERE accessory_category_id = $${values.length}
     RETURNING *;
   `;
 
-  try {
-    const result = await pool.query(query, values);
-    if (result.rows.length === 0) {
-      return { success: false, message: "Accessory category not found" };
+    try {
+      const result = await pool.query(query, values);
+      if (result.rows.length === 0) {
+        return { success: false, message: "Accessory category not found" };
+      }
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.error("❌ Error updating accessory category:", error.message);
+      return { success: false, message: error.message };
     }
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error updating accessory category:", error.message);
-    return { success: false, message: error.message };
   }
-}
 
-async getAllStoreAccessoryCategories(categoryStore) {
-  const query = `
+  async getAllStoreAccessoryCategories(categoryStore) {
+    const query = `
     SELECT * FROM ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE}
     WHERE accessory_category_store = $1
     ORDER BY created_at DESC;
   `;
 
-  try {
-    const result = await pool.query(query, [categoryStore]);
-    return { success: true, data: result.rows };
-  } catch (error) {
-    console.error("❌ Error getting store accessory categories:", error.message);
-    return { success: false, error: error.message };
+    try {
+      const result = await pool.query(query, [categoryStore]);
+      return { success: true, data: result.rows };
+    } catch (error) {
+      console.error(
+        "❌ Error getting store accessory categories:",
+        error.message
+      );
+      return { success: false, error: error.message };
+    }
   }
-}
 
-// ========================= ACCESSORY PRODUCTS =========================
-async createAccessoryProduct(product) {
-  const query = `
+  // ========================= ACCESSORY PRODUCTS =========================
+  async createAccessoryProduct(product) {
+    const query = `
     INSERT INTO ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE} (
       accessory_name,
       accessory_description,
@@ -953,30 +1001,30 @@ async createAccessoryProduct(product) {
     RETURNING *;
   `;
 
-  const values = [
-    product.accessory_name,
-    product.accessory_description || null,
-    product.accessory_category,
-    product.accessory_price,
-    product.stock_quantity,
-    product.sku || null,
-    product.accessory_status,
-    JSON.stringify(product.accessory_gallery || []), // store as JSONB
-    product.accessory_store
-  ];
+    const values = [
+      product.accessory_name,
+      product.accessory_description || null,
+      product.accessory_category,
+      product.accessory_price,
+      product.stock_quantity,
+      product.sku || null,
+      product.accessory_status,
+      JSON.stringify(product.accessory_gallery || []), // store as JSONB
+      product.accessory_store,
+    ];
 
-  try {
-    const result = await pool.query(query, values);
-    console.log("✅ Accessory product created:", result.rows[0]);
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error creating accessory product:", error.message);
-    return { success: false, error: error.message };
+    try {
+      const result = await pool.query(query, values);
+      console.log("✅ Accessory product created:", result.rows[0]);
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.error("❌ Error creating accessory product:", error.message);
+      return { success: false, error: error.message };
+    }
   }
-}
 
-async getAccessoryProductById(productId) {
-  const query = `
+  async getAccessoryProductById(productId) {
+    const query = `
     SELECT ap.*, ac.accessory_category_name
     FROM ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE} ap
     LEFT JOIN ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE} ac 
@@ -984,123 +1032,129 @@ async getAccessoryProductById(productId) {
     WHERE ap.accessory_id = $1;
   `;
 
-  try {
-    const result = await pool.query(query, [productId]);
-    
-    if (result.rows.length === 0) {
-      return { success: false, message: "Accessory product not found" };
-    }
+    try {
+      const result = await pool.query(query, [productId]);
 
-    const product = result.rows[0];
-    
-    // Parse JSONB gallery if it exists
-    if (product.accessory_gallery) {
-      try {
-        product.accessory_gallery = typeof product.accessory_gallery === 'string' 
-          ? JSON.parse(product.accessory_gallery) 
-          : product.accessory_gallery;
-      } catch (e) {
-        console.warn("⚠️ Could not parse accessory gallery JSON:", e);
-        product.accessory_gallery = [];
+      if (result.rows.length === 0) {
+        return { success: false, message: "Accessory product not found" };
       }
+
+      const product = result.rows[0];
+
+      // Parse JSONB gallery if it exists
+      if (product.accessory_gallery) {
+        try {
+          product.accessory_gallery =
+            typeof product.accessory_gallery === "string"
+              ? JSON.parse(product.accessory_gallery)
+              : product.accessory_gallery;
+        } catch (e) {
+          console.warn("⚠️ Could not parse accessory gallery JSON:", e);
+          product.accessory_gallery = [];
+        }
+      }
+
+      return { success: true, data: product };
+    } catch (error) {
+      console.error("❌ Error getting accessory product:", error.message);
+      return { success: false, error: error.message };
     }
-
-    return { success: true, data: product };
-  } catch (error) {
-    console.error("❌ Error getting accessory product:", error.message);
-    return { success: false, error: error.message };
   }
-}
 
-async getAccessoryProductByName(productName, productStore) {
-  const query = `
+  async getAccessoryProductByName(productName, productStore) {
+    const query = `
     SELECT * FROM ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE}
     WHERE accessory_name = $1 AND accessory_store = $2;
   `;
 
-  try {
-    const result = await pool.query(query, [productName, productStore]);
-    
-    if (result.rows.length === 0) {
-      return { success: false, exists: false, data: null };
+    try {
+      const result = await pool.query(query, [productName, productStore]);
+
+      if (result.rows.length === 0) {
+        return { success: false, exists: false, data: null };
+      }
+
+      return { success: true, exists: true, data: result.rows[0] };
+    } catch (error) {
+      console.error(
+        "❌ Error getting accessory product by name:",
+        error.message
+      );
+      return { success: false, error: error.message };
     }
-
-    return { success: true, exists: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error getting accessory product by name:", error.message);
-    return { success: false, error: error.message };
   }
-}
 
-async deleteAccessoryProduct(productId) {
-  const query = `
+  async deleteAccessoryProduct(productId) {
+    const query = `
     DELETE FROM ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE}
     WHERE accessory_id = $1
     RETURNING *;
   `;
 
-  try {
-    const result = await pool.query(query, [productId]);
+    try {
+      const result = await pool.query(query, [productId]);
 
-    if (result.rows.length === 0) {
-      console.log(`⚠️ No accessory product found with id: ${productId}`);
+      if (result.rows.length === 0) {
+        console.log(`⚠️ No accessory product found with id: ${productId}`);
+        return { success: false, data: null };
+      }
+
+      console.log("✅ Accessory product deleted:", result.rows[0]);
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.log("❌ Error deleting accessory product:", error.message);
       return { success: false, data: null };
     }
-
-    console.log("✅ Accessory product deleted:", result.rows[0]);
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.log("❌ Error deleting accessory product:", error.message);
-    return { success: false, data: null };
-  }
-}
-
-async updateAccessoryProductFields(productId, fields) {
-  const allowedFields = [
-    "accessory_name",
-    "accessory_description",
-    "accessory_category",
-    "accessory_price",
-    "stock_quantity",
-    "sku",
-    "accessory_status",
-    "accessory_gallery"
-  ];
-
-  const keys = Object.keys(fields).filter(key => allowedFields.includes(key));
-
-  if (keys.length === 0) {
-    return { success: false, message: "No valid fields provided" };
   }
 
-  // Build dynamic query
-  const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
-  const values = keys.map(key => 
-    key === "accessory_gallery" ? JSON.stringify(fields[key]) : fields[key]
-  );
-  values.push(productId); // last param for WHERE
+  async updateAccessoryProductFields(productId, fields) {
+    const allowedFields = [
+      "accessory_name",
+      "accessory_description",
+      "accessory_category",
+      "accessory_price",
+      "stock_quantity",
+      "sku",
+      "accessory_status",
+      "accessory_gallery",
+    ];
 
-  const query = `
+    const keys = Object.keys(fields).filter((key) =>
+      allowedFields.includes(key)
+    );
+
+    if (keys.length === 0) {
+      return { success: false, message: "No valid fields provided" };
+    }
+
+    // Build dynamic query
+    const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
+    const values = keys.map((key) =>
+      key === "accessory_gallery" ? JSON.stringify(fields[key]) : fields[key]
+    );
+    values.push(productId); // last param for WHERE
+
+    const query = `
     UPDATE ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE}
     SET ${setClauses}
     WHERE accessory_id = $${values.length}
     RETURNING *;
   `;
 
-  try {
-    const result = await pool.query(query, values);
-    if (result.rows.length === 0) {
-      return { success: false, message: "Accessory product not found" };
+    try {
+      const result = await pool.query(query, values);
+      if (result.rows.length === 0) {
+        return { success: false, message: "Accessory product not found" };
+      }
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.error("❌ Error updating accessory product:", error.message);
+      return { success: false, message: error.message };
     }
-    return { success: true, data: result.rows[0] };
-  } catch (error) {
-    console.error("❌ Error updating accessory product:", error.message);
-    return { success: false, message: error.message };
   }
-}
 
-async getAllStoreAccessoryProducts(productStore) {
-  const query = `
+  async getAllStoreAccessoryProducts(productStore) {
+    const query = `
     SELECT ap.*, ac.accessory_category_name
     FROM ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE} ap
     LEFT JOIN ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE} ac 
@@ -1109,30 +1163,104 @@ async getAllStoreAccessoryProducts(productStore) {
     ORDER BY ap.created_at DESC;
   `;
 
-  try {
-    const result = await pool.query(query, [productStore]);
-    
-    // Parse JSONB galleries for all products
-    const products = result.rows.map(product => {
-      if (product.accessory_gallery) {
-        try {
-          product.accessory_gallery = typeof product.accessory_gallery === 'string' 
-            ? JSON.parse(product.accessory_gallery) 
-            : product.accessory_gallery;
-        } catch (e) {
-          console.warn("⚠️ Could not parse accessory gallery JSON:", e);
-          product.accessory_gallery = [];
-        }
-      }
-      return product;
-    });
+    try {
+      const result = await pool.query(query, [productStore]);
 
-    return { success: true, data: products };
+      // Parse JSONB galleries for all products
+      const products = result.rows.map((product) => {
+        if (product.accessory_gallery) {
+          try {
+            product.accessory_gallery =
+              typeof product.accessory_gallery === "string"
+                ? JSON.parse(product.accessory_gallery)
+                : product.accessory_gallery;
+          } catch (e) {
+            console.warn("⚠️ Could not parse accessory gallery JSON:", e);
+            product.accessory_gallery = [];
+          }
+        }
+        return product;
+      });
+
+      return { success: true, data: products };
+    } catch (error) {
+      console.error(
+        "❌ Error getting store accessory products:",
+        error.message
+      );
+      return { success: false, error: error.message };
+    }
+  }
+
+  async registerCustomer({
+    firstName,
+    lastName,
+    email,
+    password, // raw password
+    title,
+    phone,
+    fashionNews = false,
+    sharePreferences = false,
+  }) {
+    try {
+      // 1. Hash password
+      const saltRounds = 10;
+      const passwordHash = await bcrypt.hash(password, saltRounds);
+
+      // 2. Insert user (without country_code)
+      const query = `
+        INSERT INTO ${process.env.DATABASE_USERS_TABLE} 
+        (email, password_hash, title, first_name, last_name, phone, fashion_news, share_preferences)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+        RETURNING customer_id, email, title, first_name, last_name, phone, fashion_news, share_preferences, created_at;
+      `;
+
+      const values = [
+        email,
+        passwordHash,
+        title,
+        firstName,
+        lastName,
+        phone,
+        fashionNews,
+        sharePreferences,
+      ];
+
+      const { rows } = await pool.query(query, values);
+
+      return { success: true, user: rows[0] };
+    } catch (error) {
+      if (error.code === "23505") {
+        // duplicate email
+        return { success: false, message: "Email already registered" };
+      }
+      console.error("Error registering user:", error);
+      throw error;
+    }
+  }
+async  findCustomerByEmail(email) {
+  try {
+    const query = `
+      SELECT *
+      FROM ${process.env.DATABASE_USERS_TABLE}
+      WHERE email = $1
+      LIMIT 1;
+    `;
+
+    const { rows } = await pool.query(query, [email]);
+
+    if (rows.length === 0) {
+      return { success: false, message: "Customer not found" };
+    }
+
+    return { success: true, user: rows[0] };
   } catch (error) {
-    console.error("❌ Error getting store accessory products:", error.message);
-    return { success: false, error: error.message };
+    console.error("Error finding customer by email:", error);
+    return { success: false, message: "Database error" };
   }
 }
+
+
 
 }
 

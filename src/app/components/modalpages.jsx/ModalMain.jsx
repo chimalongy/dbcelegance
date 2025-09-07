@@ -18,7 +18,7 @@ const ModalMain = () => {
   function renderActiveTab() {
     switch (selectednavtab) {
       case "search":
-        return <Search />;
+        return <Search setShowModal={setShowModal}/>;
       case "wishlist":
         return <Wishlist setShowModal={setShowModal}/>; // Replace with actual Wishlist component
       case "user":
