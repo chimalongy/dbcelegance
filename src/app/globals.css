@@ -32,3 +32,55 @@
   scrollbar-width: none;
 }
 
+
+
+
+
+
+
+
+
+
+/* Phone input custom styles */
+.phone-input-container {
+  position: relative;
+}
+
+.phone-input-container .react-tel-input .form-control {
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  padding: 0.5rem 0 0.5rem 40px;
+  background: transparent;
+  font-size: inherit;
+  font-family: inherit;
+  height: auto;
+  line-height: normal;
+}
+
+.phone-input-container .react-tel-input .flag-dropdown {
+  border: none;
+  background: transparent;
+  border-radius: 0;
+}
+
+.phone-input-container .react-tel-input .selected-flag {
+  padding: 0 0 0 8px;
+  border-radius: 0;
+}
+
+.phone-input-container .react-tel-input .selected-flag:hover, 
+.phone-input-container .react-tel-input .selected-flag:focus {
+  background: transparent;
+}
+
+.phone-input-container .react-tel-input .country-list {
+  border-radius: 0;
+  border: 1px solid #d1d5db;
+  box-shadow: none;
+}
+
+.phone-input-container.focus-within .react-tel-input .form-control {
+  outline: none;
+  box-shadow: none;
+}

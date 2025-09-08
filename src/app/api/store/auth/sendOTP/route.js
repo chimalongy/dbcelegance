@@ -31,6 +31,23 @@ export async function POST(request) {
       );
     }
 
+
+
+  let usercheck = await dbActions.findCustomerByEmail(email)
+
+    if (usercheck.success){
+         return NextResponse.json(
+        { success: false, error: "This email is registered." },
+        { status: 400 }
+      );
+    }
+
+
+
+
+
+
+
     //let registrationOTP = new RegistrationOTP(otp, firstName, duration);
     const registrationOTP = new RegistrationOTP({
   otp: otp,

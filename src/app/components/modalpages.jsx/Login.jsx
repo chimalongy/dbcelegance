@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { FaGoogle, FaFacebook, FaEye, FaEyeSlash } from "react-icons/fa";
+import { FaGoogle, FaFacebook, FaEye, FaEyeSlash, FaArrowRight } from "react-icons/fa";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
@@ -32,115 +32,85 @@ const LoginForm = () => {
   };
 
   return (
-    // <div className="flex flex-col lg:flex-row justify-between w-full max-w-5xl mx-auto p-6 ">
-<div>
-          <h1 className="text-2xl font-bold mb-6">Login</h1>
-      {/* Left side info */}
-      {/* <div className="hidden lg:flex flex-col justify-center w-1/3">
-        <h2 className="text-lg font-semibold text-gray-800">Login</h2>
-        <p className="text-sm text-gray-500 mt-1">To access your account</p>
-      </div> */}
-
-      {/* Right side form */}
-      <div className="w-full lg:w-2/3 max-w-md mx-auto">
-        {/* Social buttons */}
-        {/* <div className="flex flex-col gap-4">
-          <button
-            onClick={() => handleSocialLogin("Google")}
-            className="border px-4 py-2 rounded-md flex items-center justify-center gap-2 text-sm"
-          >
-            <FaGoogle /> Google
-          </button>
-          <button
-            onClick={() => handleSocialLogin("Facebook")}
-            className="border px-4 py-2 rounded-md flex items-center justify-center gap-2 text-sm"
-          >
-            <FaFacebook /> Facebook
-          </button>
-        </div> */}
-
-        {/* Privacy */}
-        {/* <p className="text-center text-xs text-gray-500 mt-4">Privacy statement</p> */}
-
-        {/* Divider */}
-        {/* <div className="flex items-center my-4">
-          <hr className="flex-grow border-gray-300" />
-          <span className="mx-2 text-gray-400 text-sm">Or</span>
-          <hr className="flex-grow border-gray-300" />
-        </div> */}
-
-        {/* Login form */}
-        <form onSubmit={handleLogin} className="space-y-4 mt-36">
-            
-          <div>
-            <label className="text-sm text-gray-700 font-medium">* Email address</label>
-            <input
-              type="email"
-              className="w-full border-b focus:outline-none focus:border-black py-1 text-sm mt-1"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-            />
-          </div>
-
-          <div>
-            <label className="text-sm text-gray-700 font-medium">* Password</label>
-            <div className="flex items-center border-b">
+    <div className="flex pt-16 justify-center">
+      <div className="w-full max-w-md bg-white overflow-hidden">
+        {/* Luxury header section */}
+      
+        
+        <div className="">
+          {/* Social login options - minimal and elegant */}
+        
+        
+          {/* Login form */}
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">Email Address</label>
               <input
-                type={showPassword ? "text" : "password"}
-                className="flex-1 py-1 focus:outline-none text-sm"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                type="email"
+                className="w-full border-b border-gray-300 focus:border-black py-2 focus:outline-none bg-transparent transition-colors"
+                value={email}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  setError("");
+                }}
+                placeholder="Enter your email"
               />
+            </div>
+
+            <div>
+              <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">Password</label>
+              <div className="flex items-center border-b border-gray-300 focus-within:border-black transition-colors">
+                <input
+                  type={showPassword ? "text" : "password"}
+                  className="flex-1 py-2 focus:outline-none bg-transparent"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError("");
+                  }}
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((prev) => !prev)}
+                  className="text-gray-500 hover:text-gray-700 p-2"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                >
+                  {showPassword ? <FaEyeSlash size={14} /> : <FaEye size={14} />}
+                </button>
+              </div>
+            </div>
+
+            <div className="text-right">
               <button
                 type="button"
-                onClick={() => setShowPassword((prev) => !prev)}
-                className="text-gray-500"
+                onClick={() => alert("Redirecting to forgot password...")}
+                className="text-xs text-gray-500 hover:text-gray-700 underline transition-colors"
               >
-                {showPassword ? <FaEyeSlash /> : <FaEye />}
+                Forgot password?
               </button>
             </div>
-          </div>
 
-          <div className="text-right">
+            {error && <p className="text-red-500 text-xs">{error}</p>}
+
             <button
-              type="button"
-              onClick={() => alert("Redirecting to forgot password...")}
-              className="text-sm text-gray-500 underline"
+              type="submit"
+              disabled={!isFormValid}
+              className={`w-full py-3 rounded-sm text-white text-sm font-medium flex items-center justify-center space-x-2 transition-all ${
+                isFormValid 
+                  ? "bg-black hover:bg-gray-800 active:bg-gray-900" 
+                  : "bg-gray-300 cursor-not-allowed"
+              }`}
             >
-              I forgot my password
+              <span>Sign In</span>
+              <FaArrowRight size={12} />
             </button>
-          </div>
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={!isFormValid}
-            className={`w-full py-2 rounded-md text-white text-sm font-medium ${
-              isFormValid ? "bg-black hover:bg-gray-900" : "bg-gray-300 cursor-not-allowed"
-            }`}
-          >
-            Sign in to your account
-          </button>
+          </form>
 
          
-        </form>
-
-        <hr className="my-6" />
-
-        {/* Sign up */}
-        {/* <div className="flex justify-between items-center">
-          <div>
-            <p className="text-sm text-gray-700 font-semibold">Sign up</p>
-            <p className="text-sm text-gray-500">Don't have an account yet?</p>
-          </div>
-          <button
-            onClick={handleCreateAccount}
-            className="bg-gray-900 text-white text-sm px-6 py-2 rounded-md hover:bg-black"
-          >
-            Create an account
-          </button>
-        </div> */}
+        </div>
+        
+      
       </div>
     </div>
   );

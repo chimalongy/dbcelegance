@@ -1,26 +1,41 @@
 "use client"
 import { useState } from 'react'
-import React from 'react'
 import LoginForm from './Login'
 import SignupForm from './Signup'
 
 export default function AccountsPage() {
-  const [showlogin, setshowLogin] = useState(false)
+  const [activeTab, setActiveTab] = useState('login')
+  
   return (
-    <div>
-      <div className='flex'>
-        <div className={`flex-1 text-center border rounded-tl-2xl rounded-bl-2xl p-2 ${showlogin ? " bg-black text-white" : ""}`}
-          onClick={() => { setshowLogin(true) }}
-        >Login</div>
-        <div className={`flex-1 text-center border rounded-tr-2xl rounded-br-2xl p-2 ${!showlogin ? " bg-black text-white" : ""}`}
-          onClick={() => { setshowLogin(false) }}
-        >Register</div>
-
-
+    <div className="max-w-md mx-auto mt-10 bg-white  overflow-hidden">
+      {/* Tab Navigation */}
+      <div className="flex border-b border-gray-200 border-t-0">
+        <button
+          className={`flex-1 py-4 text-center font-light tracking-wide transition-all duration-300 ${
+            activeTab === 'login' 
+              ? "text-black border-b-2 border-black" 
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+          onClick={() => setActiveTab('login')}
+        >
+          LOGIN
+        </button>
+        <button
+          className={`flex-1 py-4 text-center font-light tracking-wide transition-all duration-300 ${
+            activeTab === 'signup' 
+              ? "text-black border-b-2 border-black" 
+              : "text-gray-500 hover:text-gray-700"
+          }`}
+          onClick={() => setActiveTab('signup')}
+        >
+          REGISTER
+        </button>
       </div>
-
-      {showlogin && <LoginForm />}
-      {!showlogin && <SignupForm />}
+      
+      {/* Form Content */}
+      <div className="p-6 md:p-8">
+        {activeTab === 'login' ? <LoginForm /> : <SignupForm />}
+      </div>
     </div>
   )
 }

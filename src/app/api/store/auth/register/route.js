@@ -16,7 +16,7 @@ export async function POST(request) {
       title,
       phone,
       fashionNews,
-      sharePreferences,
+      // sharePreferences,
     } = body;
 
     console.log("📥 Incoming Registration:", body.userData);
@@ -72,7 +72,7 @@ export async function POST(request) {
       title,
       phone,
       fashionNews,
-      sharePreferences,
+      sharePreferences:false,
     });
 
     console.log(registrationResult)

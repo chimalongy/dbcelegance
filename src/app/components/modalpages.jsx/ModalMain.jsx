@@ -80,7 +80,7 @@ const ModalMain = () => {
         </div>
 
         {/* Scrollable Tab Content */}
-        <div className="flex-grow overflow-y-auto p-6 min-h-0 hide-scrollbar">
+        <div className="flex-grow overflow-y-auto  min-h-0 hide-scrollbar">
           {renderActiveTab()}
         </div>
       </div>
