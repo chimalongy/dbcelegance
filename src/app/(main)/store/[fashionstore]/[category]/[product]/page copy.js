@@ -8,21 +8,15 @@ import ModalMain from "@/app/components/modalpages.jsx/ModalMain";
 import { useSelectedProductStore } from "@/app/lib/store/selectedproductstore";
 import { useUserViewedProducts } from "@/app/lib/store/UserViewedProducts";
 import RecentlyViewd from "@/app/components/RecentlyViewd";
-import { useUserCart } from "@/app/lib/store/userCart";
-import { FaTrashAlt } from "react-icons/fa"; // Import the bin icon
 
 const ProductPage = () => {
   const selectedProductMem = useSelectedProductStore(
     (state) => state.selectedproduct
   );
 
-  const addUniqueUserViewedProduct = useUserViewedProducts(
-    (state) => state.addUniqueUserViewedProduct
-  );
+  const addUniqueUserViewedProduct= useUserViewedProducts((state)=>state.addUniqueUserViewedProduct)
 
-  const CartItems = useUserCart((state) => state.usercart);
-  const addToCart = useUserCart((state) => state.addToCart);
-  const removeCartItem = useUserCart((state) => state.removeCartItem);
+
 
   const [selectedProduct, setSelectedProduct] = useState({});
   const {
@@ -38,11 +32,6 @@ const ProductPage = () => {
   const [showMore, setShowMore] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
   const [sizeError, setSizeError] = useState(false);
-
-  // Check if product is already in cart
-  const isProductInCart = CartItems.some(
-    (item) => item.product_id === selectedProduct?.product_id
-  );
 
   // store refs for all videos
   const videoRefs = useRef([]);
@@ -99,6 +88,7 @@ const ProductPage = () => {
   const parsedDescription = parseProductDescription(
     selectedProduct?.product_description
   );
+// console.log(parsedDescription);
 
   const content = {
     description: parsedDescription,
@@ -114,7 +104,7 @@ const ProductPage = () => {
       setSelectedProduct(selectedProductMem);
 
       // insert as recently viewd
-      addUniqueUserViewedProduct(selectedProductMem);
+      addUniqueUserViewedProduct(selectedProductMem)
     }
   }, [selectedProductMem?.product_id]);
 
@@ -163,11 +153,9 @@ const ProductPage = () => {
       setSizeError(true);
       return;
     }
-    addToCart(selectedProduct);
-  };
-
-  const handleRemoveFromCart = () => {
-    removeCartItem(selectedProduct);
+    console.log(
+      `Added to cart: ${selectedProduct?.product_name}, Size ${selectedSize}`
+    );
   };
 
   const renderMedia = (mediaItem, index) => {
@@ -228,6 +216,7 @@ const ProductPage = () => {
 
     return (
       <div className="mt-4">
+        {/* <h4 className="font-medium mb-2">Features:</h4> */}
         <ul className="list-disc pl-5 space-y-1">
           {size_and_fit.map((item, index) => (
             <li key={index}>{item}</li>
@@ -253,7 +242,7 @@ const ProductPage = () => {
     <div className="bg-white">
       <Navbar />
 
-      <div className="pt-[61px] flex flex-col lg:py-24 lg:flex-row lg:px-16 xl:px-32 gap-8 lg:gap-16">
+      <div className="flex flex-col lg:py-24 lg:flex-row lg:px-16 xl:px-32 gap-8 lg:gap-16">
         {/* Media Carousel */}
         <div className="flex-1 flex flex-col items-center lg:sticky lg:top-24 lg:self-start">
           {productMedia.length > 0 && (
@@ -366,94 +355,79 @@ const ProductPage = () => {
         </div>
 
         {/* PRODUCT DETAILS */}
-        <div className="flex flex-col w-full lg:w-[45%] space-y-8 px-6 lg:px-0 justify-end mb-8 lg:sticky lg:top-24 lg:self-start">
+        <div className="flex flex-col w-full lg:w-1/2 space-y-6 px-6 lg:px-0 justify-end mb-6 lg:sticky lg:top-24 lg:self-start">
           <div className="max-w-2xl mx-auto w-full">
-            {/* Product Header */}
-            <div className="border-b border-gray-200 pb-6">
-              <h1 className="text-2xl lg:text-3xl font-light tracking-wide text-gray-900">
-                {selectedProduct.product_name}
-              </h1>
-              <p className="text-xs text-gray-500 mt-2 tracking-wide">
-                REFERENCE:{" "}
-                {selectedSize?.sku ||
-                  (productSizes.length > 0 ? productSizes[0]?.sku : "N/A")}
-              </p>
+            <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight">
+              {selectedProduct.product_name}
+            </h1>
+            <p className="text-xs text-gray-500 mt-1">
+              Reference:{" "}
+              {selectedSize?.sku ||
+                (productSizes.length > 0 ? productSizes[0]?.sku : "N/A")}
+            </p>
 
-              {/* Price Display */}
-              <div className="mt-4 text-xl font-light tracking-wide">
-                $
-                {selectedSize?.price ||
-                  (productSizes.length > 0 ? productSizes[0]?.price : "N/A")}
-              </div>
+            {/* Price Display */}
+            <div className="mt-4 text-lg font-medium">
+              $
+              {selectedSize?.price ||
+                (productSizes.length > 0 ? productSizes[0]?.price : "N/A")}
             </div>
 
             {/* Size Selector */}
-            <div className="mt-8">
-              <div className="flex justify-between items-center mb-3">
-                <label
-                  htmlFor="size"
-                  className="block text-sm font-medium text-gray-700 tracking-wide"
-                >
-                  SELECT SIZE
+            <div className="mt-6">
+              <div className="flex justify-between items-center mb-2">
+                <label htmlFor="size" className="block text-sm font-medium">
+                  Select your size
                 </label>
-                {sizeError && (
-                  <p className="text-xs text-red-600">Please select a size</p>
-                )}
               </div>
               <div className="flex flex-wrap gap-2">
                 {productSizes.map((product_size, index) => (
                   <button
                     key={index}
                     onClick={() => handleSizeSelect(product_size)}
-                    className={`border w-14 h-10 flex items-center justify-center text-sm transition-all duration-200
-              ${
-                selectedSize === product_size
-                  ? "border-black bg-black text-white"
-                  : "border-gray-300 hover:border-gray-600"
-              }`}
+                    className={`border w-14 h-10 flex items-center justify-center text-sm transition-colors
+                      ${
+                        selectedSize === product_size
+                          ? "border-black bg-black text-white"
+                          : "border-gray-300 hover:border-gray-500"
+                      }`}
                   >
                     {product_size.size}
                   </button>
                 ))}
               </div>
+              {sizeError && (
+                <p className="mt-2 text-sm text-red-600">
+                  Please select a size
+                </p>
+              )}
             </div>
 
-            {/* Add to Cart / Remove from Cart */}
+            {/* Add to Cart */}
             <div className="mt-8 space-y-3">
               <button
-                onClick={isProductInCart ? handleRemoveFromCart : handleAddToCart}
-                className={`w-full py-4 rounded-sm transition-colors duration-300 tracking-wide text-sm font-light flex items-center justify-center gap-2 ${
-                  isProductInCart 
-                    ? "bg-gray-600 text-white hover:bg-gray-700" 
-                    : "bg-black text-white hover:bg-gray-800"
-                }`}
+                onClick={handleAddToCart}
+                className="w-full bg-black text-white py-3 rounded hover:bg-gray-800 transition-colors"
               >
-                {isProductInCart ? (
-                  <>
-                    <FaTrashAlt className="text-sm" />
-                    REMOVE FROM CART
-                  </>
-                ) : (
-                  "ADD TO CART"
-                )}
+                Add to cart
               </button>
               <button
-                className="w-full border border-gray-300 text-gray-500 py-4 rounded-sm cursor-not-allowed text-sm tracking-wide font-light"
+                className="w-full border border-gray-300 text-gray-500 py-3 rounded cursor-not-allowed"
                 disabled
               >
-                EXPRESS PAYMENT
+                Express payment
               </button>
             </div>
 
             {/* Product Details Tabs */}
-            <div className="mt-10 text-gray-800 border-t border-gray-200 pt-8">
+            <div className="mt-8 font-sans text-gray-800 border-t border-gray-200 pt-6">
               {/* Tabs for Desktop */}
               <div className="hidden md:flex border-b border-gray-200">
                 {tabs.map((tab) => (
                   <button
                     key={tab.key}
                     onClick={() => setActiveTab(tab.key)}
-                    className={`px-4 py-3 text-xs tracking-wide border-b-2 transition-all ${
+                    className={`px-4 py-3 text-sm border-b-2 transition-all ${
                       activeTab === tab.key
                         ? "border-black font-medium"
                         : "border-transparent text-gray-500 hover:text-gray-800"
@@ -465,10 +439,10 @@ const ProductPage = () => {
               </div>
 
               {/* Content for Desktop */}
-              <div className="hidden md:block py-6">
+              <div className="hidden md:block py-4">
                 {activeTab === "description" && (
                   <div>
-                    <p className="text-sm text-gray-700 mb-4 leading-relaxed whitespace-pre-line">
+                    <p className="text-sm mb-3 whitespace-pre-line">
                       {showMore
                         ? content.description.description
                         : `${content.description.description.substring(
@@ -485,41 +459,35 @@ const ProductPage = () => {
                     {content.description.description.length > 150 && (
                       <button
                         onClick={() => setShowMore(!showMore)}
-                        className="text-xs underline hover:text-gray-600 mt-2 tracking-wide"
+                        className="text-sm underline hover:text-gray-600 mt-2"
                       >
-                        {showMore ? "SHOW LESS" : "READ MORE"}
+                        {showMore ? "Show less" : "Read more"}
                       </button>
                     )}
                   </div>
                 )}
                 {activeTab === "size_and_fit" && <RenderSizeAndFit />}
                 {activeTab === "contact" && (
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {content.contact}
-                  </p>
+                  <p className="text-sm">{content.contact}</p>
                 )}
                 {activeTab === "delivery" && (
-                  <p className="text-sm text-gray-700 leading-relaxed">
-                    {content.delivery}
-                  </p>
+                  <p className="text-sm">{content.delivery}</p>
                 )}
               </div>
 
               {/* Accordion for Mobile */}
               <div className="md:hidden divide-y divide-gray-200">
                 {tabs.map((tab) => (
-                  <div key={tab.key} className="py-5">
+                  <div key={tab.key} className="py-4">
                     <button
                       className="flex justify-between w-full items-center"
                       onClick={() =>
                         setActiveTab(activeTab === tab.key ? "" : tab.key)
                       }
                     >
-                      <h3 className="font-light text-sm tracking-wide text-gray-900">
-                        {tab.label}
-                      </h3>
+                      <h3 className="font-medium text-sm">{tab.label}</h3>
                       <svg
-                        className={`w-4 h-4 text-gray-500 transform transition-transform ${
+                        className={`w-5 h-5 text-gray-500 transform transition-transform ${
                           activeTab === tab.key ? "rotate-180" : ""
                         }`}
                         fill="none"
@@ -535,10 +503,10 @@ const ProductPage = () => {
                       </svg>
                     </button>
                     {activeTab === tab.key && (
-                      <div className="mt-4 text-sm text-gray-700">
+                      <div className="mt-2 text-sm text-gray-700">
                         {tab.key === "description" && (
                           <div>
-                            <p className="mb-4 leading-relaxed whitespace-pre-line">
+                            <p className="mb-2 whitespace-pre-line">
                               {showMore
                                 ? content.description.description
                                 : `${content.description.description.substring(
@@ -557,9 +525,9 @@ const ProductPage = () => {
                             {content.description.description.length > 150 && (
                               <button
                                 onClick={() => setShowMore(!showMore)}
-                                className="text-xs underline hover:text-gray-600 mt-2 tracking-wide"
+                                className="text-sm underline hover:text-gray-600 mt-2"
                               >
-                                {showMore ? "SHOW LESS" : "READ MORE"}
+                                {showMore ? "Show less" : "Read more"}
                               </button>
                             )}
                           </div>
@@ -567,10 +535,10 @@ const ProductPage = () => {
 
                         {tab.key === "size_and_fit" && <RenderSizeAndFit />}
                         {tab.key === "contact" && (
-                          <p className="leading-relaxed">{content.contact}</p>
+                          <p className="text-sm">{content.contact}</p>
                         )}
                         {tab.key === "delivery" && (
-                          <p className="leading-relaxed">{content.delivery}</p>
+                          <p className="text-sm">{content.delivery}</p>
                         )}
                       </div>
                     )}
@@ -583,7 +551,7 @@ const ProductPage = () => {
         {showmodal && <ModalMain />}
       </div>
 
-      <RecentlyViewd />
+      <RecentlyViewd/>
 
       <Footer />
     </div>

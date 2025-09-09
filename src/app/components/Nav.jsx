@@ -104,111 +104,119 @@ export default function Navbar() {
     setMenuOpen(false)
   };
 
+  // Determine text and icon color based on showrightnavoptions
+  const textColorClass = showrightnavoptions ? "text-black" : "text-white";
+  const hoverColorClass = showrightnavoptions ? "hover:text-black/80" : "hover:text-white/80";
+  const hoverBgClass = showrightnavoptions ? "hover:bg-black/10" : "hover:bg-white/10";
+
   return (
-    <nav className={`${showrightnavoptions ? "bg-black/20 " : ""} absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center  z-50 shadow-sm`}>
-      {/* Left - Hamburger */}
-      <div className=' flex ' >
+    <nav className={`absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center z-50 ${showrightnavoptions ? "shadow-b shadow-sm":""}`}> 
+      {/* Left Section - Hamburger & Search */}
+      <div className='flex items-center'>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className="p-2 focus:outline-none focus:ring-2 focus:ring-gray-300 rounded-md"
+          className={`p-2 focus:outline-none focus:ring-2 rounded-md transition-all duration-200 ${hoverBgClass} ${showrightnavoptions ? "focus:ring-black/30" : "focus:ring-white/30"}`}
           aria-label="Toggle menu"
         >
           {menuOpen ? (
-            <IoMdClose className="text-2xl text-white" />
+            <IoMdClose className={`text-xl ${textColorClass}`} />
           ) : (
-            <HiOutlineEquals className="text-2xl text-white" />
+            <HiOutlineEquals className={`text-xl ${textColorClass}`} />
           )}
         </button>
 
         <button
-          className="text-white hover:text-white transition-colors p-1"
+          className={`${textColorClass} ${hoverColorClass} transition-colors p-2 ml-2 rounded-md ${hoverBgClass}`}
           onClick={() => handleIconClick('search')}
         >
-          <CiSearch className=" w-5 h-5 lg:w-7 lg:h-7 text-xl" />
+          <CiSearch className="w-5 h-5" />
         </button>
       </div>
 
-      {/* Center - Logo */}
-      <div className={` mx-auto text-white`}>
-        <DbcEleganceLogo />
+      {/* Center - Logo (Always Centered) */}
+      <div className="absolute left-1/2 transform -translate-x-1/2">
+        <div className={`${textColorClass} ${hoverColorClass}flex flex-row text-xl  gap-3 items-center ${hoverBgClass}`}>
+          
+                <p>DBC ELEGANCE</p>
+              
+            </div>
       </div>
 
       {/* Right - Icons */}
-      {
-        showrightnavoptions &&
-        <div className="flex items-center lg:space-x-4 ml-auto">
+      {showrightnavoptions && (
+        <div className="flex items-center ">
           <button
-            className="text-white hover:text-white transition-colors p-1"
+            className={`${textColorClass} ${hoverColorClass} transition-colors p-2 rounded-md ${hoverBgClass}`}
             onClick={() => handleIconClick('wishlist')}
           >
-            <CiHeart className=" w-5 h-5 lg:w-7 lg:h-7" />
+            <CiHeart className="w-5 h-5" />
           </button>
           <button
-            className="text-white hover:text-white transition-colors p-1"
+            className={`${textColorClass} ${hoverColorClass} transition-colors p-2 rounded-md ${hoverBgClass}`}
             onClick={() => handleIconClick('user')}
           >
-            <CiUser className=" w-5 h-5 lg:w-7 lg:h-7" />
+            <CiUser className="w-5 h-5" />
           </button>
           <button
-            className="text-white hover:text-white transition-colors p-1"
+            className={`${textColorClass} ${hoverColorClass} transition-colors p-2 rounded-md ${hoverBgClass}`}
             onClick={() => handleIconClick('cart')}
           >
-            <CiShoppingCart className=" w-5 h-5 lg:w-7 lg:h-7" />
+            <CiShoppingCart className="w-5 h-5" />
           </button>
         </div>
-      }
+      )}
 
       {/* Mobile Menu */}
       {menuOpen && (
-        <div className="absolute top-full left-0 w-full bg-white shadow-lg z-40 animate-fadeIn ">
-          <ul className="space-y-3 p-5 text-gray-600 ">
-            <li className="py-2 hover:text-gray-900 hover:bg-gray-50 px-3 rounded-md transition-colors">
-              What's New
-            </li>
-            <li className="py-2 hover:text-gray-900 hover:bg-gray-50 px-3 rounded-md transition-colors"
-              onClick={async () => {
-                let result = await fetch_collections("male")
-                if (result) {
-                  console.log(result)
-                  router.push("/store/mensfashion")
-                }
-              }}
-            >
-              Men's Fashion
-            </li>
-            <li className="py-2 hover:text-gray-900 hover:bg-gray-50 px-3 rounded-md transition-colors"
-              onClick={async () => {
-                let result = await fetch_collections("female")
-                if (result) {
-                  console.log(result)
-                  router.push("/store/womensfashion")
-                }
-              }}
-            >
-              Women's Fashion
-            </li>
+        <div className="absolute top-full left-0 w-full bg-white shadow-lg z-40 animate-fadeIn">
+          <div className="p-6">
+            <ul className="space-y-1 text-gray-700">
+              <li className="py-3 px-4 hover:bg-gray-50 rounded-md transition-colors cursor-pointer font-light">
+                What's New
+              </li>
+              <li 
+                className="py-3 px-4 hover:bg-gray-50 rounded-md transition-colors cursor-pointer font-light"
+                onClick={async () => {
+                  let result = await fetch_collections("male")
+                  if (result) {
+                    router.push("/store/mensfashion")
+                  }
+                }}
+              >
+                Men's Fashion
+              </li>
+              <li 
+                className="py-3 px-4 hover:bg-gray-50 rounded-md transition-colors cursor-pointer font-light"
+                onClick={async () => {
+                  let result = await fetch_collections("female")
+                  if (result) {
+                    router.push("/store/womensfashion")
+                  }
+                }}
+              >
+                Women's Fashion
+              </li>
+            </ul>
 
-            <div className="py-3 border-t border-gray-100">
+            <div className="border-t border-gray-100 mt-4 pt-4">
               {/* Collapsible Categories Section */}
               <button
-                className="flex items-center justify-between w-full text-lg font-semibold text-gray-800 mb-3"
+                className="flex items-center justify-between w-full py-3 text-gray-800 font-light text-sm tracking-wide uppercase"
                 onClick={() => setCategoriesOpen(!categoriesOpen)}
               >
-                <span>Categories</span>
-                {categoriesOpen ? <FaChevronUp /> : <FaChevronDown />}
+                <span>CATEGORIES</span>
+                {categoriesOpen ? <FaChevronUp className="text-gray-500" /> : <FaChevronDown className="text-gray-500" />}
               </button>
 
               {categoriesOpen && (
-                <div className="pl-4">
-                  <div className="ml-2 flex flex-col gap-2">
+                <div className="pl-2 mt-2">
+                  <div className="flex flex-col gap-1">
                     {selectedstorecategories && selectedstorecategories.map((category, index) => (
                       <div key={index} className="group">
                         <p
-                          className={`block py-2 px-4 rounded-md transition-all duration-200 
-                          group-hover:bg-gray-50 group-hover:text-gray-900 
-                          group-hover:font-medium text-gray-700 ${category.category_name == userselectedstorecategory.category_name ? "font-bold" : ""}`}
-                          
-                          
+                          className={`block py-2 px-4 rounded-md transition-all duration-200 text-sm
+                            group-hover:bg-gray-50 group-hover:text-gray-900 
+                            ${category.category_name == userselectedstorecategory.category_name ? "font-medium text-gray-900" : "text-gray-600"}`}
                           onClick={() => handleCategoryClick(category)}
                         >
                           {category.category_name}
@@ -221,78 +229,53 @@ export default function Navbar() {
 
               {/* Collapsible Products Section */}
               <button
-                className="flex items-center justify-between w-full text-lg font-semibold text-gray-800 mt-6 mb-3"
+                className="flex items-center justify-between w-full py-3 text-gray-800 font-light text-sm tracking-wide uppercase mt-4"
                 onClick={() => setProductsOpen(!productsOpen)}
               >
-                <span>Products</span>
-                {productsOpen ? <FaChevronUp /> : <FaChevronDown />}
+                <span>PRODUCTS</span>
+                {productsOpen ? <FaChevronUp className="text-gray-500" /> : <FaChevronDown className="text-gray-500" />}
               </button>
 
               {productsOpen && (
-                <div className="pl-4">
-                  <div className="ml-2 flex flex-col gap-2">
-                    {selectedstoreproducts && <div>
-                      {selectedstoreproducts.length > 0 ? (
-                        <div>
-                          {selectedstoreproducts.map((product, index) => (
-                            <div key={index}
-                            
-                            // className="group"
-
-                             className={`block py-2 px-4 rounded-md transition-all duration-200 
-                          group-hover:bg-gray-50 group-hover:text-gray-900 
-                          group-hover:font-medium text-gray-700 `}
-                          
-
-                              onClick={() => {
-                                // console.log(item)
-
-                                // console.log(selectedCategories)
-                                const selected_category = selectedstorecategories.find(
-                                  (category) => String(category.category_id) === String(product.product_category)
-                                );
-                                console.log(selected_category)
-                                if (selected_category) {
-                                  setSelectedProduct(product)
-                                  router.push(
-                                    `/store/${product.product_store === "female" ? "women" : "mens"}/${selected_category.category_name.trim()}/${product.product_name.trim()}`
+                <div className="pl-2 mt-2">
+                  <div className="flex flex-col gap-1">
+                    {selectedstoreproducts && (
+                      <div>
+                        {selectedstoreproducts.length > 0 ? (
+                          <div>
+                            {selectedstoreproducts.map((product, index) => (
+                              <div 
+                                key={index}
+                                className="block py-2 px-4 rounded-md transition-all duration-200 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
+                                onClick={() => {
+                                  const selected_category = selectedstorecategories.find(
+                                    (category) => String(category.category_id) === String(product.product_category)
                                   );
-                                  setShowModal(false)
-                                } else {
-                                  console.warn("No category found for item:", item);
-                                }
-
-
-
-                                // console.log(selected_category)
-
-                                router.push(`/store/${product.product_store == "female" ? "women" : "mens"}/${selected_category.category_name.trim()}/${product.product_name.trim()}`)
-                              }}
-
-
-
-
-
-                           
-
-
-
-                            >
-                              {product.product_name}
-                            </div>
-                          ))}
-                        </div>
-                      ) : (
-                        <div>
-                          <p className='p-6'>No products available</p>
-                        </div>
-                      )}
-                    </div>}
+                                  if (selected_category) {
+                                    setSelectedProduct(product)
+                                    router.push(
+                                      `/store/${product.product_store === "female" ? "women" : "mens"}/${selected_category.category_name.trim()}/${product.product_name.trim()}`
+                                    );
+                                    setShowModal(false)
+                                  }
+                                }}
+                              >
+                                {product.product_name}
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="py-3 px-4 text-gray-500 text-sm">
+                            No products available
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
             </div>
-          </ul>
+          </div>
         </div>
       )}
     </nav>

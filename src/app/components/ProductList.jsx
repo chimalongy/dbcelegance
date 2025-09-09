@@ -27,23 +27,22 @@ const ProductList = ({ gender, products = [], selected_category }) => {
     });
   };
 
- const handleWishlistClick = (product, e) => {
-  e.preventDefault();
-  e.stopPropagation();
+  const handleWishlistClick = (product, e) => {
+    e.preventDefault();
+    e.stopPropagation();
 
-  const inWishlist = isInWishlist(product.product_id);
+    const inWishlist = isInWishlist(product.product_id);
 
-  if (inWishlist) {
-    const updated = wishlist.filter((item) => item.product_id !== product.product_id);
-    setWishList(updated);
-  } else {
-    const updated = [...wishlist, product];
-    setWishList(updated);
-  }
+    if (inWishlist) {
+      const updated = wishlist.filter((item) => item.product_id !== product.product_id);
+      setWishList(updated);
+    } else {
+      const updated = [...wishlist, product];
+      setWishList(updated);
+    }
 
-  console.log(`Product ${product.product_id} wishlist status: ${!inWishlist}`);
-};
-
+    console.log(`Product ${product.product_id} wishlist status: ${!inWishlist}`);
+  };
 
   // ✅ Safe check: wishlist is always array
   const isInWishlist = (productId) => {
@@ -51,61 +50,68 @@ const ProductList = ({ gender, products = [], selected_category }) => {
   };
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="grid grid-cols-2 gap-2 lg:gap-10 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="container mx-auto py-8 ">
+      <div className="grid grid-cols-2 gap-2 md:gap-6 lg:gap-8 sm:grid-cols-2 lg:grid-cols-4">
         {visibleProducts.map((product) => (
           <Link
             href={`/store/${gender}/${selected_category.category_name}/${product.product_name}`}
             key={product.product_id}
             onClick={() => handleProductClick(product)}
+            className="group"
           >
-            <div className="bg-white shadow hover:shadow-lg transition duration-300 overflow-hidden relative">
-              {/* Heart icon for wishlist */}
+            <div className="bg-white overflow-hidden relative transition-all duration-500 group-hover:shadow-xl">
+              {/* Heart icon for wishlist - Reduced size */}
               <div
-                className="absolute top-2 right-2 z-10 p-2 rounded-full shadow-md transition-colors"
+                className="absolute top-3 right-3 z-10 p-2 rounded-full bg-white/80 backdrop-blur-sm transition-all duration-300 group-hover:bg-white"
                 onClick={(e) => handleWishlistClick(product, e)}
                 style={{
-                  backgroundColor: isInWishlist(product.product_id) ? "black" : "white",
+                  color: isInWishlist(product.product_id) ? "black" : "rgba(0,0,0,0.6)",
                 }}
               >
                 <FaHeart
-                  className={isInWishlist(product.product_id) ? "text-white" : "text-black"}
+                  className={`w-3 h-3 ${isInWishlist(product.product_id) ? "text-black" : "text-gray-600"}`}
+                  style={{
+                    fill: isInWishlist(product.product_id) ? "black" : "none",
+                    stroke: isInWishlist(product.product_id) ? "black" : "currentColor",
+                    strokeWidth: isInWishlist(product.product_id) ? "0" : "1.5"
+                  }}
                 />
               </div>
 
               <ImageCarousel product={product} />
 
-              <div className="p-4">
-                <h3 className="text-md font-extralight text-gray-500 mb-2">
+              <div className="p-4 border-t border-gray-100 group-hover:border-gray-200 transition-colors duration-300">
+                <h3 className="text-sm font-light text-gray-700 mb-1 tracking-wide uppercase">
                   {product.product_name}
                 </h3>
+                {/* Price section removed */}
               </div>
             </div>
           </Link>
         ))}
       </div>
 
-      <div className="mt-[160px]">
+      <div className="mt-24">
         {/* Show "See More" button only if there are more products to show */}
         {visibleCount < products.length && (
-          <div className="mt-10 flex justify-center">
+          <div className="flex justify-center">
             <button
               onClick={handleLoadMore}
-              className="px-6 py-3 bg-black text-white rounded-3xl hover:bg-gray-800 transition-colors duration-300"
+              className="px-8 py-3 bg-black text-white text-sm tracking-wide uppercase hover:bg-gray-800 transition-colors duration-300 font-light"
             >
-              See More
+              View More
             </button>
           </div>
         )}
 
         {/* Show disabled button when all products are visible */}
         {visibleCount >= products.length && products.length > 0 && (
-          <div className="mt-10 flex justify-center">
+          <div className="flex justify-center">
             <button
               disabled
-              className="px-6 py-3 bg-gray-300 text-gray-500 rounded-3xl cursor-not-allowed"
+              className="px-8 py-3 bg-gray-100 text-gray-400 text-sm tracking-wide uppercase cursor-not-allowed font-light"
             >
-              See More
+              All Items Displayed
             </button>
           </div>
         )}
@@ -146,27 +152,28 @@ const ImageCarousel = ({ product }) => {
 
   return (
     <div
-      className="relative h-[300px] lg:h-[600px] overflow-hidden"
+      className="relative h-[280px] lg:h-[500px] overflow-hidden bg-gray-50"
       onTouchStart={handleTouchStart}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
       <div
-        className="flex h-full transition-transform duration-300 ease-in-out"
+        className="flex h-full transition-transform duration-500 ease-out"
         style={{ transform: `translateX(-${currentIndex * 100}%)` }}
       >
         {images.length > 0 ? (
           images.map((img, idx) => (
-            <img
-              key={idx}
-              src={img.url}
-              alt={`${product.product_name} - ${idx + 1}`}
-              className="w-full h-full object-cover flex-shrink-0"
-            />
+            <div key={idx} className="w-full h-full flex-shrink-0 relative">
+              <img
+                src={img.url}
+                alt={`${product.product_name} - ${idx + 1}`}
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              />
+            </div>
           ))
         ) : (
-          <div className="w-full h-full bg-gray-200 flex items-center justify-center flex-shrink-0">
-            <span className="text-gray-500">No images available</span>
+          <div className="w-full h-full bg-gray-100 flex items-center justify-center flex-shrink-0">
+            <span className="text-gray-400 text-sm tracking-wide">NO IMAGE AVAILABLE</span>
           </div>
         )}
       </div>

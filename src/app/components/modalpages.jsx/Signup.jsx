@@ -275,7 +275,7 @@ const SignupForm = () => {
     <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
       {/* Login Info */}
       <section>
-        <h2 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-4">Login Information</h2>
+        <h2 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-4 bold">Login Information</h2>
 
         <div className="mb-4">
           <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
@@ -346,7 +346,7 @@ const SignupForm = () => {
 
       {/* Personal Info */}
       <section>
-        <h2 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-4">Personal Information</h2>
+        <h2 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-4 bold">Personal Information</h2>
 
         <div className="mb-4">
           <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">Title</label>
@@ -423,7 +423,7 @@ const SignupForm = () => {
 
       {/* Preferences */}
       <section>
-        <h2 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-4">
+        <h2 className="text-xs font-medium text-gray-700 uppercase tracking-wide mb-4 bold">
           Preferences & Terms
         </h2>
 

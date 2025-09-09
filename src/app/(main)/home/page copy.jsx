@@ -18,30 +18,31 @@ import CategoryLoader from '@/app/components/CategoryLoader';
 
 const categories = [
   {
-    label: "WOMEN'S COLLECTION",
+    label: "Women's Collection",
     image: womensfashionbg,
     link: "/store/womensfashion",
-    color: "from-black/40 to-transparent",
-    icon: <FiShoppingBag className="text-white" size={16} />,
-    actionText: "SHOP NOW",
+    color: "from-gray-900/30 to-gray-800/20",
+    icon: <FiShoppingBag className="text-white" size={18} />,
+    actionText: "Shop Now",
     store_name: "female"
   },
   {
-    label: "MEN'S COLLECTION",
+    label: "Men's Collection",
     image: mensfashionbg,
     link: "/store/mensfashion",
-    color: "from-black/40 to-transparent",
-    icon: <FiShoppingBag className="text-white" size={16} />,
-    actionText: "SHOP NOW",
+    color: "from-gray-900/30 to-gray-800/20",
+    icon: <FiShoppingBag className="text-white" size={18} />,
+    actionText: "Shop Now",
     store_name: "male"
   },
   {
-    label: "DBC CUSTOM PIECE",
+    label: "DBC Custom Piece",
+   
     image: customfashion,
     link: "/store/customfashion",
-    color: "from-black/40 to-transparent",
-    icon: <FiMail className="text-white" size={16} />,
-    actionText: "REQUEST"
+    color: "from-gray-900/30 to-gray-800/20",
+    icon: <FiMail className="text-white" size={18} />,
+    actionText: "Request"
   },
 ];
 
@@ -61,7 +62,6 @@ export default function Home() {
   const setSelectedStoreProducts = useSelectedStoreProducts(
     (state) => state.setSelectedStoreProducts
   );
-  
   async function fetch_collections(category) {
     if (!category.store_name) {
       router.push(category.link);
@@ -69,9 +69,10 @@ export default function Home() {
     }
 
     setLoadingCategory(category.label);
-    let dataloaded = false;
+    let dataloaded =false
 
     try {
+      // fetch categories & products at the same time
       setSelectedStoreCategories([]);
       setSelectedStoreProducts([]);
       const [categoriesRes, productsRes] = await Promise.all([
@@ -81,80 +82,78 @@ export default function Home() {
 
       if (categoriesRes.data.success && productsRes.data.success) {
         setSelectedStoreCategories(categoriesRes.data.data);
-        setSelectedStoreProducts(productsRes.data.data);
-        dataloaded = true;
+         setSelectedStoreProducts(productsRes.data.data);
+         dataloaded=true
       }
+
+      // if (productsRes.data.success) {
+       
+      // }
+
+     
     } catch (error) {
       console.error("Error fetching collections:", error);
     } finally {
       setLoadingCategory(null);
-      if (dataloaded) {
-        router.push(category.link);
+      if(dataloaded){
+         router.push(category.link);
       }
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative bg-black">
+    <div className="min-h-screen flex flex-col relative">
       {/* Simple Loading Overlay */}
       {loadingCategory && (<CategoryLoader/>)}
       
       {/* Main content */}
       <main className="flex-1 flex flex-col lg:flex-row">
-        {/* Brand Header */}
-        <div className='absolute top-6 left-1/2 transform -translate-x-1/2 z-50 text-white text-center'>
-          <h1 className={`${notoSerif.className} text-2xl md:text-3xl font-light tracking-widest`}>
-            DBC ELEGANCE
-          </h1>
-        </div>
-        
+       <div className='absolute fixed flex justify-center text-center z-50 text-white text-3xl mx-auto w-full'>
+         <h1 className={`${notoSerif.className} p-3 font-extrabold`}>DBC ELEGANCE</h1>
+       </div>
         {categories.map((category, index) => (
           <motion.div
             key={index}
-            className="relative flex-1 overflow-hidden group cursor-pointer border-r border-gray-800 last:border-r-0"
+            className="relative flex-1 overflow-hidden group cursor-pointer"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: index * 0.15 }}
+            transition={{ duration: 0.5, delay: index * 0.1 }}
             onClick={() => !loadingCategory && fetch_collections(category)}
           >
             <div className="relative w-full h-full">
               <Image  
                 src={category.image}
                 alt={category.label}
-                className="w-full h-full object-cover transform transition-transform duration-1000 group-hover:scale-110"
+                className="w-full h-full object-cover transform transition-transform duration-700 group-hover:scale-105"
                 placeholder="blur"
-                quality={100}
-                priority={index === 0}
+                quality={90}
               />
-              <div className={`absolute inset-0 bg-gradient-to-t ${category.color} via-transparent to-transparent`}></div>
+              <div className={`absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent`}></div>
             </div>
 
             {/* Content positioned at the bottom */}
-            <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center p-6 text-white z-10">
+            <div className="absolute bottom-0 left-0 right-0 flex flex-col items-center p-6 text-white z-10">
               <motion.h2
-                className="text-xl md:text-2xl font-light mb-3 text-center tracking-wider"
+                className="text-2xl md:text-3xl font-serif font-light mb-2 text-center"
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6, delay: index * 0.3 }}
+                transition={{ duration: 0.5, delay: index * 0.2 }}
               >
                 {category.label}
               </motion.h2>
            
               <motion.div
-                className="flex items-center gap-2 mt-1 group-hover:underline"
+                className="flex items-center gap-2 mt-2 group-hover:underline"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: index * 0.5 }}
+                transition={{ duration: 0.5, delay: index * 0.4 }}
               >
-                <span className="text-xs md:text-sm font-light tracking-widest uppercase border-b border-white/30 pb-1 transition-all duration-300 group-hover:border-white">
+                <span className="text-sm md:text-base font-medium tracking-wide underline">
                   {category.actionText}
                 </span>
-                <FiArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+                {/* <FiArrowRight size={16} className="transition-transform duration-300 group-hover:translate-x-1" /> */}
               </motion.div>
             </div>
-
-            {/* Hover overlay effect */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-500"></div>
           </motion.div>
         ))}
       </main>

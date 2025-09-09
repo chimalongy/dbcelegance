@@ -13,6 +13,8 @@ import Image from 'next/image';
 
 
 export default function CategoryPage() {
+
+
   const userselectedcategory = useUserSelectedCategory(
     (state) => state.userselectedstorecategory
   );
@@ -39,52 +41,40 @@ export default function CategoryPage() {
     }
   }, [userselectedcategory?.category_id, store_products]);
 
+  useEffect(() => {
+    console.log("Updated Category: ", selected_category);
+  }, [selected_category]);
+
+
   const handleScroll = () => {
     const section = document.getElementById('scrollTarget');
     section?.scrollIntoView({ behavior: 'smooth' });
   };
 
   return (
-    <div className="w-full bg-white">
+    <div className="w-full">
       <Navbar />
       <div className="relative">
-        {/* Hero Section */}
-        <div className='lg:pt-30 pt-24 flex flex-col gap-8 mb-8 px-4'>
-          <h1 className='w-full text-center text-3xl lg:text-4xl font-light tracking-wide text-gray-900'>
-            {selected_category?.category_name}
-          </h1>
-          
-          <div className="flex flex-col items-center gap-6">
-            <p className='text-base lg:text-lg text-center lg:w-[50%] w-[90%] text-gray-600 leading-relaxed tracking-wide'>
-              Rooted in heritage, designed for the modern era. Discover the essential collection of shirts and overshirts, 
-              meticulously crafted from the House's archives to become the defining staples of a sophisticated wardrobe.
-            </p>
-            
-            <div className="border-t border-gray-200 w-20"></div>
-            
-            <p className='text-sm lg:text-base text-center text-gray-500 tracking-wide uppercase'>
-              {selected_products?.length || 0} {selected_products?.length === 1 ? "ITEM" : "ITEMS"}
-            </p>
-          </div>
+        {/* Hero Section with Category Image */}
 
-          {/* Scroll Indicator */}
-          {/* <div className="flex justify-center mt-4">
-            <button
-              onClick={handleScroll}
-              className="flex flex-col items-center text-gray-500 hover:text-gray-700 transition-colors duration-300 group"
-              aria-label="Scroll to products"
-            >
-              <span className="text-xs tracking-wide uppercase mb-2">EXPLORE</span>
-              <FaChevronDown className="animate-bounce text-gray-400 group-hover:text-gray-600 transition-colors" />
-            </button>
-          </div> */}
+        <div className='lg:pt-[200px] pt-[150px] flex flex-col gap-6 mb-3'>
+
+          <h1 className='w-full text-center text-2xl'>{selected_category?.category_name}</h1>
+          <p className='text-base lg:text-2xl lg:w-[45%] text-center w-[80%] m-auto text-gray-500'>
+            Rooted in heritage, designed for the modern era. Discover the essential collection of shirts and overshirts, meticulously crafted from the House's archives to become the defining staples of a sophisticated wardrobe.
+          </p>
+          <p className='text-base lg:text-2xl lg:w-[45%] text-center w-[80%] m-auto text-gray-500'>
+           {selected_products && selected_products.length} {selected_products&& selected_products.length ==1?"item":"items"}
+          </p>
         </div>
 
         {/* Content Section */}
         <div
           id="scrollTarget"
-          className="min-h-screen lg:py-10 flex flex-col items-center"
+          className="min-h-screen  py-10 flex flex-col items-center"
         >
+         
+
           {/* Products List */}
           <ProductList
             gender={gender}

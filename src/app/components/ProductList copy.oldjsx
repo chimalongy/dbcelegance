@@ -7,47 +7,51 @@ import { useUserWishList } from "../lib/store/UserWishList";
 
 const ProductList = ({ gender, products = [], selected_category }) => {
   const setSelectedProduct = useSelectedProductStore((state) => state.setSelectedProduct);
-
-  // ✅ Ensure wishlist is always an array
-  const wishlist = useUserWishList((state) => state.userwishlist) || [];
-  const setWishList = useUserWishList((state) => state.setWishList);
-
-  const itemsPerLoad = 8; 
+  const wishlist = useUserWishList((state)=>state.userwishlist)
+  const setWishList = useUserWishList((state)=>state.setWishList)
+  const itemsPerLoad = 8; // Number of products to load each time
   const [visibleCount, setVisibleCount] = useState(itemsPerLoad);
 
+
+  // Get the currently visible products
   const visibleProducts = products.slice(0, visibleCount);
 
   const handleLoadMore = () => {
-    setVisibleCount((prevCount) => prevCount + itemsPerLoad);
+    setVisibleCount(prevCount => prevCount + itemsPerLoad);
   };
 
   const handleProductClick = (product) => {
+    // Ensure we're storing the complete product data
     setSelectedProduct({
-      ...product,
+      ...product
     });
   };
 
- const handleWishlistClick = (product, e) => {
-  e.preventDefault();
-  e.stopPropagation();
+  const handleWishlistClick = (product, e) => {
+    e.preventDefault(); // Prevent navigation when clicking the heart
+    e.stopPropagation(); // Prevent event bubbling
 
-  const inWishlist = isInWishlist(product.product_id);
+    
+    
+    // Check if product is already in wishlist
+    const isInWishlist = wishlist && wishlist?.some(item => item.product_id === product.product_id);
+    
+    if (isInWishlist) {
+      // Remove from wishlist
+      setWishList(prev => prev.filter(item => item.product_id !== product.product_id));
+    } else {
+      // Add to wishlist
+      setWishList(prev => [...prev, product]);
+    }
+    
+    // Here you would typically make an API call to update wishlist on the server
+    console.log(`Product ${product.product_id} wishlist status: ${!isInWishlist}`);
 
-  if (inWishlist) {
-    const updated = wishlist.filter((item) => item.product_id !== product.product_id);
-    setWishList(updated);
-  } else {
-    const updated = [...wishlist, product];
-    setWishList(updated);
-  }
+  };
 
-  console.log(`Product ${product.product_id} wishlist status: ${!inWishlist}`);
-};
-
-
-  // ✅ Safe check: wishlist is always array
+  // Check if a product is in the wishlist
   const isInWishlist = (productId) => {
-    return wishlist.some((item) => item.product_id === productId);
+    return wishlist.some(item => item.product_id === productId);
   };
 
   return (
@@ -61,15 +65,15 @@ const ProductList = ({ gender, products = [], selected_category }) => {
           >
             <div className="bg-white shadow hover:shadow-lg transition duration-300 overflow-hidden relative">
               {/* Heart icon for wishlist */}
-              <div
+              <div 
                 className="absolute top-2 right-2 z-10 p-2 rounded-full shadow-md transition-colors"
                 onClick={(e) => handleWishlistClick(product, e)}
                 style={{
-                  backgroundColor: isInWishlist(product.product_id) ? "black" : "white",
+                  backgroundColor: isInWishlist(product.product_id) ? 'black' : 'white'
                 }}
               >
-                <FaHeart
-                  className={isInWishlist(product.product_id) ? "text-white" : "text-black"}
+                <FaHeart 
+                  className={isInWishlist(product.product_id) ? "text-white" : "text-black"} 
                 />
               </div>
 
@@ -79,37 +83,38 @@ const ProductList = ({ gender, products = [], selected_category }) => {
                 <h3 className="text-md font-extralight text-gray-500 mb-2">
                   {product.product_name}
                 </h3>
+
               </div>
             </div>
           </Link>
         ))}
       </div>
 
-      <div className="mt-[160px]">
+    <div className="mt-[160px]">
         {/* Show "See More" button only if there are more products to show */}
-        {visibleCount < products.length && (
-          <div className="mt-10 flex justify-center">
-            <button
-              onClick={handleLoadMore}
-              className="px-6 py-3 bg-black text-white rounded-3xl hover:bg-gray-800 transition-colors duration-300"
-            >
-              See More
-            </button>
-          </div>
-        )}
+      {visibleCount < products.length && (
+        <div className="mt-10 flex justify-center">
+          <button
+            onClick={handleLoadMore}
+            className="px-6 py-3 bg-black text-white rounded-3xl hover:bg-gray-800 transition-colors duration-300"
+          >
+            See More
+          </button>
+        </div>
+      )}
 
-        {/* Show disabled button when all products are visible */}
-        {visibleCount >= products.length && products.length > 0 && (
-          <div className="mt-10 flex justify-center">
-            <button
-              disabled
-              className="px-6 py-3 bg-gray-300 text-gray-500 rounded-3xl cursor-not-allowed"
-            >
-              See More
-            </button>
-          </div>
-        )}
-      </div>
+      {/* Show disabled button when all products are visible */}
+      {visibleCount >= products.length && products.length > 0 && (
+        <div className="mt-10 flex justify-center">
+          <button
+            disabled
+            className="px-6 py-3 bg-gray-300 text-gray-500 rounded-3xl cursor-not-allowed"
+          >
+            See More
+          </button>
+        </div>
+      )}
+    </div>
     </div>
   );
 };
@@ -119,6 +124,7 @@ const ImageCarousel = ({ product }) => {
   const startX = useRef(0);
   const currentX = useRef(0);
 
+  // Safely handle product_gallery being undefined
   const images = (product.product_gallery || [])
     .filter((media) => media?.type === "image")
     .slice(0, 3);
@@ -133,14 +139,14 @@ const ImageCarousel = ({ product }) => {
 
   const handleTouchEnd = () => {
     if (images.length <= 1) return;
-
+    
     const diff = startX.current - currentX.current;
-    const threshold = window.innerWidth * 0.2;
+    const threshold = window.innerWidth * 0.2; // 20% swipe threshold
 
     if (diff > threshold && currentIndex < images.length - 1) {
-      setCurrentIndex((prev) => prev + 1);
+      setCurrentIndex((prev) => prev + 1); // Next
     } else if (diff < -threshold && currentIndex > 0) {
-      setCurrentIndex((prev) => prev - 1);
+      setCurrentIndex((prev) => prev - 1); // Prev
     }
   };
 
