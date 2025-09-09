@@ -17,6 +17,8 @@ import { apiSummary } from '../lib/apiSummary';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { useSelectedProductStore } from '../lib/store/selectedproductstore';
 import { Playfair_Display } from 'next/font/google';
+import { useUserCart } from '../lib/store/userCart';
+
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -24,6 +26,7 @@ const playfair = Playfair_Display({
 });
 
 export default function Navbar() {
+  
   const setSelectedStoreCategories = useSelectedStoreCategories(
     (state) => state.setSelectedStoreCategories
   );
@@ -38,6 +41,7 @@ export default function Navbar() {
   const selectedstoreproducts = useSelectedStoreProducts(
     (state) => state.selectedstoreproducts
   );
+  let usercart = useUserCart((state) => state.usercart)
 
   let setUserSelectedStoreCategory = useUserSelectedCategory((state) => state.setUserSelectedStoreCategory)
   let userselectedstorecategory = useUserSelectedCategory((state) => state.userselectedstorecategory)
@@ -116,7 +120,7 @@ export default function Navbar() {
   const hoverBgClass = showrightnavoptions ? "hover:bg-black/10" : "hover:bg-white/10";
 
   return (
-    <nav className={`absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center z-50 ${showrightnavoptions ? "shadow-b shadow-sm" : ""}`}>
+    <nav className={`absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center z-50 `}>
       {/* Left Section - Hamburger & Search */}
       <div className='flex items-center'>
         <button
@@ -165,12 +169,23 @@ export default function Navbar() {
           >
             <CiUser size={28} />
           </button>
+
           <button
-            className={`${textColorClass} ${hoverColorClass} transition-colors p-1 rounded-md ${hoverBgClass}`}
-            onClick={() => handleIconClick('cart')}
+            className={`${textColorClass} ${hoverColorClass} transition-colors p-1 rounded-md ${hoverBgClass} relative`}
+            onClick={() => {
+               router.push("/couture/shopping-cart")
+              setShowModal(false)
+            }}
           >
             <CiShoppingCart size={28} />
+
+            {usercart?.length > 0 && (
+              <span className="absolute -bottom-1 -right-1 bg-black text-white text-xs w-5 h-5 flex items-center justify-center rounded-full shadow-md">
+                {usercart.length}
+              </span>
+            )}
           </button>
+
         </div>
       )}
 
@@ -179,7 +194,7 @@ export default function Navbar() {
         <div className="absolute top-full left-0 w-full bg-white shadow-lg z-40 animate-fadeIn">
           <div className="p-6">
             <ul className="space-y-1 text-gray-700">
-              <li className="py-3 px-4 hover:bg-gray-50 rounded-md transition-colors cursor-pointer font-light">
+              <li className="py-3 px-4 hover:bg-gray-50 rounded-md transition-colors cursor-pointer font-light" onClick={() => { console.log(usercart.length) }}>
                 What's New
               </li>
               <li

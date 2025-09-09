@@ -40,9 +40,18 @@ const ProductPage = () => {
   const [sizeError, setSizeError] = useState(false);
 
   // Check if product is already in cart
-  const isProductInCart = CartItems.some(
-    (item) => item.product_id === selectedProduct?.product_id
-  );
+  // const isProductInCart = CartItems.some(
+  //   (item) => item.product_id === selectedProduct?.product_id
+  // );
+
+const isProductInCart = CartItems.some(
+  (item) =>
+    item.product_id === selectedProduct?.product_id &&
+    item.selected_sizes?.some(
+      (s) => s.selected_size === selectedSize?.size
+    )
+);
+
 
   // store refs for all videos
   const videoRefs = useRef([]);
@@ -158,18 +167,38 @@ const ProductPage = () => {
     setSizeError(false);
   };
 
-  const handleAddToCart = () => {
-    if (!selectedSize) {
-      setSizeError(true);
-      return;
-    }
-    addToCart(selectedProduct);
+ const handleAddToCart = () => {
+  if (!selectedSize) {
+    setSizeError(true);
+    return;
+  }
+
+  // build a new product object with selected size
+  const productToAdd = {
+    ...selectedProduct,
+    selected_sizes: [
+      {
+        selected_size: selectedSize.size,
+        quantity: 1,
+      },
+    ],
   };
 
-  const handleRemoveFromCart = () => {
-    removeCartItem(selectedProduct);
-  };
+  // only add if same product + same size does NOT already exist
+  if (!isProductInCart) {
+    addToCart(productToAdd);
+  }
+};
 
+const handleRemoveFromCart = () => {
+  if (!selectedSize) return;
+
+  // remove only the matching product+size
+  removeCartItem({
+    ...selectedProduct,
+    selected_sizes: [{ selected_size: selectedSize.size }],
+  });
+};
   const renderMedia = (mediaItem, index) => {
     if (mediaItem.type === "video") {
       return (

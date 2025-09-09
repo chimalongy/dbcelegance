@@ -1,23 +1,27 @@
 "use client";
 
-import React, { useState } from 'react';
+import React from 'react';
 import { CiSearch, CiHeart, CiUser, CiShoppingCart, CiCircleMinus } from 'react-icons/ci';
 import Search from './Search';
 import AccountsPage from './AccountsPage';
 import { useNavStore } from '@/app/lib/store/navmodalstore';
 import Wishlist from './WishList';
+import { useUserCart } from '@/app/lib/store/userCart';
+import { useRouter } from 'next/navigation';
 
 const ModalMain = () => {
-   const { selectednavtab, setSelectedNavTab, clearSelectedNavTab, showmodal, setShowModal } = useNavStore();
+  let router= useRouter()
+  const { selectednavtab, setSelectedNavTab, clearSelectedNavTab, showmodal, setShowModal } = useNavStore();
+  const usercart = useUserCart((state) => state.usercart);
 
   if (!showmodal) return null;
 
   function renderActiveTab() {
     switch (selectednavtab) {
       case "search":
-        return <Search setShowModal={setShowModal}/>;
+        return <Search setShowModal={setShowModal} />;
       case "wishlist":
-        return <Wishlist setShowModal={setShowModal}/>;
+        return <Wishlist setShowModal={setShowModal} />;
       case "user":
         return <AccountsPage />;
       case "cart":
@@ -28,15 +32,7 @@ const ModalMain = () => {
   }
 
   return (
-    // <div className="fixed inset-0 h-screen bg-black/30 backdrop-blur-sm flex lg:justify-end p-3 z-50">
     <div className="fixed inset-0 h-screen bg-gray-300/40 backdrop-blur-md flex lg:justify-end p-3 z-50">
-      {/* <div
-        className="w-full lg:w-[45%] xl:w-[40%] bg-white rounded-none shadow-lg flex flex-col h-[95vh] mt-auto"
-        style={{
-          animation: 'slide-in-right 0.4s ease-out',
-        }}
-      > */}
-
       <div
         className="w-full lg:w-[50%] bg-white rounded shadow-lg flex flex-col"
         style={{
@@ -69,15 +65,32 @@ const ModalMain = () => {
               ].map(({ name, icon }) => (
                 <button
                   key={name}
-                  onClick={() => setSelectedNavTab(name)}
+                  onClick={() => 
+                    {if (name!=="cart"){
+                      setSelectedNavTab(name)
+                    }
+                    else{
+                     
+                         router.push("/couture/shopping-cart")
+                          setShowModal(false)
+                    }
+                  }
+                  }
                   aria-label={name}
-                  className={`flex justify-center items-center h-10 w-10 transition-all duration-200 ${
-                    selectednavtab === name 
-                      ? 'border-b-2 border-black text-black' 
+                  className={`relative flex justify-center items-center h-10 w-10 transition-all duration-200 ${
+                    selectednavtab === name
+                      ? 'border-b-2 border-black text-black'
                       : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   <span className="text-2xl">{icon}</span>
+
+                  {/* Show badge only on cart */}
+                  {name === 'cart' && usercart?.length > 0 && (
+                    <span className="absolute -bottom-0.5 -right-1 bg-black text-white text-xs w-5 h-5 flex items-center justify-center rounded-full shadow-md">
+                      {usercart.length}
+                    </span>
+                  )}
                 </button>
               ))}
             </div>
