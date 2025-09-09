@@ -16,6 +16,12 @@ import axios from 'axios';
 import { apiSummary } from '../lib/apiSummary';
 import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { useSelectedProductStore } from '../lib/store/selectedproductstore';
+import { Playfair_Display } from 'next/font/google';
+
+const playfair = Playfair_Display({
+  subsets: ['latin'],
+  weight: ['400', '700'], // choose weights you need
+});
 
 export default function Navbar() {
   const setSelectedStoreCategories = useSelectedStoreCategories(
@@ -110,58 +116,60 @@ export default function Navbar() {
   const hoverBgClass = showrightnavoptions ? "hover:bg-black/10" : "hover:bg-white/10";
 
   return (
-    <nav className={`absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center z-50 ${showrightnavoptions ? "shadow-b shadow-sm":""}`}> 
+    <nav className={`absolute w-full px-4 py-3 md:px-6 md:py-4 flex justify-between items-center z-50 ${showrightnavoptions ? "shadow-b shadow-sm" : ""}`}>
       {/* Left Section - Hamburger & Search */}
       <div className='flex items-center'>
         <button
           onClick={() => setMenuOpen(!menuOpen)}
-          className={`p-2 focus:outline-none focus:ring-2 rounded-md transition-all duration-200 ${hoverBgClass} ${showrightnavoptions ? "focus:ring-black/30" : "focus:ring-white/30"}`}
+          className={` focus:outline-none focus:ring-2 rounded-md transition-all duration-200 ${hoverBgClass} ${showrightnavoptions ? "focus:ring-black/30" : "focus:ring-white/30"}`}
           aria-label="Toggle menu"
         >
           {menuOpen ? (
-            <IoMdClose className={`text-xl ${textColorClass}`} />
+            <IoMdClose size={28} className={`text-xl  ${textColorClass}`} />
           ) : (
-            <HiOutlineEquals className={`text-xl ${textColorClass}`} />
+            <HiOutlineEquals size={28} className={`text-xl ${textColorClass}`} />
           )}
         </button>
 
         <button
-          className={`${textColorClass} ${hoverColorClass} transition-colors p-2 ml-2 rounded-md ${hoverBgClass}`}
+          className={`${textColorClass} ${hoverColorClass} transition-colors ml-2 rounded-md ${hoverBgClass}`}
           onClick={() => handleIconClick('search')}
         >
-          <CiSearch className="w-5 h-5" />
+          <CiSearch size={28} />
         </button>
       </div>
 
       {/* Center - Logo (Always Centered) */}
       <div className="absolute left-1/2 transform -translate-x-1/2">
         <div className={`${textColorClass} ${hoverColorClass}flex flex-row text-xl  gap-3 items-center ${hoverBgClass}`}>
-          
-                <p>DBC ELEGANCE</p>
-              
-            </div>
+
+          <p className={`${showrightnavoptions ? "text-lg font-bold" : "text-xl"} ${playfair.className}`}>
+            DBC ELEGANCE
+          </p>
+
+        </div>
       </div>
 
       {/* Right - Icons */}
       {showrightnavoptions && (
         <div className="flex items-center ">
           <button
-            className={`${textColorClass} ${hoverColorClass} transition-colors p-2 rounded-md ${hoverBgClass}`}
+            className={`${textColorClass} ${hoverColorClass} transition-colors p-1 rounded-md ${hoverBgClass}`}
             onClick={() => handleIconClick('wishlist')}
           >
-            <CiHeart className="w-5 h-5" />
+            <CiHeart size={28} />
           </button>
           <button
-            className={`${textColorClass} ${hoverColorClass} transition-colors p-2 rounded-md ${hoverBgClass}`}
+            className={`${textColorClass} ${hoverColorClass} transition-colors p-1 rounded-md ${hoverBgClass}`}
             onClick={() => handleIconClick('user')}
           >
-            <CiUser className="w-5 h-5" />
+            <CiUser size={28} />
           </button>
           <button
-            className={`${textColorClass} ${hoverColorClass} transition-colors p-2 rounded-md ${hoverBgClass}`}
+            className={`${textColorClass} ${hoverColorClass} transition-colors p-1 rounded-md ${hoverBgClass}`}
             onClick={() => handleIconClick('cart')}
           >
-            <CiShoppingCart className="w-5 h-5" />
+            <CiShoppingCart size={28} />
           </button>
         </div>
       )}
@@ -174,7 +182,7 @@ export default function Navbar() {
               <li className="py-3 px-4 hover:bg-gray-50 rounded-md transition-colors cursor-pointer font-light">
                 What's New
               </li>
-              <li 
+              <li
                 className="py-3 px-4 hover:bg-gray-50 rounded-md transition-colors cursor-pointer font-light"
                 onClick={async () => {
                   let result = await fetch_collections("male")
@@ -185,7 +193,7 @@ export default function Navbar() {
               >
                 Men's Fashion
               </li>
-              <li 
+              <li
                 className="py-3 px-4 hover:bg-gray-50 rounded-md transition-colors cursor-pointer font-light"
                 onClick={async () => {
                   let result = await fetch_collections("female")
@@ -244,7 +252,7 @@ export default function Navbar() {
                         {selectedstoreproducts.length > 0 ? (
                           <div>
                             {selectedstoreproducts.map((product, index) => (
-                              <div 
+                              <div
                                 key={index}
                                 className="block py-2 px-4 rounded-md transition-all duration-200 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
                                 onClick={() => {
