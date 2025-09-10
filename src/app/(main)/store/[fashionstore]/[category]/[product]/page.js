@@ -38,20 +38,18 @@ const ProductPage = () => {
   const [showMore, setShowMore] = useState(false);
   const [selectedSize, setSelectedSize] = useState(null);
   const [sizeError, setSizeError] = useState(false);
+  const [canAddProduct, setCanAddProduct] = useState(false);
 
   // Check if product is already in cart
   // const isProductInCart = CartItems.some(
   //   (item) => item.product_id === selectedProduct?.product_id
   // );
 
-const isProductInCart = CartItems.some(
-  (item) =>
-    item.product_id === selectedProduct?.product_id &&
-    item.selected_sizes?.some(
-      (s) => s.selected_size === selectedSize?.size
-    )
-);
-
+  const isProductInCart = CartItems.some(
+    (item) =>
+      item.product_id === selectedProduct?.product_id &&
+      item.selected_size?.user_selected_size === selectedSize?.size
+  );
 
   // store refs for all videos
   const videoRefs = useRef([]);
@@ -163,42 +161,51 @@ const isProductInCart = CartItems.some(
   };
 
   const handleSizeSelect = (size) => {
+    let previous_size = selectedSize;
     setSelectedSize(size);
+
     setSizeError(false);
   };
 
- const handleAddToCart = () => {
-  if (!selectedSize) {
-    setSizeError(true);
-    return;
-  }
+  const handleAddToCart = () => {
+    if (!selectedSize) {
+      setSizeError(true);
+      return;
+    }
 
-  // build a new product object with selected size
-  const productToAdd = {
-    ...selectedProduct,
-    selected_sizes: [
-      {
-        selected_size: selectedSize.size,
+    // build a new product object with selected size
+    const productToAdd = {
+      ...selectedProduct,
+      selected_size: {
+        user_selected_size: selectedSize.size,
         quantity: 1,
       },
-    ],
+    };
+
+    // only add if same product + same size does NOT already exist
+    if (!isProductInCart) {
+      addToCart(productToAdd);
+    }
   };
 
-  // only add if same product + same size does NOT already exist
-  if (!isProductInCart) {
-    addToCart(productToAdd);
-  }
-};
+  const handleRemoveFromCart = () => {
+    if (!selectedSize) return;
 
-const handleRemoveFromCart = () => {
-  if (!selectedSize) return;
+    // remove only the matching product+size
 
-  // remove only the matching product+size
-  removeCartItem({
-    ...selectedProduct,
-    selected_sizes: [{ selected_size: selectedSize.size }],
-  });
-};
+    let item_to_delete = CartItems.find(
+      (item) =>
+        item.product_id === selectedProduct.product_id &&
+        item.selected_size.user_selected_size === selectedSize.size
+    );
+
+    console.log("deleting");
+    console.log(item_to_delete,selectedSize);
+
+    removeCartItem(
+      item_to_delete,
+    );
+  };
   const renderMedia = (mediaItem, index) => {
     if (mediaItem.type === "video") {
       return (
@@ -450,10 +457,12 @@ const handleRemoveFromCart = () => {
             {/* Add to Cart / Remove from Cart */}
             <div className="mt-8 space-y-3">
               <button
-                onClick={isProductInCart ? handleRemoveFromCart : handleAddToCart}
+                onClick={
+                  isProductInCart ? handleRemoveFromCart : handleAddToCart
+                }
                 className={`w-full py-4 rounded-sm transition-colors duration-300 tracking-wide text-sm font-light flex items-center justify-center gap-2 ${
-                  isProductInCart 
-                    ? "bg-gray-600 text-white hover:bg-gray-700" 
+                  isProductInCart
+                    ? "bg-gray-600 text-white hover:bg-gray-700"
                     : "bg-black text-white hover:bg-gray-800"
                 }`}
               >

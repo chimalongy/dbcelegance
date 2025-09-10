@@ -36,18 +36,19 @@ export const useUserCart = create(
           };
         }),
 
-       // ✅ Update product's quantity (and size if needed)
-      updateCartItem: (productId, userSelectedSize, update) =>
+      // ✅ Update product's size or quantity
+      updateCartItem: (productId, update) =>
         set((state) => ({
           usercart: state.usercart.map((item) =>
-            item.product_id === productId &&
-            item.selected_size.user_selected_size === userSelectedSize
+            item.product_id === productId
               ? {
                   ...item,
-                  selected_size: {
-                    ...item.selected_size,
-                    quantity: update.quantity,
-                  },
+                  selected_sizes: [
+                    {
+                      selected_size: update.selected_size,
+                      quantity: update.quantity,
+                    },
+                  ],
                 }
               : item
           ),
