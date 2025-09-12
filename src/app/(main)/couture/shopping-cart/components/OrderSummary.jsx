@@ -12,8 +12,8 @@ const OrderSummary = ({ products, removeCartItem, updateCartItem }) => {
 
     return (
         <div className="p-6">
-            <div className="flex items-center justify-between py-8">
-                <h2 className="lg:text-xl text-lg font-semibold tracking-wide">Order Summary</h2>
+            <div className="flex items-center justify-between py-4">
+                <h2 className="lg:text-xl text-lg tracking-wide">Order Summary</h2>
                 <p className="text-gray-500 text-sm uppercase tracking-wide">{products.length} products</p>
             </div>
 
@@ -32,7 +32,7 @@ const OrderSummary = ({ products, removeCartItem, updateCartItem }) => {
                     const totalPrice = price * quantity;
 
                     return (
-                        <div key={index} className="flex md:flex-row gap-2 py-6">
+                        <div key={index} className="flex md:flex-row gap-2 ">
                             {/* Product Image */}
                             <div className="w-[40%] lg:w-[30%] lg:h-[350px]">
                                 <img

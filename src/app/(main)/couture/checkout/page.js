@@ -3,44 +3,45 @@ import React, { useMemo, useState } from 'react';
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import { useRouter } from 'next/navigation';
 import { useUserCart } from '@/app/lib/store/userCart';
-import OrderSummary from './components/OrderSummary';
-import PackagingGifting from './components/Packaging';
+//import OrderSummary from './components/OrderSummary';
+//import PackagingGifting from './components/Packaging';
 import { FiChevronDown } from "react-icons/fi";
 
 import { RiSecurePaymentLine } from "react-icons/ri";
 import { MdOutlineContactSupport } from "react-icons/md";
 import { CiDeliveryTruck } from "react-icons/ci";
 import { MdOutlineCalendarToday } from "react-icons/md";
-import AddMessageModal from './components/AddMessageModal';
+import LoginOptions from './components/AuthOptions';
+//import AddMessageModal from './components/AddMessageModal';
 
-const ShoppingCart = () => {
-  const usercart = useUserCart((state) => state.usercart);
-  const removeCartItem = useUserCart((state) => state.removeCartItem);
-  const updateCartItem = useUserCart((state) => state.updateCartItem);
-  const router = useRouter();
-  const [showAddMessageModal, setShowAddMessageModal] = useState(false);
-  const [packageMessage, setpackageMessage] = useState("");
+const CheckOut = () => {
+  // const usercart = useUserCart((state) => state.usercart);
+  // const removeCartItem = useUserCart((state) => state.removeCartItem);
+  // const updateCartItem = useUserCart((state) => state.updateCartItem);
+   const router = useRouter();
+  // const [showAddMessageModal, setShowAddMessageModal] = useState(false);
+  // const [packageMessage, setpackageMessage] = useState("");
 
   // ✅ Calculate subtotal dynamically
-  const subtotal = useMemo(() => {
-    return usercart.reduce((total, product) => {
-      const size = product.selected_size;
-      const price = parseFloat(
-        product.product_sizes.find(
-          (s) => s.size === size?.user_selected_size
-        )?.price || 0
-      );
-      return total + price * (size?.quantity || 1);
-    }, 0);
-  }, [usercart]);
+  // const subtotal = useMemo(() => {
+  //   return usercart.reduce((total, product) => {
+  //     const size = product.selected_size;
+  //     const price = parseFloat(
+  //       product.product_sizes.find(
+  //         (s) => s.size === size?.user_selected_size
+  //       )?.price || 0
+  //     );
+  //     return total + price * (size?.quantity || 1);
+  //   }, 0);
+  // }, [usercart]);
 
-  const total = subtotal;
+  // const total = subtotal;
 
-  const formatPrice = (price) =>
-    new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price);
+  // const formatPrice = (price) =>
+  //   new Intl.NumberFormat("en-US", {
+  //     minimumFractionDigits: 2,
+  //     maximumFractionDigits: 2,
+  //   }).format(price);
 
   const AccordionItem = ({ title, children, defaultOpen = false }) => {
     const [open, setOpen] = useState(defaultOpen);
@@ -78,16 +79,7 @@ const ShoppingCart = () => {
       <div className="flex flex-col lg:flex-row flex-1 bg-gray-50 pt-[30px] lg:pt-[85px] overflow-y-auto hide-scrollbar">
         {/* Left Section */}
         <div className="flex-2 hide-scrollbar w-full lg:px-[150px] lg:overflow-y-auto lg:h-[calc(100vh-80px)]">
-          <OrderSummary
-            products={usercart}
-            removeCartItem={removeCartItem}
-            updateCartItem={updateCartItem}
-          />
-          <PackagingGifting
-            packageMessage={packageMessage}
-            setpackageMessage={setpackageMessage}
-            setShowAddMessageModal={setShowAddMessageModal}
-          />
+          <LoginOptions/>
         </div>
 
         {/* Right Section */}
@@ -98,7 +90,7 @@ const ShoppingCart = () => {
               <h2 className="text-xl font-semibold tracking-wide">Total</h2>
               <div className="flex justify-between text-gray-700">
                 <span className="text-sm uppercase tracking-wide">Subtotal</span>
-                <span className="font-medium">${formatPrice(subtotal)}</span>
+                {/* <span className="font-medium">${formatPrice(subtotal)}</span> */}
               </div>
             </div>
 
@@ -110,7 +102,7 @@ const ShoppingCart = () => {
                          lg:static lg:w-full"
             >
               Continue to checkout
-              <span className="ml-2">${formatPrice(total)}</span>
+              {/* <span className="ml-2">${formatPrice(total)}</span> */}
             </button>
 
             {/* Terms */}
@@ -186,19 +178,20 @@ const ShoppingCart = () => {
                 For any questions or immediate changes, please contact DBC ELEGANCE Customer Care.
               </p>
             </AccordionItem>
+         
           </div>
         </div>
       </div>
 
-      {showAddMessageModal && (
+      {/* {showAddMessageModal && (
         <AddMessageModal
           setShowAddMessageModal={setShowAddMessageModal}
           packageMessage={packageMessage}
           setpackageMessage={setpackageMessage}
         />
-      )}
+      )} */}
     </div>
   );
 };
 
-export default ShoppingCart;
+export default CheckOut;

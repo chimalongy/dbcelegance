@@ -19,9 +19,9 @@ const PackagingOptions = ({packageMessage, setpackageMessage,setShowAddMessageMo
     return (
         <div className="p-6">
             {/* Packaging Header */}
-            <div className="flex items-center justify-between py-8">
-                <h2 className="lg:text-xl text-lg font-semibold tracking-wide">Packaging & Gifting</h2>
-                <p className="text-gray-500 text-sm uppercase tracking-wide">Complimentary options</p>
+            <div className="flex items-center justify-between py-4">
+                <h2 className="lg:text-xl text-lg  tracking-wide">Packaging & Gifting</h2>
+                <p className="text-gray-500 text-sm ">Complimentary options</p>
             </div>
 
             {/* Packaging Images */}
@@ -47,9 +47,9 @@ const PackagingOptions = ({packageMessage, setpackageMessage,setShowAddMessageMo
                         className="mt-1 h-4 w-4 text-black border-gray-300 focus:ring-black"
                     />
                     <div>
-                        <p className="font-medium text-gray-800 text-sm uppercase tracking-wide">Signature Packaging</p>
+                        <p className="font-medium text-gray-800  uppercase tracking-wide">Signature Packaging</p>
                         {selectedPackaging === "signature" && (
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-gray-600 p-3">
                                 All orders come wrapped in an iconic DBC ELEGANCE gift box – responsibly
                                 produced, certified and made of more than 90% recycled materials.
                             </p>
@@ -72,7 +72,7 @@ const PackagingOptions = ({packageMessage, setpackageMessage,setShowAddMessageMo
                     <div>
                         <p className="font-medium text-gray-800 text-sm uppercase tracking-wide">Eco Packaging</p>
                         {selectedPackaging === "eco" && (
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="text-sm text-gray-600 p-3">
                                 Conceived to use as few resources as possible, this single-material
                                 packaging is made from 100% recycled cardboard, and incorporates
                                 solvent-free, water-based ink. <br />
