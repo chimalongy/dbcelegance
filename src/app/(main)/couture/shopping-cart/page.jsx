@@ -108,6 +108,9 @@ const ShoppingCart = () => {
                          w-[90%] bg-black text-white p-4 text-sm font-medium tracking-wide
                          hover:bg-gray-800 flex items-center justify-center
                          lg:static lg:w-full"
+             onClick={()=>{
+                router.push("/couture/checkout")
+             }}
             >
               Continue to checkout
               <span className="ml-2">${formatPrice(total)}</span>
