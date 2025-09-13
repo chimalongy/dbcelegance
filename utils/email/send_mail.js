@@ -2,6 +2,13 @@ import nodemailer from "nodemailer";
 import { smtp_settings } from "./smtp_setup.js";
 
 export async function sendEmail({ to, subject, text, html }) {
+ 
+  console.log(to)
+  console.log(subject)
+  console.log(text)
+  console.log(html)
+ 
+ 
   try {
     // 1. Create transporter
     const transporter = nodemailer.createTransport(smtp_settings);

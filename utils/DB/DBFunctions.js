@@ -658,6 +658,35 @@ class DBFunctions {
     }
   }
 
+  async getAllProducts() {
+const query = `
+  SELECT *
+  FROM ${process.env.DATABASE_PRODUCTS_TABLE}
+  ORDER BY created_at DESC;
+`;
+
+  try {
+    const result = await pool.query(query);
+
+    if (result.rows.length === 0) {
+      console.log("⚠️ No products found");
+      return { success: false, data: [] };
+    }
+
+    const products = result.rows;
+
+    // Parse JSONB sizes for each product if they exist
+    for (const product of products) {
+      this.parseProductSizes(product);
+    }
+
+    return { success: true, data: products };
+  } catch (error) {
+    console.log("❌ Error fetching products:", error.message);
+    return { success: false, data: [] };
+  }
+}
+
   async getProductByName(product_name, product_store) {
     const query = `
     SELECT *
@@ -1192,6 +1221,14 @@ class DBFunctions {
     }
   }
 
+
+
+
+
+
+
+// ==========================CUSTOMERS=========================================
+
   async registerCustomer({
     firstName,
     lastName,
@@ -1253,13 +1290,58 @@ async  findCustomerByEmail(email) {
       return { success: false, message: "Customer not found" };
     }
 
-    return { success: true, user: rows[0] };
+    return { success: true, customer: rows[0] };
   } catch (error) {
     console.error("Error finding customer by email:", error);
     return { success: false, message: "Database error" };
   }
 }
 
+async updateCustomerField(customerId, fieldName, newValue) {
+    try {
+      // ✅ Allowed fields (to prevent SQL injection)
+      const allowedFields = [
+        "email",
+        "password_hash",
+        "title",
+        "first_name",
+        "last_name",
+        "phone",
+        "fashion_news",
+        "share_preferences",
+      ];
+
+      if (fieldName= "password_hash"){
+         const saltRounds = 10;
+         const passwordHash = await bcrypt.hash(newValue, saltRounds);
+         newValue= passwordHash;
+      }
+
+
+      if (!allowedFields.includes(fieldName)) {
+        return { success: false, error: "Invalid field name" };
+      }
+
+      // ✅ Construct dynamic query safely
+      const query = `
+        UPDATE ${process.env.DATABASE_USERS_TABLE}
+        SET ${fieldName} = $1, updated_at = CURRENT_TIMESTAMP
+        WHERE customer_id = $2
+        RETURNING *;
+      `;
+
+      const result = await pool.query(query, [newValue, customerId]);
+
+      if (result.rows.length === 0) {
+        return { success: false, error: "Customer not found" };
+      }
+
+      return { success: true, data: result.rows[0] };
+    } catch (error) {
+      console.error("❌ Error updating customer field:", error);
+      return { success: false, error: "Database error" };
+    }
+  }
 
 
 }

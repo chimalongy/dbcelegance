@@ -50,8 +50,9 @@ export const apiSummary = {
 
     auth:{
       register:"/api/store/auth/register",
-      login:"",
-      sendOtp:"/api/store/auth/sendOTP"
+      login:"/api/store/auth/login",
+      sendOtp:"/api/store/auth/sendOTP",
+      update_password:"/api/store/auth/update-customer",
         }
 
   }
