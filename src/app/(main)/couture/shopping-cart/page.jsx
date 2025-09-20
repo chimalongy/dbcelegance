@@ -118,7 +118,7 @@ const ShoppingCart = () => {
               <h2 className="text-xl font-semibold tracking-wide">Total</h2>
               <div className="flex justify-between text-gray-700">
                 <span className="text-sm uppercase tracking-wide">Subtotal</span>
-                <span className="font-medium">{geoData?.currency_symbol} {formatPrice(geoData.exchange_rate * total)}</span>
+                <span className="font-medium">{geoData?.currency_symbol} {formatPrice(geoData?.exchange_rate * total)}</span>
               </div>
             </div>
 
@@ -149,7 +149,7 @@ const ShoppingCart = () => {
               }}
             >
               Continue to checkout
-              <span className="ml-2">{geoData?.currency_symbol} {formatPrice(geoData.exchange_rate * total)}</span>
+              <span className="ml-2">{geoData?.currency_symbol} {formatPrice(geoData?.exchange_rate * total)}</span>
             </button>
 
             {/* Terms */}
