@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import DBFunctions from "../../../../../../utils/DB/DBFunctions";
 import jwt from "jsonwebtoken"; // install: npm install jsonwebtoken
 import bcrypt from "bcrypt";
+import { createSession } from "../../../../../../utils/sessions";
 export async function POST(request) {
   const dbActions = new DBFunctions();
 
@@ -39,10 +40,9 @@ export async function POST(request) {
 
     // ✅ Compare password (⚠️ Hashing recommended in production)
 
-    let customer = customerresult.customer
+    let customer = customerresult.customer;
 
-
-    let ismatch = await bcrypt.compare(password,customer.password_hash)
+    let ismatch = await bcrypt.compare(password, customer.password_hash);
 
     if (!ismatch) {
       return NextResponse.json(
@@ -51,27 +51,19 @@ export async function POST(request) {
       );
     }
 
-    // ✅ Generate JWT token
-    const token = jwt.sign(
-      { id: customer.customer_id, email:customer.email },
-      process.env.JWT_SECRET,
-      { expiresIn: "1h" }
-    );
-
-    return NextResponse.json(
-      {
-        success: true,
-        message: "Login successful",
-        token,
-        customer: {
-          id: customer.customer_id,
-          firstName: customer.first_name,
-          lastName: customer.last_name,
-          email: customer.email,
-        },
-      },
+    delete customer.password_hash
+    let token = await createSession(customer.customer_id, customer.email);
+    const response = NextResponse.json(
+      { success: true, customer: customer },
       { status: 200 }
     );
+    response.cookies.set("session", token, {
+      // httpOnly: true,
+      secure: true,
+      sameSite: "strict",
+      maxAge: 60 * 60,
+    });
+    return response;
   } catch (error) {
     console.error("❌ Login error:", error);
     return NextResponse.json(

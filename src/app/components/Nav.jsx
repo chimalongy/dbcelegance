@@ -18,6 +18,8 @@ import { FaChevronDown, FaChevronUp } from 'react-icons/fa';
 import { useSelectedProductStore } from '../lib/store/selectedproductstore';
 import { Playfair_Display } from 'next/font/google';
 import { useUserCart } from '../lib/store/userCart';
+import { useLeftNavStore } from '../lib/store/leftnavmodalstore';
+import NavLeftModal from './NavLeftModal';
 
 
 const playfair = Playfair_Display({
@@ -26,6 +28,11 @@ const playfair = Playfair_Display({
 });
 
 export default function Navbar() {
+
+  let showLeftNavModal = useLeftNavStore((state)=>state.showLeftNavModal)
+  let setShowLeftNavModal = useLeftNavStore((state)=>state.setShowLeftNavModal)
+
+
   
   const setSelectedStoreCategories = useSelectedStoreCategories(
     (state) => state.setSelectedStoreCategories
@@ -124,7 +131,11 @@ export default function Navbar() {
       {/* Left Section - Hamburger & Search */}
       <div className='flex items-center'>
         <button
-          onClick={() => setMenuOpen(!menuOpen)}
+          onClick={() => {
+           // setMenuOpen(!menuOpen)
+           setShowModal(false);
+            setShowLeftNavModal(!showLeftNavModal)
+          }}
           className={` focus:outline-none focus:ring-2 rounded-md transition-all duration-200 ${hoverBgClass} ${showrightnavoptions ? "focus:ring-black/30" : "focus:ring-white/30"}`}
           aria-label="Toggle menu"
         >
@@ -299,6 +310,7 @@ export default function Navbar() {
               )}
             </div>
           </div>
+          {showLeftNavModal && <NavLeftModal/>}
         </div>
       )}
     </nav>

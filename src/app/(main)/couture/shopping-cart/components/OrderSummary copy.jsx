@@ -4,21 +4,12 @@ import React from "react";
 import { FiTrash2 } from "react-icons/fi";
 import { useGeoDataStore } from '@/app/lib/store/geoDataStore';
 
-const OrderSummary = ({ products, removeCartItem, updateCartItem, roundToNearestTopHundred, geoData }) => {
+const OrderSummary = ({ products, removeCartItem, updateCartItem }) => {
     const formatPrice = (price) =>
         new Intl.NumberFormat("en-US", {
             minimumFractionDigits: 2,
             maximumFractionDigits: 2,
         }).format(price);
-
-    // Helper function if not passed as prop
-    const defaultRoundToNearestTopHundred = (price) => {
-        if (!price) return "N/A";
-        //return Math.ceil(price / 10) * 10;
-        return  price
-    };
-
-    const roundFunction = roundToNearestTopHundred || defaultRoundToNearestTopHundred;
 
     return (
         <div className="p-6">
@@ -33,15 +24,13 @@ const OrderSummary = ({ products, removeCartItem, updateCartItem, roundToNearest
                     const selectedSizeObj = product.selected_size;
                     const quantity = selectedSizeObj?.quantity || 1;
 
-                    // Find matching price and apply exchange rate
-                    const rawPrice =
+                    // Find matching price
+                    const price =
                         product.product_sizes.find(
                             (s) => s.size === selectedSizeObj?.user_selected_size
                         )?.price || 0;
 
-                    const price = rawPrice * geoData.exchange_rate;
-                    const roundedPrice = roundFunction(price);
-                    const totalPrice = roundedPrice * quantity;
+                    const totalPrice = price * quantity;
 
                     return (
                         <div key={index} className="flex md:flex-row gap-2 ">
@@ -112,7 +101,7 @@ const OrderSummary = ({ products, removeCartItem, updateCartItem, roundToNearest
 
                                     {/* Price */}
                                     <div className="font-medium text-base whitespace-nowrap">
-                                        {geoData.currency_symbol}{formatPrice(totalPrice)}
+                                        ${formatPrice(totalPrice)}
                                     </div>
                                 </div>
                             </div>

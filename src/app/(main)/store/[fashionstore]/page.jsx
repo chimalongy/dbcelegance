@@ -14,6 +14,8 @@ import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiArrowRight } from 'react-icons/fi';
 import Loader from '@/app/components/Loader';
+import { useLeftNavStore } from '@/app/lib/store/leftnavmodalstore';
+import NavLeftModal from '@/app/components/NavLeftModal';
 
 export default function FashionPage() {
     const router = useRouter();
@@ -22,6 +24,8 @@ export default function FashionPage() {
     const store_products = useSelectedStoreProducts((state) => state.selectedstoreproducts);
     let setUserSelectedStoreCategory= useUserSelectedCategory((state)=>state.setUserSelectedStoreCategory)
     const { showmodal } = useNavStore();
+    const { showLeftNavModal } = useLeftNavStore();
+    
     const gender = params.fashionstore;
     const [isLoading, setIsLoading] = useState(true);
     const [isScrolled, setIsScrolled] = useState(false);
@@ -164,6 +168,7 @@ export default function FashionPage() {
                 </div>
 
                 {showmodal && <ModalMain />}
+                {showLeftNavModal && <NavLeftModal/>}
             </div>
             <Footer />
         </div>

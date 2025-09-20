@@ -2,11 +2,10 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
-import mensfashionbg from "../../../../public/images/malefashion.jpg";
-import womensfashionbg from "../../../../public/images/femalefashion.jpg";
-import customfashion from "../../../../public/images/customfashion.jpg";
+import mensfashionbg from "../../../../public/images/malefashion.avif";
+import womensfashionbg from "../../../../public/images/femalefashion.avif";
 import { useRouter } from 'next/navigation';
-import { FiArrowRight, FiShoppingBag, FiMail } from 'react-icons/fi';
+import { FiArrowRight, FiShoppingBag } from 'react-icons/fi';
 import Navbar from '@/app/components/Nav';
 import { motion } from 'framer-motion';
 import { apiSummary } from '@/app/lib/apiSummary';
@@ -35,17 +34,8 @@ const categories = [
     actionText: "SHOP NOW",
     store_name: "male"
   },
-  {
-    label: "DBC CUSTOM PIECE",
-    image: customfashion,
-    link: "/store/customfashion",
-    color: "from-black/40 to-transparent",
-    icon: <FiMail className="text-white" size={16} />,
-    actionText: "REQUEST"
-  },
 ];
 
-// Correct font configuration
 const notoSerif = Noto_Serif({ 
   subsets: ['latin'],
   weight: ['400', '700'],
@@ -87,77 +77,82 @@ export default function Home() {
     } catch (error) {
       console.error("Error fetching collections:", error);
     } finally {
-      setLoadingCategory(null);
       if (dataloaded) {
+        // ✅ keep loader active, then navigate
         router.push(category.link);
+      } else {
+        // ❌ only reset loader if navigation won’t happen
+        setLoadingCategory(null);
       }
     }
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative bg-black">
-      {/* Simple Loading Overlay */}
-      {loadingCategory && (<CategoryLoader/>)}
-      
-      {/* Main content */}
-      <main className="flex-1 flex flex-col lg:flex-row">
-        {/* Brand Header */}
-        <div className='absolute top-6 left-1/2 transform -translate-x-1/2 z-50 text-white text-center'>
-          <h1 className={`${notoSerif.className} text-2xl md:text-3xl font-light tracking-widest`}>
-            DBC ELEGANCE
-          </h1>
-        </div>
-        
-        {categories.map((category, index) => (
-          <motion.div
-            key={index}
-            className="relative flex-1 overflow-hidden group cursor-pointer border-r border-gray-800 last:border-r-0"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.8, delay: index * 0.15 }}
-            onClick={() => !loadingCategory && fetch_collections(category)}
-          >
-            <div className="relative w-full h-full">
-              <Image  
-                src={category.image}
-                alt={category.label}
-                className="w-full h-full object-cover transform transition-transform duration-1000 group-hover:scale-110"
-                placeholder="blur"
-                quality={100}
-                priority={index === 0}
-              />
-              <div className={`absolute inset-0 bg-gradient-to-t ${category.color} via-transparent to-transparent`}></div>
-            </div>
+    <div className="min-h-screen flex flex-col relative bg-white">
+      {/* Show only loader when loading */}
+      {loadingCategory ? (
+        <CategoryLoader />
+      ) : (
+        <main className="flex-1 flex flex-col lg:flex-row">
+          {/* Brand Header */}
+          <div className='absolute top-6 left-1/2 transform -translate-x-1/2 z-50 text-white text-center'>
+            <h1 className={`${notoSerif.className} text-2xl md:text-3xl font-light tracking-widest`}>
+              DBC ELEGANCE
+            </h1>
+          </div>
+          
+          {categories.map((category, index) => (
+            <motion.div
+              key={index}
+              className="relative flex-1 overflow-hidden group cursor-pointer"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: index * 0.15 }}
+              onClick={() => !loadingCategory && fetch_collections(category)}
+            >
+              {/* Background image */}
+              <div className="absolute inset-0">
+                <Image  
+                  src={category.image}
+                  alt={category.label}
+                  className="w-full h-full object-fill lg:object-cover transform transition-transform duration-1000 group-hover:scale-110"
+                  placeholder="blur"
+                  quality={100}
+                  priority={index === 0}
+                />
+                <div className={`absolute inset-0 bg-gradient-to-t ${category.color} via-transparent to-transparent`}></div>
+              </div>
 
-            {/* Content positioned at the bottom */}
-            <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center p-6 text-white z-10">
-              <motion.h2
-                className="text-xl md:text-2xl font-light mb-3 text-center tracking-wider"
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6, delay: index * 0.3 }}
-              >
-                {category.label}
-              </motion.h2>
-           
-              <motion.div
-                className="flex items-center gap-2 mt-1 group-hover:underline"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.6, delay: index * 0.5 }}
-              >
-                <span className="text-xs md:text-sm font-light tracking-widest uppercase border-b border-white/30 pb-1 transition-all duration-300 group-hover:border-white">
-                  {category.actionText}
-                </span>
-                <FiArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
-              </motion.div>
-            </div>
+              {/* Text content */}
+              <div className="absolute bottom-8 left-0 right-0 flex flex-col items-center p-6 text-white z-10">
+                <motion.h2
+                  className="text-xl md:text-2xl font-light mb-3 text-center tracking-wider"
+                  initial={{ y: 20, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  transition={{ duration: 0.6, delay: index * 0.3 }}
+                >
+                  {category.label}
+                </motion.h2>
+            
+                <motion.div
+                  className="flex items-center gap-2 mt-1 group-hover:underline"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.6, delay: index * 0.5 }}
+                >
+                  <span className="text-xs md:text-sm font-light tracking-widest uppercase border-b border-white/30 pb-1 transition-all duration-300 group-hover:border-white">
+                    {category.actionText}
+                  </span>
+                  <FiArrowRight size={14} className="transition-transform duration-300 group-hover:translate-x-1" />
+                </motion.div>
+              </div>
 
-            {/* Hover overlay effect */}
-            <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-500"></div>
-          </motion.div>
-        ))}
-      </main>
+              {/* Hover overlay */}
+              <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-all duration-500"></div>
+            </motion.div>
+          ))}
+        </main>
+      )}
     </div>
   );
 }

@@ -10,8 +10,13 @@ import { useUserViewedProducts } from "@/app/lib/store/UserViewedProducts";
 import RecentlyViewd from "@/app/components/RecentlyViewd";
 import { useUserCart } from "@/app/lib/store/userCart";
 import { FaTrashAlt } from "react-icons/fa"; // Import the bin icon
+import { useLeftNavStore } from "@/app/lib/store/leftnavmodalstore";
+import NavLeftModal from "@/app/components/NavLeftModal";
+import { useGeoDataStore } from "@/app/lib/store/geoDataStore";
 
 const ProductPage = () => {
+  let geoData = useGeoDataStore((state) => state.geoData);
+  const { showLeftNavModal } = useLeftNavStore();
   const selectedProductMem = useSelectedProductStore(
     (state) => state.selectedproduct
   );
@@ -44,6 +49,14 @@ const ProductPage = () => {
   // const isProductInCart = CartItems.some(
   //   (item) => item.product_id === selectedProduct?.product_id
   // );
+
+  const roundToNearestTopHundred = (price) => {
+    if (!price) return "N/A";
+  //return Math.ceil(price / 100) * 100;
+  return price;
+  };
+
+
 
   const isProductInCart = CartItems.some(
     (item) =>
@@ -200,11 +213,9 @@ const ProductPage = () => {
     );
 
     console.log("deleting");
-    console.log(item_to_delete,selectedSize);
+    console.log(item_to_delete, selectedSize);
 
-    removeCartItem(
-      item_to_delete,
-    );
+    removeCartItem(item_to_delete);
   };
   const renderMedia = (mediaItem, index) => {
     if (mediaItem.type === "video") {
@@ -416,10 +427,25 @@ const ProductPage = () => {
               </p>
 
               {/* Price Display */}
+              {/* <div className="mt-4 text-xl font-light tracking-wide">
+                {geoData.currency_symbol}
+                {selectedSize?.price * geoData.exchange_rate ||
+                  (productSizes.length > 0
+                    ? productSizes[0]?.price * geoData.exchange_rate
+                    : "N/A")}
+              </div> */}
+
               <div className="mt-4 text-xl font-light tracking-wide">
-                $
-                {selectedSize?.price ||
-                  (productSizes.length > 0 ? productSizes[0]?.price : "N/A")}
+                {geoData.currency_symbol}
+                {selectedSize?.price * geoData.exchange_rate
+                  ? roundToNearestTopHundred(
+                      selectedSize.price * geoData.exchange_rate
+                    )
+                  : productSizes.length > 0
+                  ? roundToNearestTopHundred(
+                      productSizes[0].price * geoData.exchange_rate
+                    )
+                  : "N/A"}
               </div>
             </div>
 
@@ -618,7 +644,9 @@ const ProductPage = () => {
             </div>
           </div>
         </div>
+
         {showmodal && <ModalMain />}
+        {showLeftNavModal && <NavLeftModal />}
       </div>
 
       <RecentlyViewd />

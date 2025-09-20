@@ -10,9 +10,11 @@ import { useNavStore } from '@/app/lib/store/navmodalstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
 import { useUserSelectedCategory } from '@/app/lib/store/UserSelectedCategory';
 import Image from 'next/image';
-
+import { useLeftNavStore } from '@/app/lib/store/leftnavmodalstore';
+import NavLeftModal from '@/app/components/NavLeftModal';
 
 export default function CategoryPage() {
+  const { showLeftNavModal } = useLeftNavStore();
   const userselectedcategory = useUserSelectedCategory(
     (state) => state.userselectedstorecategory
   );
@@ -53,15 +55,15 @@ export default function CategoryPage() {
           <h1 className='w-full text-center text-3xl lg:text-4xl font-light tracking-wide text-gray-900'>
             {selected_category?.category_name}
           </h1>
-          
+
           <div className="flex flex-col items-center gap-6">
             <p className='text-base lg:text-lg text-center lg:w-[50%] w-[90%] text-gray-600 leading-relaxed tracking-wide'>
-              Rooted in heritage, designed for the modern era. Discover the essential collection of shirts and overshirts, 
+              Rooted in heritage, designed for the modern era. Discover the essential collection of shirts and overshirts,
               meticulously crafted from the House's archives to become the defining staples of a sophisticated wardrobe.
             </p>
-            
+
             <div className="border-t border-gray-200 w-20"></div>
-            
+
             <p className='text-sm lg:text-base text-center text-gray-500 tracking-wide uppercase'>
               {selected_products?.length || 0} {selected_products?.length === 1 ? "ITEM" : "ITEMS"}
             </p>
@@ -93,7 +95,9 @@ export default function CategoryPage() {
           />
         </div>
 
+
         {showmodal && <ModalMain />}
+        {showLeftNavModal && <NavLeftModal />}
       </div>
       <Footer />
     </div>

@@ -2,9 +2,14 @@ import LoginForm from "@/app/components/modalpages.jsx/Login";
 import SignupForm from "@/app/components/modalpages.jsx/Signup";
 import { useState } from "react";
 import GuestForm from "./GuestForm";
+import { useGuestCustomerStore } from "@/app/lib/store/guestCustomer";
 
-export default function AuthOptions() {
-  const [selected, setSelected] = useState(null);
+export default function AuthOptions({selectedauthtype, setSelectedAuthtype}) {
+  
+  const guestCustomer = useGuestCustomerStore((state) => state.guestCustomer);
+  let setGuestCustomer = useGuestCustomerStore(
+    (state) => state.setGuestCustomer
+  );
 
   const options = [
     { id: "login", title: "Log in", description: "Please log in" },
@@ -21,7 +26,7 @@ export default function AuthOptions() {
   ];
 
   const handleSelect = (id) => {
-    setSelected((prev) => (prev === id ? null : id));
+    setSelectedAuthtype((prev) => (prev === id ? null : id));
   };
 
   return (
@@ -42,14 +47,14 @@ export default function AuthOptions() {
             >
               <label
                 className={`lg:p-10 p-6 flex items-start space-x-3 cursor-pointer transition ${
-                  selected === opt.id
+                  selectedauthtype === opt.id
                     ? "border-gray-800 bg-gray-100"
                     : "border-gray-200 hover:border-gray-300"
                 }`}
               >
                 <input
                   type="checkbox"
-                  checked={selected === opt.id}
+                  checked={selectedauthtype === opt.id}
                   onChange={() => handleSelect(opt.id)}
                   className="mt-1 h-4 w-4 text-gray-800 focus:ring-gray-700 border-gray-400"
                 />
@@ -62,7 +67,9 @@ export default function AuthOptions() {
               {/* Smooth expansion wrapper */}
               <div
                 className={`transition-all duration-500 ease-in-out overflow-hidden ${
-                  selected === opt.id ? "max-h-[1000px] opacity-100" : "max-h-0 opacity-0"
+                  selectedauthtype === opt.id
+                    ? "max-h-[1000px] opacity-100"
+                    : "max-h-0 opacity-0"
                 }`}
               >
                 <div className="px-4 lg:px-12 pb-4 border-t border-gray-200 bg-white">

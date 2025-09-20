@@ -1,14 +1,8 @@
 "use client";
 import React, { useState } from "react";
 
-const PackagingOptions = ({packageMessage, setpackageMessage,setShowAddMessageModal}) => {
-    const [selectedPackaging, setSelectedPackaging] = useState("signature");
-    const [giftOptions, setGiftOptions] = useState({
-        shoppingBag: true,
-        offerGift: true,
-        giftMessage: true,
-    });
-
+const PackagingOptions = ({selectedPackaging, setSelectedPackaging, giftOptions, setGiftOptions, packageMessage, setpackageMessage,setShowAddMessageModal}) => {
+   
     const toggleGiftOption = (key) => {
         setGiftOptions((prev) => ({
             ...prev,

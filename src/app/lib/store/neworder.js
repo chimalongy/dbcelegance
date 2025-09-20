@@ -2,15 +2,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export const useUserStore = create(
+export const useNewOrderStorage = create(
   persist(
     (set) => ({
-      user: null,
-      setUser: (user) => set({ user }),
-      clearUser: () => set({ user: null }),
+      newOrder: null,
+      setNewOrder: (newOrder) => set({ newOrder }),
+      clearNewOrder: () => set({ newOrder: null }),
     }),
     {
-      name: 'user-storage', // Key in localStorage
+      name: 'user-new-order-storage', // Key in localStorage
       getStorage: () => localStorage, // Use sessionStorage if preferred
     }
   )
