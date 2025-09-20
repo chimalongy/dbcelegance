@@ -116,14 +116,14 @@ const CheckOutSteps = ({
     <div className="p-3 mx-auto pt-8 bg-gray-50">
       {/* Step 1: Shipping Address */}
       <div className="bg-white mb-4">
-        <button 
+        <button
           className="w-full p-4 lg:p-6 text-left flex justify-between items-center"
           onClick={() => toggleSection('shippingAddress')}
         >
           <h2 className="text-lg font-semibold">1. Shipping address</h2>
           {expandedSections.shippingAddress ? <FiChevronUp /> : <FiChevronDown />}
         </button>
-        
+
         {expandedSections.shippingAddress && (
           <div className="px-4 lg:px-12 pb-8">
             <p className="text-sm text-gray-600 mb-4">Enter your delivery address:</p>
@@ -295,8 +295,8 @@ const CheckOutSteps = ({
                 </div>
               )}
             </div>
-            
-            <button 
+
+            <button
               className="bg-black text-white px-6 py-3 text-sm font-medium rounded-sm hover:bg-gray-800 active:bg-gray-900 transition-colors"
               onClick={() => {
                 toggleSection('shippingAddress');
@@ -311,14 +311,14 @@ const CheckOutSteps = ({
 
       {/* Step 2: Shipping Method */}
       <div className="bg-white mb-4">
-        <button 
+        <button
           className="w-full p-4 lg:p-6 text-left flex justify-between items-center"
           onClick={() => toggleSection('shippingMethod')}
         >
           <h2 className="text-lg font-semibold">2. Shipping method</h2>
           {expandedSections.shippingMethod ? <FiChevronUp /> : <FiChevronDown />}
         </button>
-        
+
         {expandedSections.shippingMethod && (
           <div className="px-4 lg:px-12 pb-8">
             <p className="text-sm text-gray-600 mb-4">Choose a shipping method for your delivery</p>
@@ -349,8 +349,8 @@ const CheckOutSteps = ({
                 Please note that we require the client's presence, signature and/or ID are required for delivery.
               </p>
             </div>
-            
-            <button 
+
+            <button
               className="bg-black text-white px-6 py-3 text-sm font-medium rounded-sm hover:bg-gray-800 active:bg-gray-900 transition-colors"
               onClick={() => {
                 toggleSection('shippingMethod');
@@ -365,14 +365,14 @@ const CheckOutSteps = ({
 
       {/* Step 3: Billing & Payment */}
       <div className="bg-white mb-4">
-        <button 
+        <button
           className="w-full p-4 lg:p-6 text-left flex justify-between items-center"
           onClick={() => toggleSection('billingPayment')}
         >
           <h2 className="text-lg font-semibold">3. Billing & Payment</h2>
           {expandedSections.billingPayment ? <FiChevronUp /> : <FiChevronDown />}
         </button>
-        
+
         {expandedSections.billingPayment && (
           <div className="px-4 lg:px-12 pb-8">
             <div className="p-4 lg:p-8 bg-gray-50 mb-4">
@@ -559,7 +559,11 @@ const CheckOutSteps = ({
               {/* Terms and conditions */}
               <div className="text-xs text-gray-600 border-t pt-4">
                 <p className="mb-4">
-                  By clicking on "Purchase now" I confirm I have read and accepted the terms and conditions of sale and I agree to the processing of my personal data by Christian Dior Couture in the conditions set forth in the terms of sale and for the purposes detailed in our Privacy Statement, such as the management of my order. If I am under 16 years old, I confirm I have parental consent to give my personal data. As per applicable laws and regulations, you are entitled to access, correct and delete any data that may relate to you. You may also ask us not to send you personalized communications on our products and services. You may exercise this right at any time, upon sending us notice by referring to our Contact section in our Privacy Statement.
+                  By clicking on "Purchase now" I confirm I have read and accepted the{" "}
+                  <a href="/terms" className="underline text-blue-600 hover:text-blue-800">
+                    terms and conditions of sale
+                  </a>{" "}
+                  and I agree to the processing of my personal data by DBC ELEGANCE in the conditions set forth in the terms of sale and for the purposes detailed in our Privacy Statement, such as the management of my order. If I am under 16 years old, I confirm I have parental consent to give my personal data. As per applicable laws and regulations, you are entitled to access, correct and delete any data that may relate to you. You may also ask us not to send you personalized communications on our products and services. You may exercise this right at any time, upon sending us notice by referring to our Contact section in our Privacy Statement.
                 </p>
 
                 {/* Purchase button */}
