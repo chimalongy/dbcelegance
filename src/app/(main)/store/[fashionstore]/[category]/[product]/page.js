@@ -55,7 +55,11 @@ const ProductPage = () => {
   //return Math.ceil(price / 100) * 100;
   return price;
   };
-
+const formatPrice = (price) =>
+        new Intl.NumberFormat("en-US", {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+        }).format(price);
 
 
   const isProductInCart = CartItems.some(
@@ -439,11 +443,12 @@ const ProductPage = () => {
                 {geoData.currency_symbol}
                 {selectedSize?.price * geoData.exchange_rate
                   ? roundToNearestTopHundred(
-                      selectedSize.price * geoData.exchange_rate
+                    formatPrice( selectedSize.price * geoData.exchange_rate)
+                     
                     )
                   : productSizes.length > 0
                   ? roundToNearestTopHundred(
-                      productSizes[0].price * geoData.exchange_rate
+                      formatPrice(productSizes[0].price * geoData.exchange_rate)
                     )
                   : "N/A"}
               </div>

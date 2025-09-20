@@ -112,7 +112,7 @@ const OrderSummary = ({ products, removeCartItem, updateCartItem, roundToNearest
 
                                     {/* Price */}
                                     <div className="font-medium text-base whitespace-nowrap">
-                                        {geoData.currency_symbol}{formatPrice(totalPrice)}
+                                        {geoData?.currency_symbol}{formatPrice(totalPrice)}
                                     </div>
                                 </div>
                             </div>
