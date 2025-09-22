@@ -52,68 +52,51 @@ const CheckOut = () => {
     document.body.appendChild(script);
   }, []);
 
-  // State to track step completion from CheckOutSteps
-  const [completedSteps, setCompletedSteps] = useState({
-    shippingAddress: false,
-    shippingMethod: false,
-    billingPayment: false,
-  });
-
-  // State to track if purchase is ready (when Purchase now button is enabled)
-  const [isPurchaseReady, setIsPurchaseReady] = useState(false);
-
-  // Check if all steps are completed AND purchase is ready
-  const allStepsCompleted =
-    completedSteps.shippingAddress &&
-    completedSteps.shippingMethod &&
-    completedSteps.billingPayment &&
-    isPurchaseReady;
-
   const handlePayment = () => {
-    // Log all values from each section
-    console.log("=== CHECKOUT DATA SUMMARY ===");
+  console.log(newOrder)
 
-    let order = { ...newOrder };
 
-    order["shipping_address"] = formData;
-    order["authenticated"] = authentucated;
-    order["billing_address"] = useShippingForBilling
-      ? formData
-      : billingFormData;
-    order["selected_payment_method"] = selectedPayment;
-    order["shipping_method"] = selectedShipping;
-    order["sub_total"]= formatPrice(geoData?.exchange_rate * subtotal)
-    order["total"]= formatPrice(geoData?.exchange_rate * total)
-    order["geo_data"]=geoData
-    order["customer_email"]=  session && session!==null && loggedCustomer.id?loggedCustomer.customer_email : guestCustomerValue
 
-  
-    console.log(order);
 
-    window.FlutterwaveCheckout({
-      public_key: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY, // set in .env.local
-      tx_ref: Date.now().toString(), // unique reference
-      amount: order.total,
-      currency: order.geoData?.currency_code,
-      payment_options: "card",
-      customer: {
-        email: order.customer_email|| "customer@email.com",
-        phonenumber: order.billing_address.phone,
-        name: order.billing_address.firstName +" " +order.billing_address.lastName,
-      },
-      customizations: {
-        title: "DBC ELEGANCE",
-        description: "Order for # Order ID",
-        logo: "/your-logo.png", // put your logo in public folder
-      },
-      callback: function (response) {
-        console.log("Payment callback:", response);
-        // ✅ verify this transaction on your backend using response.transaction_id
-      },
-      onclose: function () {
-        console.log("Payment modal closed");
-      },
-    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // window.FlutterwaveCheckout({
+    //   public_key: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY, // set in .env.local
+    //   tx_ref: Date.now().toString(), // unique reference
+    //   amount: 5000,
+    //   currency: "NGN",
+    //   payment_options: "card",
+    //   customer: {
+    //     email: "customer@email.com",
+    //     phonenumber: "08012345678",
+    //     name: "Chima Obi",
+    //   },
+    //   customizations: {
+    //     title: "DBC Elegance Store",
+    //     description: "Payment for Order #12345",
+    //     logo: "/your-logo.png", // put your logo in public folder
+    //   },
+    //   callback: function (response) {
+    //     console.log("Payment callback:", response);
+    //     // ✅ verify this transaction on your backend using response.transaction_id
+    //   },
+    //   onclose: function () {
+    //     console.log("Payment modal closed");
+    //   },
+    // });
   };
 
   useEffect(() => {
@@ -183,7 +166,7 @@ const CheckOut = () => {
   const [errors, setErrors] = useState({});
   const [billingErrors, setBillingErrors] = useState({});
 
-  const validate = () => {
+  const validate  = () => {
     const newErrors = {};
     if (!formData.firstName) newErrors.firstName = "First name is required";
     if (!formData.lastName) newErrors.lastName = "Last name is required";
@@ -282,6 +265,16 @@ const CheckOut = () => {
               <FiEdit className="text-xl" />
             </button>
           </div>
+          {/* <div className="bg-white p-4 lg:6 text-lg ">
+            {guestCustomerValue && guestCustomerValue !== null ? (
+              <p><span className="text-gray-500"> <CiUser/>Guest Order:</span> {guestCustomerValue}</p>
+            ) : (
+              loggedCustomer &&
+              loggedCustomer.customer_id && (
+                <p><span className="text-gray-500"><FaRegUser/>Logged Customer:</span> {loggedCustomer.email}</p>
+              )
+            )}
+          </div> */}
 
           {authentucated ? (
             <div>
@@ -306,12 +299,6 @@ const CheckOut = () => {
                 setCountries={setCountries}
                 validate={validate}
                 validateBilling={validateBilling}
-                // Pass completion state and setter
-                completedSteps={completedSteps}
-                setCompletedSteps={setCompletedSteps}
-                // Pass purchase ready state and setter
-                isPurchaseReady={isPurchaseReady}
-                setIsPurchaseReady={setIsPurchaseReady}
               />
             </div>
           ) : (
@@ -395,16 +382,13 @@ const CheckOut = () => {
                 </span>
               </div>
               <button
-                onClick={handlePayment}
-                disabled={!allStepsCompleted}
-                className={`w-full mt-4 px-6 py-3 rounded text-sm uppercase tracking-wide transition ${
-                  allStepsCompleted
-                    ? "bg-black text-white hover:opacity-90 cursor-pointer"
-                    : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                }`}
+                  onClick={handlePayment}
+                className="w-full mt-4 bg-black text-white px-6 py-3 rounded text-sm uppercase tracking-wide hover:opacity-90 transition"
               >
                 Proceed to Payment
               </button>
+
+             
             </div>
 
             {/* Terms */}

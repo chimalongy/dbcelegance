@@ -28,6 +28,7 @@ export default function WelcomePage() {
 
       let currencySymbol = null;
       let usdRate = null;
+      let country_data;
 
       // Second API call: restcountries for currency symbol
       if (data.country_code) {
@@ -36,6 +37,8 @@ export default function WelcomePage() {
             `https://restcountries.com/v3.1/alpha/${data.country_code}`
           );
           const [countryData] = await res2.json();
+          country_data = countryData
+          console.log(countryData)
           const currencyInfo = countryData.currencies?.[data.currency];
           currencySymbol = currencyInfo?.symbol || null;
         } catch (e) {
@@ -50,13 +53,21 @@ export default function WelcomePage() {
             `https://cdn.jsdelivr.net/npm/@fawazahmed0/currency-api@latest/v1/currencies/usd.json`
           );
           const rateData = await res3.json();
-          usdRate = rateData.usd?.[data.currency.toLowerCase()] || null;
+          // usdRate = rateData.usd?.[data.currency.toLowerCase()] || null;
+          // console.log(rateData)
+
+          if (country_data?.continents[0]?.toLowerCase() === "africa") {
+            usdRate = rateData.usd?.eur || null;
+          }
+          else {
+            usdRate = rateData.usd?.[data.currency.toLowerCase()] || null;
+          }
         } catch (e) {
           console.warn('Could not fetch exchange rate:', e);
         }
       }
 
-      setGeoData({
+      let payload = {
         ip: data.ip,
         country: data.country_name,
         country_code: data.country_code,
@@ -72,7 +83,20 @@ export default function WelcomePage() {
         exchange_rate: usdRate,
         date: new Date().toLocaleDateString(),
         org: data.org,
-      });
+        continent_name: country_data.continents[0],   // ✅ new field
+      };
+
+      if (payload.continent_name.toLowerCase() === "africa") {
+        //get the exchange rate of euro here
+        payload.currency_code = "EUR"
+        payload.currency_name = "Euro"
+        payload.currency_symbol="€"
+
+      }
+
+
+
+      setGeoData(payload)
     } catch (err) {
       console.error('Failed to fetch geo data:', err);
       setError(true);
@@ -239,6 +263,14 @@ export default function WelcomePage() {
                       <p>
                         <strong>Date:</strong> {geoData.date}
                       </p>
+
+
+                      {geoData.continent_name && (
+                        <p>
+                          <strong>Continent:</strong> {geoData.continent_name}
+
+                        </p>
+                      )}
                     </div> */}
 
                     {/* Explore Button */}
@@ -250,7 +282,9 @@ export default function WelcomePage() {
                       whileTap={{ scale: 0.98 }}
                       className="px-8 py-3 bg-black text-white rounded-sm transition-all font-light tracking-wide shadow-md mt-6"
                       onClick={() => {
-                        router.push('/home');
+                          router.push('/home');
+
+                        console.log(geoData)
                       }}
                     >
                       Explore

@@ -18,7 +18,9 @@ const NavLeftModal = () => {
   const pathname = usePathname(); // ✅ track current path
 
   const [categoriesOpen, setCategoriesOpen] = useState(false);
+  const [accessoriesOpen, setAccessoriesOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
+  const [loading, setLoading] = useState({ men: false, women: false }); // Loading state
 
   const setSelectedStoreCategories = useSelectedStoreCategories(
     (state) => state.setSelectedStoreCategories
@@ -72,6 +74,26 @@ const NavLeftModal = () => {
     setShowLeftNavModal(false); // ✅ close after category click
   };
 
+  const handleFashionClick = async (gender) => {
+    const storeName = gender === "men" ? "male" : "female";
+    
+    // Set loading state for the clicked button
+    setLoading(prev => ({ ...prev, [gender]: true }));
+    
+    try {
+      let result = await fetch_collections(storeName);
+      if (result) {
+        router.push(`/store/${gender === "men" ? "mensfashion" : "womensfashion"}`);
+        setShowLeftNavModal(false);
+      }
+    } catch (error) {
+      console.error("Error fetching fashion collections:", error);
+    } finally {
+      // Reset loading state
+      setLoading(prev => ({ ...prev, [gender]: false }));
+    }
+  };
+
   return (
     <div className="fixed inset-0 h-screen bg-gray-300/40 backdrop-blur-md flex lg:justify-start items-end lg:items-stretch p-3 z-50">
       <div className="w-full lg:w-[25%] h-full bg-white rounded-sm flex flex-col animate-slide-in-left p-2">
@@ -93,13 +115,13 @@ const NavLeftModal = () => {
           <div className="w-full flex flex-col gap-2 p-3">
             {/* Main Links */}
             <button
-              className="py-3 text-gray-700 text-left hover:bg-gray-50 rounded-md"
+              className="py-3 text-gray-700 text-left  text-xl"
               onClick={() => {
                 router.push("/store/whats-new");
                 setShowLeftNavModal(false);
               }}
             >
-              What’s New
+              What's New
             </button>
 
             {/* Categories */}
@@ -108,7 +130,7 @@ const NavLeftModal = () => {
                 className="flex items-center justify-between w-full py-3 text-gray-800 font-light text-sm tracking-wide uppercase"
                 onClick={() => setCategoriesOpen(!categoriesOpen)}
               >
-                <span>CATEGORIES</span>
+                <span className="text-xl">CATEGORIES</span>
                 {categoriesOpen ? (
                   <FaChevronUp className="text-gray-500" />
                 ) : (
@@ -121,12 +143,11 @@ const NavLeftModal = () => {
                   {selectedstorecategories?.map((category, index) => (
                     <p
                       key={index}
-                      className={`block py-2 px-4 rounded-md text-sm cursor-pointer transition-colors ${
-                        category.category_name ===
-                        userselectedstorecategory?.category_name
+                      className={`block py-2 px-4 rounded-md text-sm cursor-pointer transition-colors ${category.category_name ===
+                          userselectedstorecategory?.category_name
                           ? "font-medium text-gray-900"
                           : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
-                      }`}
+                        }`}
                       onClick={() =>
                         handleCategoryClick(
                           category,
@@ -141,58 +162,42 @@ const NavLeftModal = () => {
               )}
             </div>
 
-            {/* Products */}
+             {/* Accessories */}
             <div className="border-t border-gray-100 mt-4 pt-4">
               <button
                 className="flex items-center justify-between w-full py-3 text-gray-800 font-light text-sm tracking-wide uppercase"
-                onClick={() => setProductsOpen(!productsOpen)}
+                onClick={() => setAccessoriesOpen(!accessoriesOpen)}
               >
-                <span>PRODUCTS</span>
-                {productsOpen ? (
+                <span className="text-xl">Accessories</span>
+                {accessoriesOpen ? (
                   <FaChevronUp className="text-gray-500" />
                 ) : (
                   <FaChevronDown className="text-gray-500" />
                 )}
               </button>
 
-              {productsOpen && (
+
+                {/* // repalce witht the accessories here */}
+              {accessoriesOpen && (
                 <div className="pl-2 mt-2 flex flex-col gap-1">
-                  {selectedstoreproducts?.length > 0 ? (
-                    selectedstoreproducts.map((product, index) => {
-                      const category = selectedstorecategories.find(
-                        (c) =>
-                          String(c.category_id) ===
-                          String(product.product_category)
-                      );
-                      return (
-                        <p
-                          key={index}
-                          className="block py-2 px-4 rounded-md text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 cursor-pointer"
-                          onClick={() => {
-                            if (category) {
-                              setSelectedProduct(product);
-                              router.push(
-                                `/store/${
-                                  product.product_store === "female"
-                                    ? "women"
-                                    : "men"
-                                }/${category.category_name.trim()}/${
-                                  product.product_name.trim()
-                                }`
-                              );
-                              setShowLeftNavModal(false);
-                            }
-                          }}
-                        >
-                          {product.product_name}
-                        </p>
-                      );
-                    })
-                  ) : (
-                    <p className="py-3 px-4 text-gray-500 text-sm">
-                      No products available
+                  {selectedstorecategories?.map((category, index) => (
+                    <p
+                      key={index}
+                      className={`block py-2 px-4 rounded-md text-sm cursor-pointer transition-colors ${category.category_name ===
+                          userselectedstorecategory?.category_name
+                          ? "font-medium text-gray-900"
+                          : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                        }`}
+                      onClick={() =>
+                        handleCategoryClick(
+                          category,
+                          category.store_name === "female" ? "women" : "men"
+                        )
+                      }
+                    >
+                      {category.category_name}
                     </p>
-                  )}
+                  ))}
                 </div>
               )}
             </div>
@@ -200,41 +205,43 @@ const NavLeftModal = () => {
         </div>
 
         {/* Bottom Fixed Section */}
-        <div className="p-1 bg-gray-400 flex justify-between rounded-md">
-          {/* Men’s Fashion */}
+        <div className="p-1 bg-gray-400 flex justify-between rounded-md text-xl">
+          {/* Men's Fashion */}
           <button
-            className={`py-3 px-4 text-gray-700 text-left rounded-md transition-colors ${
-              pathname.includes("/store/men")
+            className={`py-3 px-4 text-gray-700 text-left rounded-md transition-colors flex items-center justify-center ${pathname.includes("/store/men")
                 ? "bg-white font-medium"
                 : "hover:bg-gray-50"
-            }`}
-            onClick={async () => {
-              let result = await fetch_collections("male");
-              if (result) {
-                router.push("/store/mensfashion");
-                setShowLeftNavModal(false);
-              }
-            }}
+              } ${loading.men ? "opacity-70 cursor-not-allowed" : ""}`}
+            onClick={() => handleFashionClick("men")}
+            disabled={loading.men}
           >
-            Men’s Fashion
+            {loading.men ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
+                Loading...
+              </div>
+            ) : (
+              "Men's Fashion"
+            )}
           </button>
 
-          {/* Women’s Fashion */}
+          {/* Women's Fashion */}
           <button
-            className={`py-3 px-4 text-gray-700 text-left rounded-md transition-colors ${
-              pathname.includes("/store/women")
+            className={`py-3 px-4 text-gray-700 text-left rounded-md transition-colors flex items-center justify-center ${pathname.includes("/store/women")
                 ? "bg-white font-medium"
                 : "hover:bg-gray-50"
-            }`}
-            onClick={async () => {
-              let result = await fetch_collections("female");
-              if (result) {
-                router.push("/store/womensfashion");
-                setShowLeftNavModal(false);
-              }
-            }}
+              } ${loading.women ? "opacity-70 cursor-not-allowed" : ""}`}
+            onClick={() => handleFashionClick("women")}
+            disabled={loading.women}
           >
-            Women’s Fashion
+            {loading.women ? (
+              <div className="flex items-center">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-700 mr-2"></div>
+                Loading...
+              </div>
+            ) : (
+              "Women's Fashion"
+            )}
           </button>
         </div>
       </div>

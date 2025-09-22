@@ -56,64 +56,83 @@ const CheckOut = () => {
   const [completedSteps, setCompletedSteps] = useState({
     shippingAddress: false,
     shippingMethod: false,
-    billingPayment: false,
+    billingPayment: false
   });
 
-  // State to track if purchase is ready (when Purchase now button is enabled)
-  const [isPurchaseReady, setIsPurchaseReady] = useState(false);
-
-  // Check if all steps are completed AND purchase is ready
-  const allStepsCompleted =
-    completedSteps.shippingAddress &&
-    completedSteps.shippingMethod &&
-    completedSteps.billingPayment &&
-    isPurchaseReady;
+  // Check if all steps are completed
+  const allStepsCompleted = completedSteps.shippingAddress && 
+                           completedSteps.shippingMethod && 
+                           completedSteps.billingPayment;
 
   const handlePayment = () => {
     // Log all values from each section
     console.log("=== CHECKOUT DATA SUMMARY ===");
+    
+    // Customer Information
+    console.log("👤 CUSTOMER INFORMATION:");
+    console.log("Guest Customer:", guestCustomerValue);
+    console.log("Logged Customer:", loggedCustomer);
+    console.log("Session:", session);
+    console.log("Authenticated:", authentucated);
+    
+    // Order Information
+    console.log("🛒 ORDER INFORMATION:");
+    console.log("Cart Items:", newOrder?.cart);
+    console.log("Packaging:", newOrder?.packaging);
+    console.log("Subtotal:", subtotal);
+    console.log("Total:", total);
+    console.log("Currency:", geoData?.currency_symbol);
+    console.log("Exchange Rate:", geoData?.exchange_rate);
+    
+    // Shipping Information
+    console.log("📦 SHIPPING INFORMATION:");
+    console.log("Shipping Address Form Data:", formData);
+    console.log("Shipping Errors:", errors);
+    console.log("Selected Shipping Method:", selectedShipping);
+    
+    // Billing Information
+    console.log("💳 BILLING INFORMATION:");
+    console.log("Use Shipping for Billing:", useShippingForBilling);
+    console.log("Billing Address Form Data:", billingFormData);
+    console.log("Billing Errors:", billingErrors);
+    console.log("Selected Payment Method:", selectedPayment);
+    
+    // Step Completion Status
+    console.log("✅ STEP COMPLETION STATUS:");
+    console.log("Shipping Address Completed:", completedSteps.shippingAddress);
+    console.log("Shipping Method Completed:", completedSteps.shippingMethod);
+    console.log("Billing & Payment Completed:", completedSteps.billingPayment);
+    console.log("All Steps Completed:", allStepsCompleted);
+    
+    console.log("=== END CHECKOUT DATA SUMMARY ===");
 
-    let order = { ...newOrder };
+    // Your existing payment logic
+    console.log(newOrder);
 
-    order["shipping_address"] = formData;
-    order["authenticated"] = authentucated;
-    order["billing_address"] = useShippingForBilling
-      ? formData
-      : billingFormData;
-    order["selected_payment_method"] = selectedPayment;
-    order["shipping_method"] = selectedShipping;
-    order["sub_total"]= formatPrice(geoData?.exchange_rate * subtotal)
-    order["total"]= formatPrice(geoData?.exchange_rate * total)
-    order["geo_data"]=geoData
-    order["customer_email"]=  session && session!==null && loggedCustomer.id?loggedCustomer.customer_email : guestCustomerValue
-
-  
-    console.log(order);
-
-    window.FlutterwaveCheckout({
-      public_key: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY, // set in .env.local
-      tx_ref: Date.now().toString(), // unique reference
-      amount: order.total,
-      currency: order.geoData?.currency_code,
-      payment_options: "card",
-      customer: {
-        email: order.customer_email|| "customer@email.com",
-        phonenumber: order.billing_address.phone,
-        name: order.billing_address.firstName +" " +order.billing_address.lastName,
-      },
-      customizations: {
-        title: "DBC ELEGANCE",
-        description: "Order for # Order ID",
-        logo: "/your-logo.png", // put your logo in public folder
-      },
-      callback: function (response) {
-        console.log("Payment callback:", response);
-        // ✅ verify this transaction on your backend using response.transaction_id
-      },
-      onclose: function () {
-        console.log("Payment modal closed");
-      },
-    });
+    // window.FlutterwaveCheckout({
+    //   public_key: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY, // set in .env.local
+    //   tx_ref: Date.now().toString(), // unique reference
+    //   amount: 5000,
+    //   currency: "NGN",
+    //   payment_options: "card",
+    //   customer: {
+    //     email: "customer@email.com",
+    //     phonenumber: "08012345678",
+    //     name: "Chima Obi",
+    //   },
+    //   customizations: {
+    //     title: "DBC Elegance Store",
+    //     description: "Payment for Order #12345",
+    //     logo: "/your-logo.png", // put your logo in public folder
+    //   },
+    //   callback: function (response) {
+    //     console.log("Payment callback:", response);
+    //     // ✅ verify this transaction on your backend using response.transaction_id
+    //   },
+    //   onclose: function () {
+    //     console.log("Payment modal closed");
+    //   },
+    // });
   };
 
   useEffect(() => {
@@ -183,7 +202,7 @@ const CheckOut = () => {
   const [errors, setErrors] = useState({});
   const [billingErrors, setBillingErrors] = useState({});
 
-  const validate = () => {
+  const validate  = () => {
     const newErrors = {};
     if (!formData.firstName) newErrors.firstName = "First name is required";
     if (!formData.lastName) newErrors.lastName = "Last name is required";
@@ -309,9 +328,6 @@ const CheckOut = () => {
                 // Pass completion state and setter
                 completedSteps={completedSteps}
                 setCompletedSteps={setCompletedSteps}
-                // Pass purchase ready state and setter
-                isPurchaseReady={isPurchaseReady}
-                setIsPurchaseReady={setIsPurchaseReady}
               />
             </div>
           ) : (

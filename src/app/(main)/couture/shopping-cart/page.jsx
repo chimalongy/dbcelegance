@@ -16,7 +16,7 @@ import AddMessageModal from './components/AddMessageModal';
 import { useGeoDataStore } from '@/app/lib/store/geoDataStore';
 
 const ShoppingCart = () => {
-  let geoData = useGeoDataStore((state)=>state.geoData)
+  let geoData = useGeoDataStore((state) => state.geoData)
   const usercart = useUserCart((state) => state.usercart);
   const removeCartItem = useUserCart((state) => state.removeCartItem);
   const updateCartItem = useUserCart((state) => state.updateCartItem);
@@ -128,28 +128,30 @@ const ShoppingCart = () => {
                          w-[90%] bg-black text-white p-4 text-sm font-medium tracking-wide
                          hover:bg-gray-800 flex items-center justify-center
                          lg:static lg:w-full"
+                         disabled={usercart.length<1}
               onClick={() => {
 
                 console.log(selectedPackaging)
 
-                setneworder({
-                  cart: usercart,
-                  packaging: {
-                    selectedpackaging: selectedPackaging,
-                    gift_options: giftOptions,
-                    package_mdssage: packageMessage,
-                    sub_total:subtotal
-                  }
+                if (usercart.length > 0) {
+                  setneworder({
+                    cart: usercart,
+                    packaging: {
+                      selectedpackaging: selectedPackaging,
+                      gift_options: giftOptions,
+                      package_mdssage: packageMessage,
+                      sub_total: subtotal
+                    }
 
 
-                })
-
-
-                router.push("/couture/checkout")
+                  })
+                 
+                }
+                 router.push("/couture/checkout")
               }}
             >
               Continue to checkout
-              <span className="ml-2">{geoData?.currency_symbol} {formatPrice(geoData?.exchange_rate * total)}</span>
+              {/* <span className="ml-2">{geoData?.currency_symbol} {formatPrice(geoData?.exchange_rate * total)}</span> */}
             </button>
 
             {/* Terms */}
@@ -159,7 +161,7 @@ const ShoppingCart = () => {
                 terms of service
               </a>
             </p>
-          </div> 
+          </div>
 
           {/* Help & Services */}
           <div className="p-6 bg-white">

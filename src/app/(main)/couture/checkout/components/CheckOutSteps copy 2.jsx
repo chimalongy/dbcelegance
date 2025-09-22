@@ -17,19 +17,95 @@ const CheckOutSteps = ({
   countries, setCountries,
   validate, validateBilling
 }) => {
-  // State for collapsible sections
+  // State for collapsible sections and step completion
   const [expandedSections, setExpandedSections] = useState({
     shippingAddress: true,
     shippingMethod: false,
     billingPayment: false
   });
 
-  // Toggle section expansion
+  // State for completed steps
+  const [completedSteps, setCompletedSteps] = useState({
+    shippingAddress: false,
+    shippingMethod: false,
+    billingPayment: false
+  });
+
+  // State for step enablement
+  const [enabledSteps, setEnabledSteps] = useState({
+    shippingAddress: true,
+    shippingMethod: false,
+    billingPayment: false
+  });
+
+  // Toggle section expansion (only if step is enabled)
   const toggleSection = (section) => {
+    if (!enabledSteps[section]) return;
+    
     setExpandedSections(prev => ({
       ...prev,
       [section]: !prev[section]
     }));
+  };
+
+  // Check if shipping address form is valid
+  const isShippingAddressValid = () => {
+    return (
+      formData.firstName &&
+      formData.lastName &&
+      formData.country &&
+      formData.address &&
+      formData.phone &&
+      !errors.firstName &&
+      !errors.lastName &&
+      !errors.country &&
+      !errors.address &&
+      !errors.phone
+    );
+  };
+
+  // Check if billing address form is valid (when not using shipping address)
+  const isBillingAddressValid = () => {
+    if (useShippingForBilling) return true;
+    
+    return (
+      billingFormData.firstName &&
+      billingFormData.lastName &&
+      billingFormData.country &&
+      billingFormData.address &&
+      billingFormData.phone &&
+      !billingErrors.firstName &&
+      !billingErrors.lastName &&
+      !billingErrors.country &&
+      !billingErrors.address &&
+      !billingErrors.phone
+    );
+  };
+
+  // Handle completion of shipping address step
+  const handleShippingAddressComplete = () => {
+    if (!isShippingAddressValid()) return;
+    
+    setCompletedSteps(prev => ({ ...prev, shippingAddress: true }));
+    setEnabledSteps(prev => ({ ...prev, shippingMethod: true }));
+    setExpandedSections({
+      shippingAddress: false,
+      shippingMethod: true,
+      billingPayment: false
+    });
+  };
+
+  // Handle completion of shipping method step
+  const handleShippingMethodComplete = () => {
+    if (!selectedShipping) return;
+    
+    setCompletedSteps(prev => ({ ...prev, shippingMethod: true }));
+    setEnabledSteps(prev => ({ ...prev, billingPayment: true }));
+    setExpandedSections({
+      shippingAddress: false,
+      shippingMethod: false,
+      billingPayment: true
+    });
   };
 
   // Fetch countries on mount
@@ -115,16 +191,30 @@ const CheckOutSteps = ({
   return (
     <div className="p-3 mx-auto pt-8 bg-gray-50">
       {/* Step 1: Shipping Address */}
-      <div className="bg-white mb-4">
+      <div className={`bg-white mb-4 ${!enabledSteps.shippingAddress ? 'opacity-60' : ''}`}>
         <button
-          className="w-full p-4 lg:p-6 text-left flex justify-between items-center"
+          className={`w-full p-4 lg:p-6 text-left flex justify-between items-center ${
+            !enabledSteps.shippingAddress ? 'cursor-not-allowed' : 'cursor-pointer'
+          }`}
           onClick={() => toggleSection('shippingAddress')}
+          disabled={!enabledSteps.shippingAddress}
         >
-          <h2 className="text-lg font-semibold">1. Shipping address</h2>
-          {expandedSections.shippingAddress ? <FiChevronUp /> : <FiChevronDown />}
+          <div className="flex items-center gap-3">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+              completedSteps.shippingAddress 
+                ? 'bg-black text-white' 
+                : 'bg-gray-200 text-gray-600'
+            }`}>
+              {completedSteps.shippingAddress ? '✓' : '1'}
+            </div>
+            <h2 className="text-lg font-semibold">Shipping address</h2>
+          </div>
+          {enabledSteps.shippingAddress && (
+            expandedSections.shippingAddress ? <FiChevronUp /> : <FiChevronDown />
+          )}
         </button>
 
-        {expandedSections.shippingAddress && (
+        {expandedSections.shippingAddress && enabledSteps.shippingAddress && (
           <div className="px-4 lg:px-12 pb-8">
             <p className="text-sm text-gray-600 mb-4">Enter your delivery address:</p>
 
@@ -251,14 +341,14 @@ const CheckOutSteps = ({
                       </p>
                     </div>
 
-                    {/* Phone (styled like SignupForm) */}
+                    {/* Phone */}
                     <div className="mb-4">
                       <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
                         * Phone Number
                       </label>
                       <div className="phone-input-container border-b border-gray-300 focus-within:border-black transition-colors">
                         <PhoneInput
-                          country={"us"} // change to "at" if you want Austria
+                          country={"us"}
                           value={formData.phone}
                           onChange={(phone) => setFormData((prev) => ({ ...prev, phone }))}
                           inputClass="!w-full !bg-transparent !border-none !outline-none !ring-0 !shadow-none py-2"
@@ -297,11 +387,13 @@ const CheckOutSteps = ({
             </div>
 
             <button
-              className="bg-black text-white px-6 py-3 text-sm font-medium rounded-sm hover:bg-gray-800 active:bg-gray-900 transition-colors"
-              onClick={() => {
-                toggleSection('shippingAddress');
-                toggleSection('shippingMethod');
-              }}
+              className={`px-6 py-3 text-sm font-medium rounded-sm transition-colors ${
+                isShippingAddressValid()
+                  ? 'bg-black text-white hover:bg-gray-800 active:bg-gray-900'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              onClick={handleShippingAddressComplete}
+              disabled={!isShippingAddressValid()}
             >
               Continue to Shipping Method
             </button>
@@ -310,16 +402,32 @@ const CheckOutSteps = ({
       </div>
 
       {/* Step 2: Shipping Method */}
-      <div className="bg-white mb-4">
+      <div className={`bg-white mb-4 ${!enabledSteps.shippingMethod ? 'opacity-60' : ''}`}>
         <button
-          className="w-full p-4 lg:p-6 text-left flex justify-between items-center"
+          className={`w-full p-4 lg:p-6 text-left flex justify-between items-center ${
+            !enabledSteps.shippingMethod ? 'cursor-not-allowed' : 'cursor-pointer'
+          }`}
           onClick={() => toggleSection('shippingMethod')}
+          disabled={!enabledSteps.shippingMethod}
         >
-          <h2 className="text-lg font-semibold">2. Shipping method</h2>
-          {expandedSections.shippingMethod ? <FiChevronUp /> : <FiChevronDown />}
+          <div className="flex items-center gap-3">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+              completedSteps.shippingMethod 
+                ? 'bg-black text-white' 
+                : enabledSteps.shippingMethod
+                ? 'bg-gray-800 text-white'
+                : 'bg-gray-200 text-gray-600'
+            }`}>
+              {completedSteps.shippingMethod ? '✓' : '2'}
+            </div>
+            <h2 className="text-lg font-semibold">Shipping method</h2>
+          </div>
+          {enabledSteps.shippingMethod && (
+            expandedSections.shippingMethod ? <FiChevronUp /> : <FiChevronDown />
+          )}
         </button>
 
-        {expandedSections.shippingMethod && (
+        {expandedSections.shippingMethod && enabledSteps.shippingMethod && (
           <div className="px-4 lg:px-12 pb-8">
             <p className="text-sm text-gray-600 mb-4">Choose a shipping method for your delivery</p>
 
@@ -351,11 +459,13 @@ const CheckOutSteps = ({
             </div>
 
             <button
-              className="bg-black text-white px-6 py-3 text-sm font-medium rounded-sm hover:bg-gray-800 active:bg-gray-900 transition-colors"
-              onClick={() => {
-                toggleSection('shippingMethod');
-                toggleSection('billingPayment');
-              }}
+              className={`px-6 py-3 text-sm font-medium rounded-sm transition-colors ${
+                selectedShipping
+                  ? 'bg-black text-white hover:bg-gray-800 active:bg-gray-900'
+                  : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+              }`}
+              onClick={handleShippingMethodComplete}
+              disabled={!selectedShipping}
             >
               Continue to Billing & Payment
             </button>
@@ -364,16 +474,32 @@ const CheckOutSteps = ({
       </div>
 
       {/* Step 3: Billing & Payment */}
-      <div className="bg-white mb-4">
+      <div className={`bg-white mb-4 ${!enabledSteps.billingPayment ? 'opacity-60' : ''}`}>
         <button
-          className="w-full p-4 lg:p-6 text-left flex justify-between items-center"
+          className={`w-full p-4 lg:p-6 text-left flex justify-between items-center ${
+            !enabledSteps.billingPayment ? 'cursor-not-allowed' : 'cursor-pointer'
+          }`}
           onClick={() => toggleSection('billingPayment')}
+          disabled={!enabledSteps.billingPayment}
         >
-          <h2 className="text-lg font-semibold">3. Billing & Payment</h2>
-          {expandedSections.billingPayment ? <FiChevronUp /> : <FiChevronDown />}
+          <div className="flex items-center gap-3">
+            <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium ${
+              completedSteps.billingPayment 
+                ? 'bg-black text-white' 
+                : enabledSteps.billingPayment
+                ? 'bg-gray-800 text-white'
+                : 'bg-gray-200 text-gray-600'
+            }`}>
+              {completedSteps.billingPayment ? '✓' : '3'}
+            </div>
+            <h2 className="text-lg font-semibold">Billing & Payment</h2>
+          </div>
+          {enabledSteps.billingPayment && (
+            expandedSections.billingPayment ? <FiChevronUp /> : <FiChevronDown />
+          )}
         </button>
 
-        {expandedSections.billingPayment && (
+        {expandedSections.billingPayment && enabledSteps.billingPayment && (
           <div className="px-4 lg:px-12 pb-8">
             <div className="p-4 lg:p-8 bg-gray-50 mb-4">
               {/* Use shipping address for billing */}
@@ -537,7 +663,6 @@ const CheckOutSteps = ({
                 </div>
               )}
 
-              
               {/* Terms and conditions */}
               <div className="text-xs text-gray-600 border-t pt-4">
                 <p className="mb-4">
@@ -549,7 +674,14 @@ const CheckOutSteps = ({
                 </p>
 
                 {/* Purchase button */}
-                <button className="w-full bg-black text-white py-3 text-sm font-medium rounded-sm hover:bg-gray-800 active:bg-gray-900 transition-colors">
+                <button 
+                  className={`w-full py-3 text-sm font-medium rounded-sm transition-colors ${
+                    isBillingAddressValid()
+                      ? 'bg-black text-white hover:bg-gray-800 active:bg-gray-900'
+                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                  }`}
+                  disabled={!isBillingAddressValid()}
+                >
                   Purchase now
                 </button>
               </div>
