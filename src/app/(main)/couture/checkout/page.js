@@ -98,7 +98,7 @@ const CheckOut = () => {
       payment_options: "card",
       customer: {
         email: order.customer_email|| "customer@email.com",
-        phonenumber: order.billing_address.phone,
+        phonenumber: order.billing_address.phone||"07039914403",
         name: order.billing_address.firstName +" " +order.billing_address.lastName,
       },
       customizations: {
