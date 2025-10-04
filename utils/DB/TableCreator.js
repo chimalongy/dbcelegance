@@ -1,50 +1,55 @@
 import pool from "./DBConnect";
-import { createClient } from '@supabase/supabase-js'
+import { createClient } from "@supabase/supabase-js";
 
-const supabase = createClient(process.env.IMAGE_STORAGE_DB_URL, process.env.IMAGE_STORAGE_DB_CONNECTION_KEY)
+const supabase = createClient(
+  process.env.IMAGE_STORAGE_DB_URL,
+  process.env.IMAGE_STORAGE_DB_CONNECTION_KEY
+);
 
-
-const bucketName = 'dbc_elegance_store'
+const bucketName = "dbc_elegance_store";
 
 const folders = [
-  'store/male/categories/',
-  'store/male/products/',
-  'store/male/accessories/',
-  'store/female/categories/',
-  'store/female/products/',
-  'store/female/accessories/',
-]
+  "store/male/categories/",
+  "store/male/products/",
+  "store/male/accessories/",
+  "store/female/categories/",
+  "store/female/products/",
+  "store/female/accessories/",
+];
 
 async function createBucketAndFolders() {
   // 1. Check if bucket exists
-  const { data: listData, error: listError } = await supabase.storage.listBuckets()
+  const { data: listData, error: listError } =
+    await supabase.storage.listBuckets();
 
   if (listError) {
-    console.error('❌ Error listing buckets:', listError.message)
-    return
+    console.error("❌ Error listing buckets:", listError.message);
+    return;
   }
 
-  const bucketExists = listData?.some(b => b.name === bucketName)
+  const bucketExists = listData?.some((b) => b.name === bucketName);
 
   // 2. Create bucket if it doesn't exist
   if (!bucketExists) {
-    const { error: createError } = await supabase.storage.createBucket(bucketName, {
-      public: true // make it private; change to true if you want public access
-    })
+    const { error: createError } = await supabase.storage.createBucket(
+      bucketName,
+      {
+        public: true, // make it private; change to true if you want public access
+      }
+    );
 
     if (createError) {
-      console.error('❌ Failed to create bucket:', createError.message)
-      return
+      console.error("❌ Failed to create bucket:", createError.message);
+      return;
     }
 
-    console.log(`✅ Created bucket: ${bucketName}`)
+    console.log(`✅ Created bucket: ${bucketName}`);
   } else {
-    console.log(`ℹ️ Bucket already exists: ${bucketName}`)
+    console.log(`ℹ️ Bucket already exists: ${bucketName}`);
   }
 }
 
 async function createAdminUsersTable() {
-  
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS ${process.env.DATABASE_ADMIN_USERS_TABLE} (
       id SERIAL PRIMARY KEY,
@@ -64,18 +69,16 @@ async function createAdminUsersTable() {
   `;
 
   try {
-   // const client = await pool.connect();
+    // const client = await pool.connect();
     await pool.query(createTableQuery);
-    console.log('Admin users table created successfully');
+    console.log("Admin users table created successfully");
   } catch (error) {
-    console.error('Error creating admin users table:', error);
+    console.error("Error creating admin users table:", error);
     throw error;
-  } 
+  }
 }
 
 async function createCategoryTable() {
-
-  
   const createTableQuery = `
     CREATE TABLE IF NOT EXISTS ${process.env.DATABASE_CATEGORY_TABLE} (
       category_id SERIAL PRIMARY KEY,
@@ -90,11 +93,11 @@ async function createCategoryTable() {
   try {
     //const client = await pool.connect();
     await pool.query(createTableQuery);
-    console.log('Admin category table created successfully');
+    console.log("Admin category table created successfully");
   } catch (error) {
-    console.error('Error creating admin category table:', error);
+    console.error("Error creating admin category table:", error);
     throw error;
-  } 
+  }
 }
 
 async function createProductsTable() {
@@ -126,9 +129,9 @@ async function createProductsTable() {
 
   try {
     await pool.query(createTableQuery);
-    console.log('Products table created successfully');
+    console.log("Products table created successfully");
   } catch (error) {
-    console.error('Error creating products table:', error);
+    console.error("Error creating products table:", error);
     throw error;
   }
 }
@@ -147,9 +150,9 @@ async function createAccessoryCategoryTable() {
 
   try {
     await pool.query(createTableQuery);
-    console.log('Accessory category table created successfully');
+    console.log("Accessory category table created successfully");
   } catch (error) {
-    console.error('Error creating accessory category table:', error);
+    console.error("Error creating accessory category table:", error);
     throw error;
   }
 }
@@ -179,18 +182,22 @@ async function createAccessoryProductsTable() {
 
   try {
     await pool.query(createTableQuery);
-    console.log('Accessory products table created successfully');
+    console.log("Accessory products table created successfully");
   } catch (error) {
-    console.error('Error creating accessory products table:', error);
+    console.error("Error creating accessory products table:", error);
     throw error;
   }
 }
 
 async function createAuditLogsTable() {
   const createTableQuery = `
-    CREATE TABLE IF NOT EXISTS ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'} (
+    CREATE TABLE IF NOT EXISTS ${
+      process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"
+    } (
       audit_id SERIAL PRIMARY KEY,
-      user_id INT REFERENCES ${process.env.DATABASE_ADMIN_USERS_TABLE}(id) ON DELETE SET NULL,
+      user_id INT REFERENCES ${
+        process.env.DATABASE_ADMIN_USERS_TABLE
+      }(id) ON DELETE SET NULL,
       user_email VARCHAR(255),
       action_type VARCHAR(100) NOT NULL,
       action_category VARCHAR(100) NOT NULL,
@@ -209,18 +216,28 @@ async function createAuditLogsTable() {
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
     
-    CREATE INDEX IF NOT EXISTS idx_audit_user_id ON ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}(user_id);
-    CREATE INDEX IF NOT EXISTS idx_audit_action_type ON ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}(action_type);
-    CREATE INDEX IF NOT EXISTS idx_audit_resource_type ON ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}(resource_type);
-    CREATE INDEX IF NOT EXISTS idx_audit_created_at ON ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}(created_at);
-    CREATE INDEX IF NOT EXISTS idx_audit_user_email ON ${process.env.DATABASE_AUDIT_LOGS_TABLE || 'audit_logs'}(user_email);
+    CREATE INDEX IF NOT EXISTS idx_audit_user_id ON ${
+      process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"
+    }(user_id);
+    CREATE INDEX IF NOT EXISTS idx_audit_action_type ON ${
+      process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"
+    }(action_type);
+    CREATE INDEX IF NOT EXISTS idx_audit_resource_type ON ${
+      process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"
+    }(resource_type);
+    CREATE INDEX IF NOT EXISTS idx_audit_created_at ON ${
+      process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"
+    }(created_at);
+    CREATE INDEX IF NOT EXISTS idx_audit_user_email ON ${
+      process.env.DATABASE_AUDIT_LOGS_TABLE || "audit_logs"
+    }(user_email);
   `;
 
   try {
     await pool.query(createTableQuery);
-    console.log('Audit logs table created successfully');
+    console.log("Audit logs table created successfully");
   } catch (error) {
-    console.error('Error creating audit logs table:', error);
+    console.error("Error creating audit logs table:", error);
     throw error;
   }
 }
@@ -234,9 +251,11 @@ async function migrateAdminUsersTable() {
       WHERE table_name = $1 
       AND column_name IN ('last_login_ip', 'last_login_location')
     `;
-    
-    const result = await pool.query(checkColumnsQuery, [process.env.DATABASE_ADMIN_USERS_TABLE]);
-    
+
+    const result = await pool.query(checkColumnsQuery, [
+      process.env.DATABASE_ADMIN_USERS_TABLE,
+    ]);
+
     // If columns don't exist, add them
     if (result.rows.length < 2) {
       const addColumnsQuery = `
@@ -244,16 +263,16 @@ async function migrateAdminUsersTable() {
         ADD COLUMN IF NOT EXISTS last_login_ip VARCHAR(255) DEFAULT 'Unknown',
         ADD COLUMN IF NOT EXISTS last_login_location VARCHAR(255) DEFAULT 'Unknown'
       `;
-      
+
       await pool.query(addColumnsQuery);
-      console.log('Migration: Added login tracking columns to admin_users table');
+      console.log(
+        "Migration: Added login tracking columns to admin_users table"
+      );
     }
   } catch (error) {
-    console.error('Error during migration:', error);
+    console.error("Error during migration:", error);
   }
 }
-
-
 
 async function createCustomerTable() {
   const createTableQuery = `
@@ -286,51 +305,100 @@ async function createCustomerTable() {
 
   try {
     await pool.query(createTableQuery);
-    console.log('Users table created successfully');
+    console.log("Users table created successfully");
   } catch (error) {
-    console.error('Error creating users table:', error);
+    console.error("Error creating users table:", error);
     throw error;
   }
 }
 
+async function createOrdersTable() {
+  const tableName = process.env.DATABASE_ORDERS_TABLE || "orders";
+
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS ${tableName} (
+      order_id SERIAL PRIMARY KEY,
+      customer_email VARCHAR(255) NOT NULL,
+
+      -- Core order details
+      cart TEXT NOT NULL,                -- stores the cart items array
+      packaging JSONB NOT NULL,          -- packaging info (signature, gift options, etc.)
+      shipping_address JSONB NOT NULL,
+      billing_address JSONB NOT NULL,
+      geo_data JSONB,                    -- IP, location, currency, etc.
+
+      sub_total NUMERIC(12, 2) NOT NULL,
+      total NUMERIC(12, 2) NOT NULL,
+      use_shipping_address BOOLEAN NOT NULL,
 
 
+      -- Payment tracking
+      payment_status VARCHAR(20) DEFAULT 'pending'
+        CHECK (payment_status IN ('pending', 'paid', 'failed', 'refunded')),
+      order_status VARCHAR(255) DEFAULT 'pending',
+      tracking_number VARCHAR(255),
+      use_tracking_number VARCHAR(255),
+      shipping_agency VARCHAR(255),
+      side_note Text,  
 
+      created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
 
+  const createIndexes = [
+    `CREATE INDEX IF NOT EXISTS idx_orders_customer_email ON ${tableName}(customer_email)`,
+    `CREATE INDEX IF NOT EXISTS idx_orders_payment_status ON ${tableName}(payment_status)`,
+    `CREATE INDEX IF NOT EXISTS idx_orders_created_at ON ${tableName}(created_at)`,
+  ];
 
+  try {
+    await pool.query(createTableQuery);
+    for (const query of createIndexes) {
+      await pool.query(query);
+    }
+    console.log("Orders table and indexes created successfully ✅");
+  } catch (error) {
+    console.error("Error creating orders table:", error);
+    throw error;
+  }
+}
 
-
-export async function TableCreator(){
-   const placeholderFile = Buffer.from('placeholder')
+export async function TableCreator() {
+  const placeholderFile = Buffer.from("placeholder");
 
   for (const folder of folders) {
-    const filePath = `${folder}.placeholder`
+    const filePath = `${folder}.placeholder`;
 
     const { error: uploadError } = await supabase.storage
       .from(bucketName)
       .upload(filePath, placeholderFile, {
-        contentType: 'text/plain',
+        contentType: "text/plain",
         upsert: false, // don't overwrite if it already exists
-      })
+      });
 
     if (uploadError) {
-      if (uploadError.message.includes('The resource already exists')) {
-        console.log(`🔁 Folder already exists: ${folder}`)
+      if (uploadError.message.includes("The resource already exists")) {
+        console.log(`🔁 Folder already exists: ${folder}`);
       } else {
-        console.error(`❌ Failed to create folder "${folder}":`, uploadError.message)
+        console.error(
+          `❌ Failed to create folder "${folder}":`,
+          uploadError.message
+        );
       }
     } else {
-      console.log(`✅ Created folder: ${folder}`)
+      console.log(`✅ Created folder: ${folder}`);
     }
   }
   await createBucketAndFolders();
-    await createAdminUsersTable();
-    await createCategoryTable();
-    await createProductsTable()
-  
-    await createAccessoryCategoryTable();
-    await createAccessoryProductsTable();
-    await createAuditLogsTable();
-    await migrateAdminUsersTable();
-    await createCustomerTable()
+  await createAdminUsersTable();
+  await createCategoryTable();
+  await createProductsTable();
+
+  await createAccessoryCategoryTable();
+  await createAccessoryProductsTable();
+  await createAuditLogsTable();
+  await migrateAdminUsersTable();
+  await createCustomerTable();
+  await createOrdersTable();
 }

@@ -42,10 +42,18 @@ export const apiSummary = {
         delete_product:"/api/admin/stores/accessories/products/delete",
       }
     },
+    orders:{
+      get_all_orders:"/api/admin/orders/get-all-orders",
+      update_order:"/api/admin/orders/update-order",
+     
+    }
   },
   store:{
     get_store_categories:"/api/store/get_store_categories",
     get_store_products:"/api/store/get_store_products",
+    orders:{
+        new_order:"/api/store/orders/neworder",
+    },
     
 
     auth:{

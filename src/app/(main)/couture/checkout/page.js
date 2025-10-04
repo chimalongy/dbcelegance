@@ -7,6 +7,7 @@ import { RiSecurePaymentLine } from "react-icons/ri";
 import { CiUser } from "react-icons/ci";
 import { FaRegUser } from "react-icons/fa";
 import { FiEdit } from "react-icons/fi";
+import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import {
   MdOutlineContactSupport,
   MdOutlineCalendarToday,
@@ -21,6 +22,10 @@ import { useNewOrderStorage } from "@/app/lib/store/neworder";
 import AuthOptions from "./components/AuthOptions";
 import CheckOutSteps from "./components/CheckOutSteps";
 import { useGeoDataStore } from "@/app/lib/store/geoDataStore";
+import axios from "axios";
+import { apiSummary } from "@/app/lib/apiSummary";
+import toast from "react-hot-toast";
+
 
 const CheckOut = () => {
   let geoData = useGeoDataStore((state) => state.geoData);
@@ -45,13 +50,6 @@ const CheckOut = () => {
 
   //FLUTTTER WAVE INTEGRATION
 
-  useEffect(() => {
-    const script = document.createElement("script");
-    script.src = "https://checkout.flutterwave.com/v3.js";
-    script.async = true;
-    document.body.appendChild(script);
-  }, []);
-
   // State to track step completion from CheckOutSteps
   const [completedSteps, setCompletedSteps] = useState({
     shippingAddress: false,
@@ -69,52 +67,128 @@ const CheckOut = () => {
     completedSteps.billingPayment &&
     isPurchaseReady;
 
-  const handlePayment = () => {
-    // Log all values from each section
-    console.log("=== CHECKOUT DATA SUMMARY ===");
+  //   const handlePayment = () => {
+  //     // Log all values from each section
+  //     console.log("=== CHECKOUT DATA SUMMARY ===");
 
+  //     let order = { ...newOrder };
+
+  //     order["shipping_address"] = formData;
+  //     order["authenticated"] = authentucated;
+  //     order["billing_address"] = useShippingForBilling
+  //       ? formData
+  //       : billingFormData;
+  //     order["selected_payment_method"] = selectedPayment;
+
+  //     order["shipping_method"] = selectedShipping;
+  //     order["sub_total"]= formatPrice(geoData?.exchange_rate * subtotal)
+  //     order["total"]= formatPrice(geoData?.exchange_rate * total)
+  //     order["geo_data"]=geoData
+  //     order["customer_email"]=  session && session!==null && loggedCustomer.id?loggedCustomer.customer_email : guestCustomerValue
+
+  //     console.log(order);
+
+  //     const config = {
+  //     public_key: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY,
+  //     tx_ref: Date.now(),
+  //     amount: order.total,
+  //     currency: geoData.currency_code,
+  //     payment_options: "",
+  //     customer: {
+  //       email: order.customer_email,
+  //       phonenumber: order.shipping_address.phone,
+  //       name: order.shipping_address.firstName + " " + order.shipping_address.lastName
+  //     },
+  //     customizations: {
+  //       title: 'DBC ELEGANCE',
+  //       description: 'Complete Payment',
+  //       logo: 'https://st2.depositphotos.com/4403291/7418/v/450/depositphotos_74189661-stock-illustration-online-shop-log.jpg',
+  //     },
+  //   };
+
+  //   console.log(config)
+  // const handleFlutterPayment = useFlutterwave(config);
+
+  //     const makePayment = () => {
+  //     handleFlutterPayment({
+  //       callback: (response) => {
+  //         console.log("Payment response:", response);
+  //         closePaymentModal(); // closes the modal programmatically
+  //       },
+  //       onClose: () => {
+  //         console.log("Payment modal closed");
+  //       },
+  //     });
+  //   };
+
+  //   makePayment()
+
+  //   };
+const handlePayment = async () => {
+  try {
     let order = { ...newOrder };
 
     order["shipping_address"] = formData;
-    order["authenticated"] = authentucated;
     order["billing_address"] = useShippingForBilling
       ? formData
       : billingFormData;
-    order["selected_payment_method"] = selectedPayment;
-    order["shipping_method"] = selectedShipping;
-    order["sub_total"]= formatPrice(geoData?.exchange_rate * subtotal)
-    order["total"]= formatPrice(geoData?.exchange_rate * total)
-    order["geo_data"]=geoData
-    order["customer_email"]=  session && session!==null && loggedCustomer.id?loggedCustomer.customer_email : guestCustomerValue
+    order["customer_email"] =
+      session && loggedCustomer.id
+        ? loggedCustomer.customer_email
+        : guestCustomerValue;
+    order["sub_total"] = formatPrice(geoData?.exchange_rate * subtotal);
+    order["total"] = formatPrice(geoData?.exchange_rate * total);
+    order["geo_data"] = geoData;
+    order["use_shipping_address"]= useShippingForBilling
 
-  
-    console.log(order);
-
-    window.FlutterwaveCheckout({
-      public_key: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY, // set in .env.local
-      tx_ref: Date.now().toString(), // unique reference
-      amount: order.total,
-      currency: order.geoData?.currency_code,
-      payment_options: "card",
+    const config = {
+      public_key: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY,
+      tx_ref: Date.now(),
+      amount: Number(geoData?.exchange_rate * total), // ✅ ensure this is a number
+      currency: "NGN",
+      payment_options: "card,mobilemoney,ussd",
       customer: {
-        email: order.customer_email|| "customer@email.com",
-        phonenumber: order.billing_address.phone||"07039914403",
-        name: order.billing_address.firstName +" " +order.billing_address.lastName,
+        email: order.customer_email,
+        phonenumber: order.shipping_address.phone,
+        name: `${order.shipping_address.firstName} ${order.shipping_address.lastName}`,
       },
       customizations: {
         title: "DBC ELEGANCE",
-        description: "Order for # Order ID",
-        logo: "/your-logo.png", // put your logo in public folder
+        description: "Complete Payment",
+        logo: "https://st2.depositphotos.com/4403291/7418/v/450/depositphotos_74189661-stock-illustration-online-shop-log.jpg",
       },
-      callback: function (response) {
-        console.log("Payment callback:", response);
-        // ✅ verify this transaction on your backend using response.transaction_id
-      },
-      onclose: function () {
-        console.log("Payment modal closed");
-      },
-    });
-  };
+    };
+
+   // const handleFlutterPayment = useFlutterwave(config);
+
+    console.log("Prepared order:", order);
+
+    // ✅ Try sending order to backend
+    const result = await axios.post(apiSummary.store.orders.new_order, order);
+
+    if (result.data.success) {
+      router.push("/couture/checkout/order-recieved")
+    } else {
+   toast.error("Failed to create order:", result.data.message);
+      // show error message to user
+    }
+  } catch (error) {
+    console.error("❌ Error in handlePayment:", error);
+
+    if (error.response) {
+      // server responded with error
+      console.error("Server response:", error.response.data);
+    } else if (error.request) {
+      // request made but no response
+      console.error("No response received:", error.request);
+    } else {
+      // other errors
+      console.error("Error setting up request:", error.message);
+    }
+  }
+};
+
+ 
 
   useEffect(() => {
     const sessionValue = Cookies.get("session") || null;
@@ -162,6 +236,14 @@ const CheckOut = () => {
   const [useShippingForBilling, setUseShippingForBilling] = useState(true);
   const [selectedPayment, setSelectedPayment] = useState("");
   const [countries, setCountries] = useState([]);
+  // const [formData, setFormData] = useState({
+  //   title: "Mr",
+  //   firstName: "Chimaobi",
+  //   lastName: "Sparky",
+  //   country: "Nigeria",
+  //   address: "No 38 Aminat Street",
+  //   phone: "08157967548",
+  // });
   const [formData, setFormData] = useState({
     title: "Mr",
     firstName: "",

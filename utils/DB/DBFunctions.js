@@ -1343,6 +1343,165 @@ async updateCustomerField(customerId, fieldName, newValue) {
     }
   }
 
+//----------------------------------------------- orders================================================
+
+async createNewOrder({
+  customer_email,
+  cart,
+  packaging,
+  shipping_address,
+  billing_address,
+  sub_total,
+  total,
+  geo_data,
+  use_shipping_address,
+  payment_status = "pending",
+}) {
+  try {
+    const query = `
+      INSERT INTO ${process.env.DATABASE_ORDERS_TABLE} 
+      (customer_email, cart, packaging, shipping_address, billing_address, sub_total, total, geo_data, use_shipping_address, payment_status)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+      RETURNING order_id, customer_email, cart, packaging, shipping_address, billing_address, sub_total, total, geo_data, use_shipping_address, payment_status, created_at;
+    `;
+
+    const values = [
+      customer_email,
+      cart,                // JSONB (cart array)
+      packaging,           // JSONB (packaging info)
+      shipping_address,    // JSONB
+      billing_address,     // JSONB
+      sub_total,
+      total,
+      geo_data,            // JSONB
+      use_shipping_address,
+      payment_status,
+    ];
+
+    const { rows } = await pool.query(query, values);
+
+    return { success: true, data: rows[0] };
+  } catch (error) {
+    console.error("Error creating new order:", error);
+    return { success: false, message: "Could not create order" };
+  }
+}
+async getAllOrders() {
+  const query = `
+    SELECT * 
+    FROM ${process.env.DATABASE_ORDERS_TABLE}
+    ORDER BY created_at DESC;
+  `;
+
+  try {
+    const result = await pool.query(query);
+
+    // Parse JSONB cart if present
+    const orders = result.rows.map((order) => {
+      if (order.cart) {
+        try {
+          order.cart =
+            typeof order.cart === "string"
+              ? JSON.parse(order.cart)
+              : order.cart;
+        } catch (e) {
+          console.warn("⚠️ Could not parse cart JSON:", e);
+          order.cart = [];
+        }
+      }
+      return order;
+    });
+
+    return { success: true, data: orders };
+  } catch (error) {
+    console.error("❌ Error getting all orders:", error.message);
+    return { success: false, error: error.message };
+  }
+}
+
+async updateOrder(orderData) {
+  try {
+    const {
+      order_id,
+      customer_email,
+      cart,
+      packaging,
+      shipping_address,
+      billing_address,
+      sub_total,
+      total,
+      geo_data,
+      use_shipping_address,
+      payment_status,
+      order_status,
+      tracking_number,
+      use_tracking_number,
+      shipping_agency,
+      side_note,
+    } = orderData;
+
+    if (!order_id) {
+      return { success: false, message: "order_id is required" };
+    }
+
+    // ✅ Build dynamic update query
+    const fields = [];
+    const values = [];
+    let index = 1;
+
+    const addField = (key, value) => {
+      if (value !== undefined) {
+        fields.push(`${key} = $${index++}`);
+        values.push(value);
+      }
+    };
+
+    addField("customer_email", customer_email);
+    addField("cart", JSON.stringify(cart));
+    addField("packaging", packaging);
+    addField("shipping_address", shipping_address);
+    addField("billing_address", billing_address);
+    addField("sub_total", sub_total);
+    addField("total", total);
+    addField("geo_data", geo_data);
+    addField("use_shipping_address", use_shipping_address);
+    addField("payment_status", payment_status);
+    addField("order_status", order_status);
+    addField("tracking_number", tracking_number);
+    addField("use_tracking_number", use_tracking_number);
+    addField("shipping_agency", shipping_agency);
+    addField("side_note", side_note);
+
+    // ✅ Always update `updated_at`
+    fields.push(`updated_at = CURRENT_TIMESTAMP`);
+
+    if (fields.length === 0) {
+      return { success: false, message: "No fields to update." };
+    }
+
+    const query = `
+      UPDATE ${process.env.DATABASE_ORDERS_TABLE}
+      SET ${fields.join(", ")}
+      WHERE order_id = $${index}
+      RETURNING *;
+    `;
+
+    values.push(order_id);
+
+    const { rows } = await pool.query(query, values);
+
+    if (rows.length === 0) {
+      return { success: false, message: "Order not found" };
+    }
+
+    return { success: true, data: rows[0] };
+  } catch (error) {
+    console.error("Error updating order:", error);
+    return { success: false, message: "Could not update order" };
+  }
+}
+
+
 
 }
 

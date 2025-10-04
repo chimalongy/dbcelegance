@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import DBFunctions from "../../../../../utils/DB/DBFunctions";
-import { TableCreator } from "../../../../../utils/DB/TableCreator";
+
 import bcrypt from "bcrypt";
 
 // Helper function to create audit logs using DBFunctions
@@ -23,7 +23,7 @@ async function createAuditLog(auditData, dbActions) {
 }
 
 export async function POST(request) {
-  await TableCreator();
+ 
   const dbActions = new DBFunctions();
 
   try {
