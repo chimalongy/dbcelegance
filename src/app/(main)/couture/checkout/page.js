@@ -7,7 +7,7 @@ import { RiSecurePaymentLine } from "react-icons/ri";
 import { CiUser } from "react-icons/ci";
 import { FaRegUser } from "react-icons/fa";
 import { FiEdit } from "react-icons/fi";
-import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
+// import { useFlutterwave, closePaymentModal } from "flutterwave-react-v3";
 import {
   MdOutlineContactSupport,
   MdOutlineCalendarToday,
@@ -57,7 +57,7 @@ const CheckOut = () => {
     billingPayment: false,
   });
 
-  // State to track if purchase is ready (when Purchase now button is enabled)
+  // State to track if purchase is ready (when Purchase now button is enabled
   const [isPurchaseReady, setIsPurchaseReady] = useState(false);
 
   // Check if all steps are completed AND purchase is ready
