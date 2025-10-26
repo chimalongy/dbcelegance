@@ -147,7 +147,7 @@ export async function POST(request) {
     }
  
     // Create table if not exists
-    await TableCreator();
+  
 
     let category_exist_result = await dbActions.getCategoryById(product_category)
 

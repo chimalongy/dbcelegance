@@ -57,7 +57,7 @@ export async function POST(request) {
     }
 
     // Create table if it doesn't exist
-    await TableCreator();
+  
 
     // Check if category exists
     let category_exist_result = await dbActions.getAccessoryCategoryByName(accessory_category_name, accessory_category_store);

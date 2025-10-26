@@ -40,6 +40,8 @@ export const apiSummary = {
         get_all_products:"/api/admin/stores/accessories/products/get-all-products",
         update_product:"/api/admin/stores/accessories/products/update",
         delete_product:"/api/admin/stores/accessories/products/delete",
+        delete_accessory_gallery_item:"/api/admin/stores/accessories/products/delete-gallery-item",
+        add_accessory_gallery_item:"/api/admin/stores/accessories/products/add-gallery-item"
       }
     },
     orders:{
@@ -51,6 +53,8 @@ export const apiSummary = {
   store:{
     get_store_categories:"/api/store/get_store_categories",
     get_store_products:"/api/store/get_store_products",
+    get_store_accessories:"/api/store/get_store_accessories",
+    get_store_accessories_categories:"/api/store/get_store_accessories_categories",
     orders:{
         new_order:"/api/store/orders/neworder",
     },

@@ -4,7 +4,7 @@ import { TableCreator } from "../../../../../../utils/DB/TableCreator";
 
 export async function POST(request) {
   const dbActions = new DBFunctions();
-  await TableCreator();
+
 
   try {
     const body = await request.json();

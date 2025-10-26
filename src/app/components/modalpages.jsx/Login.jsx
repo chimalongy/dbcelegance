@@ -29,17 +29,32 @@ const LoginForm = () => {
     }
 
     try {
-      setLoading(true); // start loading
-      let loginresponse = await axios.post(apiSummary.store.auth.login, { email, password });
+      setLoading(true);
+      const response = await axios.post(apiSummary.store.auth.login, { 
+        email, 
+        password 
+      });
 
-      if (loginresponse.data.success) {
-        setLoggedCustomer(loginresponse.data.customer);
+      if (response.data.success) {
+        // Store the token and user data
+        setLoggedCustomer({
+          ...response.data.customer,
+          token: response.data.token // Ensure your API returns a token
+        });
+        
         toast.success("Login successful.");
+        
+        // Redirect to dashboard or previous page
+        // const searchParams = new URLSearchParams(window.location.search);
+        // const redirectTo = searchParams.get('redirect') || '/';
+        // window.location.href = redirectTo;
       }
     } catch (error) {
-      toast.error(error.response?.data?.error || "Login failed");
+      const errorMessage = error.response?.data?.error || "Login failed. Please check your credentials and try again.";
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
-      setLoading(false); // stop loading
+      setLoading(false);
     }
   };
 

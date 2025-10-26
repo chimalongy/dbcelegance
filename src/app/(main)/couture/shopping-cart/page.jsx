@@ -1,32 +1,28 @@
-"use client"
-import React, { useMemo, useState } from 'react';
+"use client";
+import React, { useMemo, useState } from "react";
 import { MdKeyboardArrowLeft } from "react-icons/md";
-import { useRouter } from 'next/navigation';
-import { useUserCart } from '@/app/lib/store/userCart';
-import { useNewOrderStorage } from '@/app/lib/store/neworder';
-import OrderSummary from './components/OrderSummary';
-import PackagingGifting from './components/Packaging';
+import { useRouter } from "next/navigation";
+import { useUserCart } from "@/app/lib/store/userCart";
+import { useNewOrderStorage } from "@/app/lib/store/neworder";
+import OrderSummary from "./components/OrderSummary";
+import PackagingGifting from "./components/Packaging";
 import { FiChevronDown } from "react-icons/fi";
-
 import { RiSecurePaymentLine } from "react-icons/ri";
-import { MdOutlineContactSupport } from "react-icons/md";
+import { MdOutlineContactSupport, MdOutlineCalendarToday } from "react-icons/md";
 import { CiDeliveryTruck } from "react-icons/ci";
-import { MdOutlineCalendarToday } from "react-icons/md";
-import AddMessageModal from './components/AddMessageModal';
-import { useGeoDataStore } from '@/app/lib/store/geoDataStore';
+import AddMessageModal from "./components/AddMessageModal";
+import { useGeoDataStore } from "@/app/lib/store/geoDataStore";
 
 const ShoppingCart = () => {
-  let geoData = useGeoDataStore((state) => state.geoData)
+  const geoData = useGeoDataStore((state) => state.geoData);
   const usercart = useUserCart((state) => state.usercart);
   const removeCartItem = useUserCart((state) => state.removeCartItem);
   const updateCartItem = useUserCart((state) => state.updateCartItem);
-  const setneworder = useNewOrderStorage((state) => state.setNewOrder)
+  const setneworder = useNewOrderStorage((state) => state.setNewOrder);
   const router = useRouter();
+
   const [showAddMessageModal, setShowAddMessageModal] = useState(false);
   const [packageMessage, setpackageMessage] = useState("");
-
-
-
   const [selectedPackaging, setSelectedPackaging] = useState("signature");
   const [giftOptions, setGiftOptions] = useState({
     shoppingBag: false,
@@ -34,17 +30,32 @@ const ShoppingCart = () => {
     giftMessage: false,
   });
 
-
-  // ✅ Calculate subtotal dynamically
+  // ✅ Calculate subtotal dynamically for both products & accessories
   const subtotal = useMemo(() => {
-    return usercart.reduce((total, product) => {
-      const size = product.selected_size;
-      const price = parseFloat(
-        product.product_sizes.find(
-          (s) => s.size === size?.user_selected_size
-        )?.price || 0
-      );
-      return total + price * (size?.quantity || 1);
+    return usercart.reduce((total, item) => {
+      const size = item.selected_size;
+
+      // Regular products
+      if (item.product_sizes) {
+        const price = parseFloat(
+          item.product_sizes.find(
+            (s) => s.size === size?.user_selected_size
+          )?.price || 0
+        );
+        return total + price * (size?.quantity || 1);
+      }
+
+      // Accessory products
+      if (item.accessory_sizes) {
+        const price = parseFloat(
+          item.accessory_sizes.find(
+            (s) => s.size === size?.user_selected_size
+          )?.price || 0
+        );
+        return total + price * (size?.quantity || 1);
+      }
+
+      return total;
     }, 0);
   }, [usercart]);
 
@@ -58,16 +69,19 @@ const ShoppingCart = () => {
 
   const AccordionItem = ({ title, children, defaultOpen = false }) => {
     const [open, setOpen] = useState(defaultOpen);
-
     return (
       <div className="border-b border-gray-200 p-3 flex flex-col gap-4">
         <button
           onClick={() => setOpen(!open)}
           className="w-full flex items-center justify-between py-4 text-left"
         >
-          <span className="font-medium text-sm uppercase tracking-wide text-gray-700">{title}</span>
+          <span className="font-medium text-sm uppercase tracking-wide text-gray-700">
+            {title}
+          </span>
           <FiChevronDown
-            className={`h-4 w-4 transition-transform duration-200 text-gray-500 ${open ? "rotate-180" : ""}`}
+            className={`h-4 w-4 transition-transform duration-200 text-gray-500 ${
+              open ? "rotate-180" : ""
+            }`}
           />
         </button>
         {open && <div className="pb-4 text-sm text-gray-600">{children}</div>}
@@ -77,11 +91,11 @@ const ShoppingCart = () => {
 
   return (
     <div className="min-h-screen flex flex-col hide-scrollbar">
-      {/* Header - always fixed */}
+      {/* Header */}
       <div className="fixed top-0 left-0 right-0 z-50 bg-white px-4 py-4 md:px-6 md:py-6 flex border-b border-gray-200 ">
         <div className="flex items-center cursor-pointer" onClick={router.back}>
           <MdKeyboardArrowLeft size={24} className="text-gray-700" />
-          <p className='text-sm text-gray-700'>Back</p>
+          <p className="text-sm text-gray-700">Back</p>
         </div>
         <div className="mx-auto flex flex-row text-xl gap-3 items-center text-black">
           <p className="tracking-wide lg:text-3xl">DBC ELEGANCE</p>
@@ -98,12 +112,12 @@ const ShoppingCart = () => {
             updateCartItem={updateCartItem}
             geoData={geoData}
           />
+
           <PackagingGifting
             selectedPackaging={selectedPackaging}
             setSelectedPackaging={setSelectedPackaging}
             giftOptions={giftOptions}
             setGiftOptions={setGiftOptions}
-
             packageMessage={packageMessage}
             setpackageMessage={setpackageMessage}
             setShowAddMessageModal={setShowAddMessageModal}
@@ -118,7 +132,10 @@ const ShoppingCart = () => {
               <h2 className="text-xl font-semibold tracking-wide">Total</h2>
               <div className="flex justify-between text-gray-700">
                 <span className="text-sm uppercase tracking-wide">Subtotal</span>
-                <span className="font-medium">{geoData?.currency_symbol} {formatPrice(geoData?.exchange_rate * total)}</span>
+                <span className="font-medium">
+                  {geoData?.currency_symbol}{" "}
+                  {formatPrice(geoData?.exchange_rate * total || 0)}
+                </span>
               </div>
             </div>
 
@@ -128,35 +145,28 @@ const ShoppingCart = () => {
                          w-[90%] bg-black text-white p-4 text-sm font-medium tracking-wide
                          hover:bg-gray-800 flex items-center justify-center
                          lg:static lg:w-full"
-                         disabled={usercart.length<1}
+              disabled={usercart.length < 1}
               onClick={() => {
-
-                console.log(selectedPackaging)
-
                 if (usercart.length > 0) {
                   setneworder({
                     cart: usercart,
                     packaging: {
                       selectedpackaging: selectedPackaging,
                       gift_options: giftOptions,
-                      package_mdssage: packageMessage,
-                      sub_total: subtotal
-                    }
-
-
-                  })
-                 
+                      package_message: packageMessage,
+                      sub_total: subtotal,
+                    },
+                  });
+                  router.push("/couture/checkout");
                 }
-                 router.push("/couture/checkout")
               }}
             >
               Continue to checkout
-              {/* <span className="ml-2">{geoData?.currency_symbol} {formatPrice(geoData?.exchange_rate * total)}</span> */}
             </button>
 
             {/* Terms */}
             <p className="text-center text-xs text-gray-500 mt-2">
-              By placing your order you agree to the{' '}
+              By placing your order you agree to the{" "}
               <a href="#" className="underline">
                 terms of service
               </a>
@@ -165,66 +175,98 @@ const ShoppingCart = () => {
 
           {/* Help & Services */}
           <div className="p-6 bg-white">
-            <h2 className="text-xl font-semibold mb-4 tracking-wide">Help &amp; Services</h2>
+            <h2 className="text-xl font-semibold mb-4 tracking-wide">
+              Help &amp; Services
+            </h2>
 
-            <AccordionItem title={
-              <div className='flex gap-2 items-center text-gray-600'>
-                <RiSecurePaymentLine size={20} />
-                <p className="text-sm uppercase tracking-wide">100% secure payment</p>
-              </div>
-            } defaultOpen>
-              <div className='flex flex-col gap-3'>
+            <AccordionItem
+              title={
+                <div className="flex gap-2 items-center text-gray-600">
+                  <RiSecurePaymentLine size={20} />
+                  <p className="text-sm uppercase tracking-wide">
+                    100% secure payment
+                  </p>
+                </div>
+              }
+              defaultOpen
+            >
+              <div className="flex flex-col gap-3">
                 <p className="mb-3 text-sm">
-                  Your credit card details are safe with us. All the information is
-                  protected using Secure Sockets Layer (SSL) technology.
+                  Your credit card details are safe with us. All the information
+                  is protected using Secure Sockets Layer (SSL) technology.
                 </p>
                 <div className="flex space-x-4">
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg" alt="Visa" className="h-6" />
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg" alt="Amex" className="h-6" />
-                  <img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" alt="Mastercard" className="h-6" />
-                  {/* <img src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="PayPal" className="h-6" /> */}
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg"
+                    alt="Visa"
+                    className="h-6"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg"
+                    alt="Amex"
+                    className="h-6"
+                  />
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
+                    alt="Mastercard"
+                    className="h-6"
+                  />
                 </div>
               </div>
             </AccordionItem>
 
-            <AccordionItem title={
-              <div className='flex gap-2 items-center text-gray-600'>
-                <MdOutlineContactSupport size={20} />
-                <p className="text-sm uppercase tracking-wide">Need assistance?</p>
-              </div>
-            }>
-              <div className='flex flex-col gap-3'>
-                <p className='pb-2.5 text-sm'>
-                  DBC ELEGANCE Client Service Center is available by phone from Monday to Friday
-                  from 10 am to 8 pm and Saturday from 10 am to 6 pm GMT, or at any time via email.
+            <AccordionItem
+              title={
+                <div className="flex gap-2 items-center text-gray-600">
+                  <MdOutlineContactSupport size={20} />
+                  <p className="text-sm uppercase tracking-wide">
+                    Need assistance?
+                  </p>
+                </div>
+              }
+            >
+              <div className="flex flex-col gap-3">
+                <p className="pb-2.5 text-sm">
+                  DBC ELEGANCE Client Service Center is available by phone from
+                  Monday to Friday from 10 am to 8 pm and Saturday from 10 am to
+                  6 pm GMT, or at any time via email.
                 </p>
-                <div className='bg-black text-white rounded-sm p-3 text-sm'>
+                <div className="bg-black text-white rounded-sm p-3 text-sm">
                   Contact us by phone: 08157967548
                 </div>
-                <div className='bg-black text-white rounded-sm p-3 text-sm'>
+                <div className="bg-black text-white rounded-sm p-3 text-sm">
                   Contact us by email: support@dbcelegance.com
                 </div>
               </div>
             </AccordionItem>
 
-            <AccordionItem title={
-              <div className='flex gap-2 items-center text-gray-600'>
-                <CiDeliveryTruck size={20} />
-                <p className="text-sm uppercase tracking-wide">Free standard delivery</p>
-              </div>
-            }>
+            <AccordionItem
+              title={
+                <div className="flex gap-2 items-center text-gray-600">
+                  <CiDeliveryTruck size={20} />
+                  <p className="text-sm uppercase tracking-wide">
+                    Free standard delivery
+                  </p>
+                </div>
+              }
+            >
               <p className="text-sm">Enjoy free standard delivery on all orders.</p>
             </AccordionItem>
 
-            <AccordionItem title={
-              <div className='flex gap-2 items-center text-gray-600'>
-                <MdOutlineCalendarToday size={20} />
-                <p className="text-sm uppercase tracking-wide">Free returns within 30 days</p>
-              </div>
-            }>
+            <AccordionItem
+              title={
+                <div className="flex gap-2 items-center text-gray-600">
+                  <MdOutlineCalendarToday size={20} />
+                  <p className="text-sm uppercase tracking-wide">
+                    Free returns within 30 days
+                  </p>
+                </div>
+              }
+            >
               <p className="text-sm">
-                You have 30 days from the date of delivery to request a refund or exchange.
-                For any questions or immediate changes, please contact DBC ELEGANCE Customer Care.
+                You have 30 days from the date of delivery to request a refund or
+                exchange. For any questions or immediate changes, please contact
+                DBC ELEGANCE Customer Care.
               </p>
             </AccordionItem>
           </div>

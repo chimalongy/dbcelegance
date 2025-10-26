@@ -12,6 +12,8 @@ export default function OrderActionModal({
 }) {
   if (!selectedOrder) return null;
 
+  console.log("Selected order:", selectedOrder);
+
   // State for tracking number, shipping agency, and cancellation/delay reason
   const [trackingNumber, setTrackingNumber] = useState("");
   const [shippingAgency, setShippingAgency] = useState("");
@@ -41,6 +43,43 @@ export default function OrderActionModal({
     "Royal Mail", "Australia Post", "DPD", "TNT", 
     "Aramex", "Purolator", "China Post", "EMS"
   ];
+
+  // Helper function to get product details regardless of type
+  const getProductDetails = (item) => {
+    if (item.product_id) {
+      // Regular product
+      return {
+        id: item.product_id,
+        name: item.product_name,
+        gallery: item.product_gallery,
+        selectedSize: item.selected_size,
+        sizes: item.sizes,
+        type: 'product'
+      };
+    } else if (item.accessory_id) {
+      // Accessory product
+      return {
+        id: item.accessory_id,
+        name: item.accessory_name,
+        gallery: item.accessory_gallery,
+        selectedSize: item.selected_size,
+        sizes: item.sizes,
+        type: 'accessory'
+      };
+    }
+    return null;
+  };
+
+  // Helper function to get price for an item
+  const getItemPrice = (item) => {
+    const details = getProductDetails(item);
+    if (!details || !details.selectedSize || !details.sizes) return "N/A";
+    
+    const selectedSizeObj = details.sizes.find(
+      (s) => s.size === details.selectedSize.user_selected_size
+    );
+    return selectedSizeObj ? selectedSizeObj.price : "N/A";
+  };
 
   // Handle status change
   const handleStatusChange = (newStatus) => {
@@ -219,49 +258,50 @@ export default function OrderActionModal({
                 </h4>
                 {selectedOrder.cart && selectedOrder.cart.length > 0 ? (
                   <div className="space-y-4">
-                    {selectedOrder.cart.map((item, i) => (
-                      <div
-                        key={i}
-                        className="flex items-start border-b border-gray-200 pb-4"
-                      >
-                        {/* Product Image */}
-                        {item.product_gallery && item.product_gallery.length > 0 ? (
-                          <img
-                            src={item.product_gallery[0].url}
-                            alt={item.product_name}
-                            className="h-16 w-16 bg-gray-100 rounded-md object-cover"
-                          />
-                        ) : (
-                          <div className="h-16 w-16 bg-gray-100 rounded-md flex items-center justify-center text-gray-400">
-                            <FiShoppingBag />
-                          </div>
-                        )}
+                    {selectedOrder.cart.map((item, i) => {
+                      const productDetails = getProductDetails(item);
+                      if (!productDetails) return null;
 
-                        <div className="ml-4 flex-1">
-                          <h5 className="text-sm font-medium text-gray-900">
-                            {item.product_name || "Unnamed Product"}
-                          </h5>
-                          <p className="text-sm text-gray-500">
-                            Size: {item.selected_size?.user_selected_size || "N/A"}
-                          </p>
-                          <p className="text-sm text-gray-500">
-                            Qty: {item.selected_size?.quantity || 1}
-                          </p>
-                          <div className="text-sm font-medium text-gray-900 mt-1">
-                            {selectedOrder.cart.map((item, index) => {
-                              const selectedSize = item.sizes.find(
-                                (s) => s.size === item.selected_size.user_selected_size
-                              );
-                              return (
-                                <p key={index} className="text-sm font-medium text-gray-900 mt-1">
-                                  price: {selectedOrder.geo_data.currency_symbol}{selectedSize ? selectedSize.price : "N/A"} 
-                                </p>
-                              );
-                            })}
+                      return (
+                        <div
+                          key={i}
+                          className="flex items-start border-b border-gray-200 pb-4"
+                        >
+                          {/* Product Image */}
+                          {productDetails.gallery && productDetails.gallery.length > 0 ? (
+                            <img
+                              src={productDetails.gallery[0].url}
+                              alt={productDetails.name}
+                              className="h-16 w-16 bg-gray-100 rounded-md object-cover"
+                            />
+                          ) : (
+                            <div className="h-16 w-16 bg-gray-100 rounded-md flex items-center justify-center text-gray-400">
+                              <FiShoppingBag />
+                            </div>
+                          )}
+
+                          <div className="ml-4 flex-1">
+                            <h5 className="text-sm font-medium text-gray-900">
+                              {productDetails.name || "Unnamed Product"}
+                              {productDetails.type === 'accessory' && (
+                                <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                  Accessory
+                                </span>
+                              )}
+                            </h5>
+                            <p className="text-sm text-gray-500">
+                              Size: {productDetails.selectedSize?.user_selected_size || "N/A"}
+                            </p>
+                            <p className="text-sm text-gray-500">
+                              Qty: {productDetails.selectedSize?.quantity || 1}
+                            </p>
+                            <div className="text-sm font-medium text-gray-900 mt-1">
+                              Price: {selectedOrder.geo_data.currency_symbol}{getItemPrice(item)}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : (
                   <p className="text-sm text-gray-500">No items in this order.</p>

@@ -163,26 +163,45 @@ async function createAccessoryProductsTable() {
       accessory_id SERIAL PRIMARY KEY,
       accessory_name VARCHAR(255) NOT NULL,
       accessory_description TEXT,
+      accessory_sizes JSONB, -- Array of objects {size, sku, price, inventory}
       accessory_category INT NOT NULL REFERENCES ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE}(accessory_category_id) ON DELETE CASCADE,
-      accessory_price NUMERIC(10, 2) NOT NULL,
-      stock_quantity INT DEFAULT 0,
-      sku VARCHAR(255),
       accessory_status VARCHAR(20) NOT NULL CHECK (accessory_status IN ('active', 'inactive')),
       accessory_gallery JSONB, -- Array of objects {url, type}
       accessory_store VARCHAR(255),
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );
     
+    CREATE INDEX IF NOT EXISTS idx_accessory_store 
+    ON ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE}(accessory_store);
+    
     CREATE INDEX IF NOT EXISTS idx_accessory_category 
     ON ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE}(accessory_category);
     
-    CREATE INDEX IF NOT EXISTS idx_accessory_store 
-    ON ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE}(accessory_store);
+    CREATE INDEX IF NOT EXISTS idx_accessory_status 
+    ON ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE}(accessory_status);
+    
+    CREATE INDEX IF NOT EXISTS idx_accessory_sizes 
+    ON ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE} USING GIN (accessory_sizes);
   `;
 
   try {
     await pool.query(createTableQuery);
     console.log("Accessory products table created successfully");
+    
+    // Clean up old columns if they exist (for existing tables)
+    const alterTableQuery = `
+      ALTER TABLE ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE} 
+      DROP COLUMN IF EXISTS accessory_price;
+      
+      ALTER TABLE ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE} 
+      DROP COLUMN IF EXISTS stock_quantity;
+      
+      ALTER TABLE ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE} 
+      DROP COLUMN IF EXISTS sku;
+    `;
+    
+    await pool.query(alterTableQuery);
+    console.log("Accessory products table columns cleaned up successfully");
   } catch (error) {
     console.error("Error creating accessory products table:", error);
     throw error;

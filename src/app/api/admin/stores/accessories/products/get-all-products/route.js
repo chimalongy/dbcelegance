@@ -3,7 +3,7 @@ import DBFunctions from "../../../../../../../../utils/DB/DBFunctions";
 import { TableCreator } from "../../../../../../../../utils/DB/TableCreator";
 
 export async function POST(request) {
-  await TableCreator();
+
   
   try {
     const body = await request.json();

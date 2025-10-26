@@ -10,6 +10,9 @@ import { useNavStore } from '../../../lib/store/navmodalstore';
 import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
 import { useUserSelectedCategory } from '@/app/lib/store/UserSelectedCategory';
+import { useSelectedStoreAccessoryCategories } from '@/app/lib/store/selectedstoreaccessorycategoriesstore';
+import { useSelectedStoreAccessoryProducts } from '@/app/lib/store/selectedstoreaccessoryproductsstore';
+import { useUserSelectedAccessoryCategory } from '@/app/lib/store/UserSelectedAccessoryCategory';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FiArrowRight } from 'react-icons/fi';
@@ -21,20 +24,29 @@ export default function FashionPage() {
     const router = useRouter();
     const params = useParams();
     const store_categories = useSelectedStoreCategories((state) => state.selectedstorecategories);
-    const store_products = useSelectedStoreProducts((state) => state.selectedstoreproducts);
-    let setUserSelectedStoreCategory= useUserSelectedCategory((state)=>state.setUserSelectedStoreCategory)
+    // const store_products = useSelectedStoreProducts((state) => state.selectedstoreproducts);
+    let setUserSelectedStoreCategory = useUserSelectedCategory((state) => state.setUserSelectedStoreCategory)
+
+
+
+    const store_accessory_categories = useSelectedStoreAccessoryCategories((state) => state.selectedstoreaccessorycategories);
+    // const store_accessory_products = useSelectedStoreAccessoryProducts((state) => state.selectedstoreaccessoryproducts);
+
+    let setUserSelectedStoreAccessoryCategory = useUserSelectedAccessoryCategory((state) => state.setUserSelectedStoreAccessoryCategory)
+    const setStoreAccessoryProducts = useSelectedStoreAccessoryProducts((state) => state.setSelectedStoreAccessoryProducts);
+
     const { showmodal } = useNavStore();
     const { showLeftNavModal } = useLeftNavStore();
-    
+
     const gender = params.fashionstore;
     const [isLoading, setIsLoading] = useState(true);
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
-        if (store_categories && store_products) {
+        if (store_categories && store_accessory_categories) {
             setIsLoading(false);
         }
-    }, [store_categories, store_products]);
+    }, [store_categories, store_accessory_categories]);
 
     useEffect(() => {
         const handleWindowScroll = () => {
@@ -44,6 +56,7 @@ export default function FashionPage() {
         return () => window.removeEventListener('scroll', handleWindowScroll);
     }, []);
 
+  
     const backgroundVideo =
         gender === 'mensfashion' ? '/videos/menintro.mp4' : '/videos/womenintro.mp4';
 
@@ -57,6 +70,13 @@ export default function FashionPage() {
         const sanitizedCategory = category.category_name.toLowerCase().replace(/\s+/g, '-');
         setUserSelectedStoreCategory(category)
         router.push(`/store/${gender}/${sanitizedCategory}`);
+
+    };
+    const handleAccessoryCategoryClick = (accessorycategory) => {
+        // Sanitize category name for URL
+        const sanitizedAccessoryCategory = accessorycategory.accessory_category_name.toLowerCase().replace(/\s+/g, '-');
+        setUserSelectedStoreAccessoryCategory(accessorycategory)
+        router.push(`/store/${gender}/accessories/categories/${sanitizedAccessoryCategory}`);
 
     };
 
@@ -115,7 +135,7 @@ export default function FashionPage() {
                             //     <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-black"></div>
                             //     <span className="ml-3 text-gray-600">Loading categories...</span>
                             // </div>
-                            <Loader/>
+                            <Loader />
                         ) : (
                             <>
                                 {/* Categories Grid */}
@@ -160,15 +180,77 @@ export default function FashionPage() {
                                     ))}
                                 </div>
 
+
+
+                                <div className="w-full max-w-7xl px-4">
+                                    <p className="text-gray-600 text-center mb-10 max-w-3xl mx-auto text-base w-[80%]">
+                                        Explore our carefully curated Accessory categories to find the perfect pieces for your style
+                                    </p>
+
+
+                                    <>
+                                        {/* Categories Grid */}
+                                        <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-2 mb-16">
+                                            {store_accessory_categories?.map((category, index) => (
+                                                <motion.div
+                                                    key={index}
+                                                    initial={{ opacity: 0, y: 20 }}
+                                                    animate={{ opacity: 1, y: 0 }}
+                                                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                                                    className="group relative overflow-hidden cursor-pointer transition-all duration-500  shadow-md hover:shadow-xl"
+                                                    onClick={() => handleAccessoryCategoryClick(category)}
+                                                >
+                                                    <div className="h-[250px] md:h-[300px] flex flex-col">
+                                                        {/* Image Container with Header Inside */}
+                                                        <div className="relative h-full w-full">
+                                                            <Image
+                                                                src={category.accessory_category_image}
+                                                                fill
+                                                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                                                                style={{ objectFit: 'cover' }}
+                                                                alt={`DBC - ${category.accessory_category_name}`}
+                                                                className="group-hover:scale-105 transition-transform duration-700"
+                                                            />
+
+                                                            {/* Gradient overlay */}
+                                                            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent"></div>
+
+                                                            {/* Category Title positioned inside image */}
+                                                            <div className="absolute bottom-0 left-0 right-0 text-white flex flex-col items-center justify-center p-6">
+                                                                <h3 className="text-2xl font-bold mb-0 text-center">
+                                                                    {category.accessory_category_name}
+                                                                </h3>
+                                                                <div className="flex sm:hidden items-center text-sm underline opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                                                                    <span>Shop now</span>
+                                                                    <FiArrowRight className="ml-1" />
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </motion.div>
+                                            ))}
+                                        </div>
+
+
+                                    </>
+
+                                </div>
+
+
+
+
+
                                 {/* Featured Products Section */}
                                 {/* <ProductList products={store_products} /> */}
                             </>
                         )}
                     </div>
+
+
                 </div>
 
                 {showmodal && <ModalMain />}
-                {showLeftNavModal && <NavLeftModal/>}
+                {showLeftNavModal && <NavLeftModal />}
             </div>
             <Footer />
         </div>

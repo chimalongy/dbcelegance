@@ -4,7 +4,7 @@ import { TableCreator } from "../../../../../../../../utils/DB/TableCreator";
 
 export async function GET(request) {
   const dbActions = new DBFunctions();
-  await TableCreator();
+
 
   try {
     const { searchParams } = new URL(request.url);

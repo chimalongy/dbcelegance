@@ -84,8 +84,16 @@ export async function POST(request) {
         data: orderResult.data,
         message: "✅ Order received successfully and email sent.",
       },
-      { status: 201 }
+      { status: 500 }
     );
+    // return NextResponse.json(
+    //   {
+    //     success: true,
+    //     data: orderResult.data,
+    //     message: "✅ Order received successfully and email sent.",
+    //   },
+    //   { status: 201 }
+    // );
   } catch (error) {
     console.error("❌ Error saving order:", error);
     return NextResponse.json(

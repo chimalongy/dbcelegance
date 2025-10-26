@@ -5,7 +5,7 @@ import { auditHelper } from '@/app/lib/auditHelper';
 
 export async function GET(request) {
   const dbActions = new DBFunctions();
-  await TableCreator();
+
 
   try {
     // Extract admin user info from query parameters

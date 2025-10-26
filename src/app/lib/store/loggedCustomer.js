@@ -1,17 +1,42 @@
-// store/useUserStore.js
 import { create } from 'zustand';
-import { persist } from 'zustand/middleware';
+import { persist, createJSONStorage } from 'zustand/middleware';
+
+const SESSION_TIMEOUT = 60 * 60 * 1000; // 1 hour in milliseconds
 
 export const useLoggedCustomerStore = create(
   persist(
-    (set) => ({
+    (set, get) => ({
       loggedCustomer: null,
-      setLoggedCustomer: (loggedCustomer) => set({ loggedCustomer }),
-      clearloggedCustomer: () => set({ loggedCustomer: null }),
+      lastActivity: null,
+      
+      setLoggedCustomer: (loggedCustomer) => 
+        set({ 
+          loggedCustomer,
+          lastActivity: Date.now() 
+        }),
+        
+      updateLastActivity: () => 
+        set({ lastActivity: Date.now() }),
+        
+      clearLoggedCustomer: () => 
+        set({ 
+          loggedCustomer: null, 
+          lastActivity: null 
+        }),
+        
+      isSessionExpired: () => {
+        const { lastActivity } = get();
+        return lastActivity && (Date.now() - lastActivity > SESSION_TIMEOUT);
+      }
     }),
     {
-      name: 'logged-customer-storage', // Key in localStorage
-      getStorage: () => localStorage, // Use sessionStorage if preferred
+      name: 'logged-customer-storage',
+      storage: createJSONStorage(() => localStorage),
+      // Only persist these fields
+      partialize: (state) => ({
+        loggedCustomer: state.loggedCustomer,
+        lastActivity: state.lastActivity,
+      }),
     }
   )
 );

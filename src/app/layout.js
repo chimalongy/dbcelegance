@@ -4,7 +4,7 @@ import ModalMain from "./components/modalpages.jsx/ModalMain";
 import { Toaster } from "react-hot-toast";
 import Navbar from "./components/Nav";
 import { FiCheckCircle, FiXCircle } from "react-icons/fi";
-
+import Script from "next/script";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -22,7 +22,6 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
-  
   return (
     <html lang="en">
       <body
@@ -61,6 +60,11 @@ export default function RootLayout({ children }) {
               icon: <FiXCircle size={35} className="text-black text-lg" />,
             },
           }}
+        />
+
+        <Script
+          src="https://checkout.flutterwave.com/v3.js"
+          strategy="afterInteractive" // Loads after the hydration
         />
       </body>
     </html>

@@ -5,59 +5,77 @@ import { persist } from "zustand/middleware";
 export const useUserCart = create(
   persist(
     (set) => ({
-      usercart: [], // ✅ cart always starts as an empty array
+      usercart: [], // ✅ cart always starts empty
 
-      // ✅ Add a product to the cart (no duplicates)
-      addToCart: (product) =>
+      // ✅ Add a product or accessory (no duplicates)
+      addToCart: (item) =>
         set((state) => {
-          console.log(product);
+          const isAccessory = !!item.accessory_id;
+          const idKey = isAccessory ? "accessory_id" : "product_id";
+
           const exists = state.usercart.some(
-            (item) =>
-              item.product_id === product.product_id &&
-              item.selected_size.user_selected_size ===
-                product.selected_size.user_selected_size
+            (cartItem) =>
+              cartItem[idKey] === item[idKey] &&
+              cartItem.selected_size?.user_selected_size ===
+                item.selected_size?.user_selected_size
           );
+
           if (exists) {
-            return state; // no change if product already exists
+            return state; // Don't add duplicates
           }
-          return { usercart: [...state.usercart, product] };
+
+          return { usercart: [...state.usercart, item] };
         }),
 
-      removeCartItem: (product) =>
+      // ✅ Remove a product or accessory
+      removeCartItem: (itemToRemove) =>
         set((state) => {
-          console.log("Removing product:", product);
+          const isAccessory = !!itemToRemove.accessory_id;
+          const idKey = isAccessory ? "accessory_id" : "product_id";
+
+          console.log("Removing item:", itemToRemove);
 
           return {
             usercart: state.usercart.filter(
-              (item) =>
-                JSON.stringify(item) !== JSON.stringify(product)
-               
+              (cartItem) =>
+                !(
+                  cartItem[idKey] === itemToRemove[idKey] &&
+                  cartItem.selected_size?.user_selected_size ===
+                    itemToRemove.selected_size?.user_selected_size
+                )
             ),
           };
         }),
 
-       // ✅ Update product's quantity (and size if needed)
-      updateCartItem: (productId, userSelectedSize, update) =>
-        set((state) => ({
-          usercart: state.usercart.map((item) =>
-            item.product_id === productId &&
-            item.selected_size.user_selected_size === userSelectedSize
-              ? {
-                  ...item,
-                  selected_size: {
-                    ...item.selected_size,
-                    quantity: update.quantity,
-                  },
-                }
-              : item
-          ),
-        })),
+      // ✅ Update quantity for both product and accessory
+      updateCartItem: (itemId, userSelectedSize, update, isAccessory = false) =>
+        set((state) => {
+          const idKey = isAccessory ? "accessory_id" : "product_id";
 
-      // ✅ Clear all items from cart
+          return {
+            usercart: state.usercart.map((cartItem) => {
+              const matches =
+                cartItem[idKey] === itemId &&
+                cartItem.selected_size?.user_selected_size === userSelectedSize;
+
+              if (!matches) return cartItem;
+
+              return {
+                ...cartItem,
+                selected_size: {
+                  ...cartItem.selected_size,
+                  quantity: update.quantity,
+                },
+              };
+            }),
+          };
+        }),
+
+      // ✅ Clear the entire cart
       clearCart: () => set({ usercart: [] }),
     }),
     {
-      name: "user-cart-storage", // localStorage key
+      name: "user-cart-storage",
       getStorage: () => localStorage,
     }
   )

@@ -84,7 +84,7 @@ export async function POST(request) {
       updateData[key] = value;
     }
 
-    await TableCreator();
+  
 
     const result = await dbActions.updateProductFields(product_id, updateData);
 

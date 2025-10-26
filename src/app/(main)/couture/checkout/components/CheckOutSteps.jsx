@@ -17,7 +17,10 @@ const CheckOutSteps = ({
   countries, setCountries,
   validate, validateBilling,
   completedSteps, setCompletedSteps,
-  isPurchaseReady, setIsPurchaseReady
+  isPurchaseReady, setIsPurchaseReady,
+  handlePayment,
+  handlingPayment,
+  sethandlingPayment, 
 }) => {
   // State for collapsible sections
   const [expandedSections, setExpandedSections] = useState({
@@ -33,19 +36,43 @@ const CheckOutSteps = ({
     billingPayment: false
   });
 
+  // State to track current active step
+  const [currentStep, setCurrentStep] = useState('shippingAddress');
+
+  // Enhanced validation functions that set errors
+  const validateShippingAddress = () => {
+    const newErrors = {};
+    if (!formData.firstName.trim()) newErrors.firstName = "First name is required";
+    if (!formData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!formData.country.trim()) newErrors.country = "Country is required";
+    if (!formData.address.trim()) newErrors.address = "Address is required";
+    if (!formData.phone.trim()) newErrors.phone = "Phone number is required";
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const validateBillingAddress = () => {
+    const newErrors = {};
+    if (!billingFormData.firstName.trim()) newErrors.firstName = "First name is required";
+    if (!billingFormData.lastName.trim()) newErrors.lastName = "Last name is required";
+    if (!billingFormData.country.trim()) newErrors.country = "Country is required";
+    if (!billingFormData.address.trim()) newErrors.address = "Address is required";
+    if (!billingFormData.phone.trim()) newErrors.phone = "Phone number is required";
+    
+    setBillingErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
   // Check if shipping address form is valid
   const isShippingAddressValid = () => {
     return (
-      formData.firstName &&
-      formData.lastName &&
-      formData.country &&
-      formData.address &&
-      formData.phone &&
-      !errors.firstName &&
-      !errors.lastName &&
-      !errors.country &&
-      !errors.address &&
-      !errors.phone
+      formData.firstName?.trim() &&
+      formData.lastName?.trim() &&
+      formData.country?.trim() &&
+      formData.address?.trim() &&
+      formData.phone?.trim() &&
+      Object.keys(errors).length === 0
     );
   };
 
@@ -54,31 +81,17 @@ const CheckOutSteps = ({
     if (useShippingForBilling) return true;
 
     return (
-      billingFormData.firstName &&
-      billingFormData.lastName &&
-      billingFormData.country &&
-      billingFormData.address &&
-      billingFormData.phone &&
-      !billingErrors.firstName &&
-      !billingErrors.lastName &&
-      !billingErrors.country &&
-      !billingErrors.address &&
-      !billingErrors.phone
+      billingFormData.firstName?.trim() &&
+      billingFormData.lastName?.trim() &&
+      billingFormData.country?.trim() &&
+      billingFormData.address?.trim() &&
+      billingFormData.phone?.trim() &&
+      Object.keys(billingErrors).length === 0
     );
   };
 
   // Check if billing step is complete
-  const isBillingStepComplete = useShippingForBilling ||
-    (billingFormData.firstName &&
-      billingFormData.lastName &&
-      billingFormData.country &&
-      billingFormData.address &&
-      billingFormData.phone &&
-      !billingErrors.firstName &&
-      !billingErrors.lastName &&
-      !billingErrors.country &&
-      !billingErrors.address &&
-      !billingErrors.phone);
+  const isBillingStepComplete = useShippingForBilling || isBillingAddressValid();
 
   // Update completion status when billing data changes
   useEffect(() => {
@@ -87,24 +100,42 @@ const CheckOutSteps = ({
       billingPayment: isBillingStepComplete
     }));
 
-    // Set purchase ready status (same condition as when Purchase now button is enabled)
+    // Set purchase ready status
     setIsPurchaseReady(isBillingStepComplete);
-
   }, [isBillingStepComplete, setCompletedSteps, setIsPurchaseReady]);
+
+  // Update current step based on expanded sections
+  useEffect(() => {
+    if (expandedSections.shippingAddress) setCurrentStep('shippingAddress');
+    else if (expandedSections.shippingMethod) setCurrentStep('shippingMethod');
+    else if (expandedSections.billingPayment) setCurrentStep('billingPayment');
+  }, [expandedSections]);
 
   // Toggle section expansion (only if step is enabled)
   const toggleSection = (section) => {
     if (!enabledSteps[section]) return;
 
     setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
+      shippingAddress: section === 'shippingAddress',
+      shippingMethod: section === 'shippingMethod',
+      billingPayment: section === 'billingPayment'
     }));
   };
 
   // Handle completion of shipping address step
   const handleShippingAddressComplete = () => {
-    if (!isShippingAddressValid()) return;
+    console.log("Shipping Address Submitted:", formData);
+    
+    // Validate before proceeding
+    if (!validateShippingAddress()) {
+      // Ensure shipping address section is expanded to show errors
+      setExpandedSections({
+        shippingAddress: true,
+        shippingMethod: false,
+        billingPayment: false
+      });
+      return;
+    }
 
     setCompletedSteps(prev => ({ ...prev, shippingAddress: true }));
     setEnabledSteps(prev => ({ ...prev, shippingMethod: true }));
@@ -117,7 +148,15 @@ const CheckOutSteps = ({
 
   // Handle completion of shipping method step
   const handleShippingMethodComplete = () => {
-    if (!selectedShipping) return;
+    if (!selectedShipping) {
+      // Ensure shipping method section is expanded to show selection requirement
+      setExpandedSections({
+        shippingAddress: false,
+        shippingMethod: true,
+        billingPayment: false
+      });
+      return;
+    }
 
     setCompletedSteps(prev => ({ ...prev, shippingMethod: true }));
     setEnabledSteps(prev => ({ ...prev, billingPayment: true }));
@@ -126,6 +165,43 @@ const CheckOutSteps = ({
       shippingMethod: false,
       billingPayment: true
     });
+  };
+
+  // Handle purchase now button click
+  const handlePurchaseNow = async () => {
+    // Validate billing address if not using shipping address
+    if (!useShippingForBilling && !validateBillingAddress()) {
+      // Ensure billing section is expanded to show errors
+      setExpandedSections({
+        shippingAddress: false,
+        shippingMethod: false,
+        billingPayment: true
+      });
+      return;
+    }
+
+    if (!isBillingStepComplete) {
+      // Ensure billing section is expanded to show errors
+      setExpandedSections({
+        shippingAddress: false,
+        shippingMethod: false,
+        billingPayment: true
+      });
+      return;
+    }
+
+    // Proceed with payment
+    console.log("Purchase completed! Proceeding to payment...");
+    
+    // Set loading state and call the payment handler
+    sethandlingPayment(true);
+    try {
+      await handlePayment();
+    } catch (error) {
+      console.error("Payment failed:", error);
+      // Handle payment error if needed
+    }
+    // Note: The sethandlingPayment(false) is handled in the parent component's handlePayment
   };
 
   // Fetch countries on mount
@@ -161,27 +237,57 @@ const CheckOutSteps = ({
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
   const handleBillingChange = (e) => {
     const { name, value } = e.target;
     setBillingFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (billingErrors[name]) {
+      setBillingErrors(prev => ({ ...prev, [name]: '' }));
+    }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    console.log("Shipping Address Submitted:", formData);
-    // submit to API here
+  const handlePhoneChange = (phone) => {
+    setFormData((prev) => ({ ...prev, phone }));
+    if (errors.phone) {
+      setErrors(prev => ({ ...prev, phone: '' }));
+    }
   };
 
-  const handleBillingSubmit = (e) => {
-    e.preventDefault();
-    if (!validateBilling()) return;
+  const handleBillingPhoneChange = (phone) => {
+    setBillingFormData((prev) => ({ ...prev, phone }));
+    if (billingErrors.phone) {
+      setBillingErrors(prev => ({ ...prev, phone: '' }));
+    }
+  };
 
-    console.log("Billing Address Submitted:", billingFormData);
-    // submit to API here
+  // Helper function to check if current step has errors
+  const getCurrentStepErrors = () => {
+    switch (currentStep) {
+      case 'shippingAddress':
+        return Object.values(errors).some(error => error);
+      case 'shippingMethod':
+        return !selectedShipping;
+      case 'billingPayment':
+        if (useShippingForBilling) return false;
+        return Object.values(billingErrors).some(error => error);
+      default:
+        return false;
+    }
+  };
+
+  // Get error count for display
+  const getShippingErrorCount = () => {
+    return Object.values(errors).filter(error => error).length;
+  };
+
+  const getBillingErrorCount = () => {
+    return Object.values(billingErrors).filter(error => error).length;
   };
 
   // Shipping methods data
@@ -218,6 +324,11 @@ const CheckOutSteps = ({
               {completedSteps.shippingAddress ? '✓' : '1'}
             </div>
             <h2 className="text-lg font-semibold">Shipping address</h2>
+            {expandedSections.shippingAddress && getShippingErrorCount() > 0 && (
+              <span className="text-red-500 text-sm font-medium">
+                • {getShippingErrorCount()} error{getShippingErrorCount() > 1 ? 's' : ''} to fix
+              </span>
+            )}
           </div>
           {enabledSteps.shippingAddress && (
             expandedSections.shippingAddress ? <FiChevronUp /> : <FiChevronDown />
@@ -249,7 +360,7 @@ const CheckOutSteps = ({
                     All fields marked <span className="text-red-500">*</span> are mandatory.
                   </p>
 
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
                     {/* Title */}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
@@ -282,10 +393,15 @@ const CheckOutSteps = ({
                           name="firstName"
                           value={formData.firstName}
                           onChange={handleChange}
-                          className="w-full border-b border-gray-300 focus:border-black py-2 focus:outline-none bg-transparent transition-colors"
+                          className={`w-full border-b py-2 focus:outline-none bg-transparent transition-colors ${
+                            errors.firstName ? 'border-red-500' : 'border-gray-300 focus:border-black'
+                          }`}
+                          placeholder="Enter first name"
                         />
                         {errors.firstName && (
-                          <p className="text-red-500 text-xs mt-1">{errors.firstName}</p>
+                          <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                            <span>•</span> {errors.firstName}
+                          </p>
                         )}
                       </div>
 
@@ -298,10 +414,15 @@ const CheckOutSteps = ({
                           name="lastName"
                           value={formData.lastName}
                           onChange={handleChange}
-                          className="w-full border-b border-gray-300 focus:border-black py-2 focus:outline-none bg-transparent transition-colors"
+                          className={`w-full border-b py-2 focus:outline-none bg-transparent transition-colors ${
+                            errors.lastName ? 'border-red-500' : 'border-gray-300 focus:border-black'
+                          }`}
+                          placeholder="Enter last name"
                         />
                         {errors.lastName && (
-                          <p className="text-red-500 text-xs mt-1">{errors.lastName}</p>
+                          <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                            <span>•</span> {errors.lastName}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -316,7 +437,9 @@ const CheckOutSteps = ({
                           name="country"
                           value={formData.country}
                           onChange={handleChange}
-                          className="w-full border-b border-gray-300 focus:border-black py-2 pr-8 focus:outline-none bg-transparent appearance-none transition-colors"
+                          className={`w-full border-b py-2 pr-8 focus:outline-none bg-transparent appearance-none transition-colors ${
+                            errors.country ? 'border-red-500' : 'border-gray-300 focus:border-black'
+                          }`}
                         >
                           <option value="">Select a country</option>
                           {countries.map((c) => (
@@ -326,7 +449,9 @@ const CheckOutSteps = ({
                         <FiChevronDown className="absolute right-0 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
                       </div>
                       {errors.country && (
-                        <p className="text-red-500 text-xs mt-1">{errors.country}</p>
+                        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                          <span>•</span> {errors.country}
+                        </p>
                       )}
                     </div>
 
@@ -340,10 +465,15 @@ const CheckOutSteps = ({
                         name="address"
                         value={formData.address}
                         onChange={handleChange}
-                        className="w-full border-b border-gray-300 focus:border-black py-2 focus:outline-none bg-transparent transition-colors"
+                        className={`w-full border-b py-2 focus:outline-none bg-transparent transition-colors ${
+                            errors.address ? 'border-red-500' : 'border-gray-300 focus:border-black'
+                          }`}
+                        placeholder="Enter your address"
                       />
                       {errors.address && (
-                        <p className="text-red-500 text-xs mt-1">{errors.address}</p>
+                        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                          <span>•</span> {errors.address}
+                        </p>
                       )}
                       <p className="text-xs text-gray-500 mt-1">
                         Please ensure your address is correct. It is not possible to
@@ -356,11 +486,13 @@ const CheckOutSteps = ({
                       <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
                         * Phone Number
                       </label>
-                      <div className="phone-input-container border-b border-gray-300 focus-within:border-black transition-colors">
+                      <div className={`phone-input-container border-b transition-colors ${
+                        errors.phone ? 'border-red-500' : 'border-gray-300 focus-within:border-black'
+                      }`}>
                         <PhoneInput
                           country={"us"}
                           value={formData.phone}
-                          onChange={(phone) => setFormData((prev) => ({ ...prev, phone }))}
+                          onChange={handlePhoneChange}
                           inputClass="!w-full !bg-transparent !border-none !outline-none !ring-0 !shadow-none py-2"
                           buttonClass="!bg-transparent !border-none"
                           dropdownClass="!bg-white !text-black"
@@ -368,7 +500,9 @@ const CheckOutSteps = ({
                         />
                       </div>
                       {errors.phone && (
-                        <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
+                        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                          <span>•</span> {errors.phone}
+                        </p>
                       )}
                       <p className="text-xs text-gray-500 mt-1">
                         Please enter a valid phone number that can be used for delivery purposes.
@@ -378,10 +512,9 @@ const CheckOutSteps = ({
                     {/* Buttons */}
                     <div className="flex gap-4 pt-2">
                       <button
-                        type="submit"
+                        type="button"
                         className="bg-black text-white px-6 py-3 text-sm font-medium rounded-sm hover:bg-gray-800 active:bg-gray-900 transition-colors"
                         onClick={handleShippingAddressComplete}
-                        disabled={!isShippingAddressValid()}
                       >
                         Add this address
                       </button>
@@ -399,10 +532,11 @@ const CheckOutSteps = ({
             </div>
 
             <button
-              className={`px-6 py-3 text-sm font-medium rounded-sm transition-colors ${isShippingAddressValid()
+              className={`px-6 py-3 text-sm font-medium rounded-sm transition-colors ${
+                isShippingAddressValid()
                   ? 'bg-black text-white hover:bg-gray-800 active:bg-gray-900'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+              }`}
               onClick={handleShippingAddressComplete}
               disabled={!isShippingAddressValid()}
             >
@@ -430,6 +564,9 @@ const CheckOutSteps = ({
               {completedSteps.shippingMethod ? '✓' : '2'}
             </div>
             <h2 className="text-lg font-semibold">Shipping method</h2>
+            {expandedSections.shippingMethod && !selectedShipping && (
+              <span className="text-red-500 text-sm">• Please select a shipping method</span>
+            )}
           </div>
           {enabledSteps.shippingMethod && (
             expandedSections.shippingMethod ? <FiChevronUp /> : <FiChevronDown />
@@ -462,16 +599,23 @@ const CheckOutSteps = ({
                 </div>
               ))}
 
+              {!selectedShipping && (
+                <p className="text-red-500 text-sm mt-2 flex items-center gap-1">
+                  <span>•</span> Please select a shipping method to continue
+                </p>
+              )}
+
               <p className="text-sm text-gray-600 mt-4 pt-4">
                 Please note that we require the client's presence, signature and/or ID are required for delivery.
               </p>
             </div>
 
             <button
-              className={`px-6 py-3 text-sm font-medium rounded-sm transition-colors ${selectedShipping
+              className={`px-6 py-3 text-sm font-medium rounded-sm transition-colors ${
+                selectedShipping
                   ? 'bg-black text-white hover:bg-gray-800 active:bg-gray-900'
                   : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                }`}
+              }`}
               onClick={handleShippingMethodComplete}
               disabled={!selectedShipping}
             >
@@ -499,6 +643,11 @@ const CheckOutSteps = ({
               {completedSteps.billingPayment ? '✓' : '3'}
             </div>
             <h2 className="text-lg font-semibold">Billing & Payment</h2>
+            {expandedSections.billingPayment && !useShippingForBilling && getBillingErrorCount() > 0 && (
+              <span className="text-red-500 text-sm font-medium">
+                • {getBillingErrorCount()} billing error{getBillingErrorCount() > 1 ? 's' : ''} to fix
+              </span>
+            )}
           </div>
           {enabledSteps.billingPayment && (
             expandedSections.billingPayment ? <FiChevronUp /> : <FiChevronDown />
@@ -529,7 +678,7 @@ const CheckOutSteps = ({
                     All fields marked <span className="text-red-500">*</span> are mandatory.
                   </p>
 
-                  <form onSubmit={handleBillingSubmit} className="space-y-6">
+                  <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
                     {/* Title */}
                     <div>
                       <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
@@ -563,10 +712,15 @@ const CheckOutSteps = ({
                           name="firstName"
                           value={billingFormData.firstName}
                           onChange={handleBillingChange}
-                          className="w-full border-b border-gray-300 focus:border-black py-2 focus:outline-none bg-transparent transition-colors"
+                          className={`w-full border-b py-2 focus:outline-none bg-transparent transition-colors ${
+                            billingErrors.firstName ? 'border-red-500' : 'border-gray-300 focus:border-black'
+                          }`}
+                          placeholder="Enter first name"
                         />
                         {billingErrors.firstName && (
-                          <p className="text-red-500 text-xs mt-1">{billingErrors.firstName}</p>
+                          <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                            <span>•</span> {billingErrors.firstName}
+                          </p>
                         )}
                       </div>
 
@@ -579,10 +733,15 @@ const CheckOutSteps = ({
                           name="lastName"
                           value={billingFormData.lastName}
                           onChange={handleBillingChange}
-                          className="w-full border-b border-gray-300 focus:border-black py-2 focus:outline-none bg-transparent transition-colors"
+                          className={`w-full border-b py-2 focus:outline-none bg-transparent transition-colors ${
+                            billingErrors.lastName ? 'border-red-500' : 'border-gray-300 focus:border-black'
+                          }`}
+                          placeholder="Enter last name"
                         />
                         {billingErrors.lastName && (
-                          <p className="text-red-500 text-xs mt-1">{billingErrors.lastName}</p>
+                          <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                            <span>•</span> {billingErrors.lastName}
+                          </p>
                         )}
                       </div>
                     </div>
@@ -597,7 +756,9 @@ const CheckOutSteps = ({
                           name="country"
                           value={billingFormData.country}
                           onChange={handleBillingChange}
-                          className="w-full border-b border-gray-300 focus:border-black py-2 pr-8 focus:outline-none bg-transparent appearance-none transition-colors"
+                          className={`w-full border-b py-2 pr-8 focus:outline-none bg-transparent appearance-none transition-colors ${
+                            billingErrors.country ? 'border-red-500' : 'border-gray-300 focus:border-black'
+                          }`}
                         >
                           <option value="">Select a country</option>
                           {countries.map((c) => (
@@ -607,7 +768,9 @@ const CheckOutSteps = ({
                         <FiChevronDown className="absolute right-0 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none" />
                       </div>
                       {billingErrors.country && (
-                        <p className="text-red-500 text-xs mt-1">{billingErrors.country}</p>
+                        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                          <span>•</span> {billingErrors.country}
+                        </p>
                       )}
                     </div>
 
@@ -616,15 +779,20 @@ const CheckOutSteps = ({
                       <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
                         * Address
                       </label>
-                      <input
-                        type="text"
-                        name="address"
-                        value={billingFormData.address}
-                        onChange={handleBillingChange}
-                        className="w-full border-b border-gray-300 focus:border-black py-2 focus:outline-none bg-transparent transition-colors"
-                      />
+                        <input
+                          type="text"
+                          name="address"
+                          value={billingFormData.address}
+                          onChange={handleBillingChange}
+                          className={`w-full border-b py-2 focus:outline-none bg-transparent transition-colors ${
+                            billingErrors.address ? 'border-red-500' : 'border-gray-300 focus:border-black'
+                          }`}
+                          placeholder="Enter your address"
+                        />
                       {billingErrors.address && (
-                        <p className="text-red-500 text-xs mt-1">{billingErrors.address}</p>
+                        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                          <span>•</span> {billingErrors.address}
+                        </p>
                       )}
                       <p className="text-xs text-gray-500 mt-1">
                         Please ensure your address is correct. It is not possible to
@@ -637,11 +805,13 @@ const CheckOutSteps = ({
                       <label className="block text-xs font-medium text-gray-700 uppercase tracking-wide mb-1">
                         * Phone Number
                       </label>
-                      <div className="phone-input-container border-b border-gray-300 focus-within:border-black transition-colors">
+                      <div className={`phone-input-container border-b transition-colors ${
+                        billingErrors.phone ? 'border-red-500' : 'border-gray-300 focus-within:border-black'
+                      }`}>
                         <PhoneInput
                           country={"us"}
                           value={billingFormData.phone}
-                          onChange={(phone) => setBillingFormData((prev) => ({ ...prev, phone }))}
+                          onChange={handleBillingPhoneChange}
                           inputClass="!w-full !bg-transparent !border-none !outline-none !ring-0 !shadow-none py-2"
                           buttonClass="!bg-transparent !border-none"
                           dropdownClass="!bg-white !text-black"
@@ -649,7 +819,9 @@ const CheckOutSteps = ({
                         />
                       </div>
                       {billingErrors.phone && (
-                        <p className="text-red-500 text-xs mt-1">{billingErrors.phone}</p>
+                        <p className="text-red-500 text-xs mt-1 flex items-center gap-1">
+                          <span>•</span> {billingErrors.phone}
+                        </p>
                       )}
                       <p className="text-xs text-gray-500 mt-1">
                         Please enter a valid phone number that can be used for billing purposes.
@@ -659,8 +831,9 @@ const CheckOutSteps = ({
                     {/* Buttons */}
                     <div className="flex gap-4 pt-2">
                       <button
-                        type="submit"
+                        type="button"
                         className="bg-black text-white px-6 py-3 text-sm font-medium rounded-sm hover:bg-gray-800 active:bg-gray-900 transition-colors"
+                        onClick={validateBillingAddress}
                       >
                         Add billing address
                       </button>
@@ -681,13 +854,15 @@ const CheckOutSteps = ({
 
                 {/* Purchase button */}
                 <button
-                  className={`w-full py-3 text-sm font-medium rounded-sm transition-colors ${isBillingStepComplete
+                  className={`w-full py-3 text-sm font-medium rounded-sm transition-colors ${
+                    isBillingStepComplete && !handlingPayment
                       ? 'bg-black text-white hover:bg-gray-800 active:bg-gray-900'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                    }`}
-                  disabled={!isBillingStepComplete}
+                  }`}
+                  onClick={handlePurchaseNow}
+                  disabled={!isBillingStepComplete || handlingPayment}
                 >
-                  Purchase now
+                  {handlingPayment ? "Processing Payment..." : "Purchase now"}
                 </button>
               </div>
             </div>

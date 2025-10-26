@@ -20,7 +20,7 @@ export async function POST(request) {
     }
 
     // Create table if it doesn't exist
-    await TableCreator();
+  
 
     // Check if product exists
     const productExists = await dbActions.getAccessoryProductById(accessory_id);

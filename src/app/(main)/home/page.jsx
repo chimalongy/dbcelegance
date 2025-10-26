@@ -12,8 +12,11 @@ import { apiSummary } from '@/app/lib/apiSummary';
 import axios from 'axios';
 import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
+import { useSelectedStoreAccessoryCategories } from '@/app/lib/store/selectedstoreaccessorycategoriesstore';
+
 import { Noto_Serif } from 'next/font/google';
 import CategoryLoader from '@/app/components/CategoryLoader';
+import { useSelectedStoreAccessoryProducts } from '@/app/lib/store/selectedstoreaccessoryproductsstore';
 
 const categories = [
   {
@@ -51,7 +54,12 @@ export default function Home() {
   const setSelectedStoreProducts = useSelectedStoreProducts(
     (state) => state.setSelectedStoreProducts
   );
-  
+  const setSelectedStoreAccessoryCategories = useSelectedStoreAccessoryCategories(
+    (state) => state.setSelectedStoreAccessoryCategories
+  );
+  const setSelectedStoreAccessoryProducts = useSelectedStoreAccessoryProducts(
+    (state) => state.setSelectedStoreAccessoryProducts
+  );  
   async function fetch_collections(category) {
     if (!category.store_name) {
       router.push(category.link);
@@ -64,14 +72,23 @@ export default function Home() {
     try {
       setSelectedStoreCategories([]);
       setSelectedStoreProducts([]);
-      const [categoriesRes, productsRes] = await Promise.all([
+      const [categoriesRes, productsRes, acccessoriesCategoriesRes, acccessoriesRes] = await Promise.all([
         axios.post(apiSummary.store.get_store_categories, { store_name: category.store_name }),
-        axios.post(apiSummary.store.get_store_products, { store_name: category.store_name })
+        axios.post(apiSummary.store.get_store_products, { store_name: category.store_name }),
+        axios.post(apiSummary.store.get_store_accessories_categories, { store_name: category.store_name }),
+        axios.post(apiSummary.store.get_store_accessories, { store_name: category.store_name })
       ]);
 
-      if (categoriesRes.data.success && productsRes.data.success) {
+
+      // console.log(categoriesRes.data.data);
+      // console.log(productsRes.data.data);
+      console.log(acccessoriesCategoriesRes.data.data);
+      console.log(acccessoriesRes.data.data);
+      if (categoriesRes.data.success && productsRes.data.success && acccessoriesCategoriesRes.data.success && acccessoriesRes.data.success) {
         setSelectedStoreCategories(categoriesRes.data.data);
         setSelectedStoreProducts(productsRes.data.data);
+        setSelectedStoreAccessoryCategories(acccessoriesCategoriesRes.data.data);
+        setSelectedStoreAccessoryProducts(acccessoriesRes.data.data);
         dataloaded = true;
       }
     } catch (error) {

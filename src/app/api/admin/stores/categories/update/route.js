@@ -114,7 +114,7 @@ export async function POST(request) {
       }
     }
 
-    await TableCreator();
+  
 
     
     const result = await dbActions.updateCategoryFields(category_id, updateData);

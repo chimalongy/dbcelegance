@@ -70,7 +70,7 @@ export async function POST(request) {
     }
 
     // Create table if it doesn't exist
-    await TableCreator();
+  
 
   //check if category exist
 

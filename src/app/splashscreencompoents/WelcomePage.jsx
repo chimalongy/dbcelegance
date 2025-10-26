@@ -87,11 +87,10 @@ export default function WelcomePage() {
       };
 
       if (payload.continent_name.toLowerCase() === "africa") {
-        //get the exchange rate of euro here
-        payload.currency_code = "EUR"
-        payload.currency_name = "Euro"
-        payload.currency_symbol="€"
-
+        // Set to US Dollar for African users
+        payload.currency_code = "USD"
+        payload.currency_name = "US Dollar"
+        payload.currency_symbol = "$"
       }
 
 

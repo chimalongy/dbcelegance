@@ -3,15 +3,12 @@
 import { useState, useEffect } from 'react';
 import { FiX, FiImage, FiLoader, FiPlus, FiTrash2 } from 'react-icons/fi';
 
-const EditAccessoryProductModal = ({ setShowEditProductModal, currentProduct, handleEditProduct, categories, isEditingProduct }) => {
+const EditAccessoryProductModal = ({ setShowEditModal, currentProduct, handleEditProduct, categories, isEditing }) => {
   const [imagePreviews, setImagePreviews] = useState([]);
   const [editProduct, setEditProduct] = useState({
     name: '',
     description: '',
     category: '',
-    price: '',
-    stockQuantity: '',
-    sku: '',
     status: 'active',
     images: []
   });
@@ -19,19 +16,23 @@ const EditAccessoryProductModal = ({ setShowEditProductModal, currentProduct, ha
   useEffect(() => {
     if (currentProduct) {
       setEditProduct({
-        name: currentProduct.name || '',
-        description: currentProduct.description || '',
-        category: currentProduct.category || '',
-        price: currentProduct.price || '',
-        stockQuantity: currentProduct.stockQuantity || '',
-        sku: currentProduct.sku || '',
-        status: currentProduct.status || 'active',
-        images: currentProduct.images || []
+        name: currentProduct.accessory_name || '',
+        description: currentProduct.accessory_description || '',
+        category: currentProduct.accessory_category || '',
+        status: currentProduct.accessory_status || 'active',
+        images: []
       });
-      
-      // Set existing image previews
-      if (currentProduct.images && currentProduct.images.length > 0) {
-        setImagePreviews(currentProduct.images.map(img => img.url));
+
+      // Set existing image previews from accessory_gallery
+      if (currentProduct.accessory_gallery && currentProduct.accessory_gallery.length > 0) {
+        try {
+          const gallery = Array.isArray(currentProduct.accessory_gallery)
+            ? currentProduct.accessory_gallery
+            : JSON.parse(currentProduct.accessory_gallery);
+          setImagePreviews(gallery.map(img => img.url));
+        } catch {
+          setImagePreviews([]);
+        }
       }
     }
   }, [currentProduct]);
@@ -57,7 +58,17 @@ const EditAccessoryProductModal = ({ setShowEditProductModal, currentProduct, ha
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    handleEditProduct(e);
+    const updatedAccessory = {
+      accessory_id: currentProduct?.accessory_id,
+      accessory_name: editProduct.name,
+      accessory_description: editProduct.description,
+      accessory_category: editProduct.category,
+      accessory_status: editProduct.status,
+      accessory_store: currentProduct?.accessory_store,
+      // Only pass new files; existing gallery remains unless new files uploaded
+      accessory_gallery: editProduct.images,
+    };
+    handleEditProduct(updatedAccessory);
   };
 
   return (
@@ -66,7 +77,7 @@ const EditAccessoryProductModal = ({ setShowEditProductModal, currentProduct, ha
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-bold text-gray-800">Edit Accessory Product</h2>
           <button 
-            onClick={() => setShowEditProductModal(false)} 
+            onClick={() => setShowEditModal(false)} 
             className="text-gray-500 hover:text-gray-700"
           >
             <FiX size={24} />
@@ -114,43 +125,6 @@ const EditAccessoryProductModal = ({ setShowEditProductModal, currentProduct, ha
             />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Price *</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={editProduct.price}
-                onChange={(e) => setEditProduct({...editProduct, price: e.target.value})}
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Stock Quantity *</label>
-              <input
-                type="number"
-                min="0"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={editProduct.stockQuantity}
-                onChange={(e) => setEditProduct({...editProduct, stockQuantity: e.target.value})}
-                required
-              />
-            </div>
-            
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">SKU</label>
-              <input
-                type="text"
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                value={editProduct.sku}
-                onChange={(e) => setEditProduct({...editProduct, sku: e.target.value})}
-              />
-            </div>
-          </div>
-
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
             <select
@@ -209,7 +183,7 @@ const EditAccessoryProductModal = ({ setShowEditProductModal, currentProduct, ha
           <div className="flex justify-end space-x-3 mt-6">
             <button
               type="button"
-              onClick={() => setShowEditProductModal(false)}
+              onClick={() => setShowEditModal(false)}
               className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
             >
               Cancel
@@ -217,9 +191,9 @@ const EditAccessoryProductModal = ({ setShowEditProductModal, currentProduct, ha
             <button
               type="submit"
               className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 flex items-center"
-              disabled={isEditingProduct}
+              disabled={isEditing}
             >
-              {isEditingProduct ? (
+              {isEditing ? (
                 <>
                   <FiLoader className="animate-spin mr-2" />
                   Updating...

@@ -6,18 +6,25 @@ export class OrderCanceled {
     console.log("order_canceled");
     console.log(order);
 
-    const productCards = JSON.parse(order.cart || "[]")
+  const productCards = JSON.parse(order.cart)
       .map((p) => {
-        const imageUrl = p.product_gallery?.[0]?.url || "";
-        const name = p.product_name || "Untitled Product";
+        let product_type = p.product_id ? "product" : "accessory";
+        const imageUrl =
+          product_type == "product"
+            ? p.product_gallery?.[0]?.url
+            : p.accessory_gallery?.[0]?.url || "";
+        const name =
+          product_type == "product"
+            ? p.product_name
+            : p.accessory_name || "Untitled Product";
         return `
-          <td align="center" style="padding: 0 8px;">
-            <a href="#" style="text-decoration:none; color:#111;">
-              <img src="${imageUrl}" alt="${name}" width="160" style="width:100%; max-width:160px; height:200px; border:1px solid #eee; border-radius:12px; display:block;"/>
-              <p style="margin:8px 0 0 0; font-size:14px; color:#111; font-weight:500;">${name}</p>
-            </a>
-          </td>
-        `;
+      <td align="center" style="padding: 0 8px;">
+        <a href="#" style="text-decoration:none; color:#111;">
+          <img src="${imageUrl}" alt="${name}" width="160" style="width:100%; max-width:160px; height:"200"; border:1px solid #eee;  display:block;"/>
+          <p style="margin:8px 0 0 0; font-size:14px; color:#111; font-weight:500;">${name}</p>
+        </a>
+      </td>
+    `;
       })
       .join("");
 

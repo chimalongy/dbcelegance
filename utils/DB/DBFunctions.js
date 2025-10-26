@@ -806,6 +806,23 @@ const query = `
     }
     return product;
   }
+  parseAccessorySizes(accessory) {
+    if (accessory.accessory_sizes) {
+      try {
+        accessory.sizes =
+          typeof accessory.accessory_sizes === "string"
+            ? JSON.parse(accessory.accessory_sizes)
+            : accessory.accessory_sizes;
+      } catch (e) {
+        console.warn("⚠️ Could not parse accessory sizes JSON:", e);
+        accessory.sizes = [];
+      }
+    } else {
+      accessory.sizes = [];
+    }
+    return accessory;
+  }
+ 
 
   // Helper function to validate size data
   validateSizeData(size) {
@@ -1020,13 +1037,11 @@ const query = `
       accessory_name,
       accessory_description,
       accessory_category,
-      accessory_price,
-      stock_quantity,
-      sku,
       accessory_status,
+      accessory_sizes,
       accessory_gallery,
       accessory_store
-    ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+    ) VALUES ($1, $2, $3, $4, $5, $6, $7)
     RETURNING *;
   `;
 
@@ -1034,10 +1049,8 @@ const query = `
       product.accessory_name,
       product.accessory_description || null,
       product.accessory_category,
-      product.accessory_price,
-      product.stock_quantity,
-      product.sku || null,
       product.accessory_status,
+      JSON.stringify(product.accessory_sizes || []), // store as JSONB
       JSON.stringify(product.accessory_gallery || []), // store as JSONB
       product.accessory_store,
     ];
@@ -1070,7 +1083,7 @@ const query = `
 
       const product = result.rows[0];
 
-      // Parse JSONB gallery if it exists
+      // Parse JSONB gallery and sizes if they exist
       if (product.accessory_gallery) {
         try {
           product.accessory_gallery =
@@ -1082,10 +1095,59 @@ const query = `
           product.accessory_gallery = [];
         }
       }
+      
+      if (product.accessory_sizes) {
+        try {
+          product.accessory_sizes =
+            typeof product.accessory_sizes === "string"
+              ? JSON.parse(product.accessory_sizes)
+              : product.accessory_sizes;
+        } catch (e) {
+          console.warn("⚠️ Could not parse accessory sizes JSON:", e);
+          product.accessory_sizes = [];
+        }
+      }
 
       return { success: true, data: product };
     } catch (error) {
       console.error("❌ Error getting accessory product:", error.message);
+      return { success: false, error: error.message };
+    }
+  }
+
+  async updateAccessoryGallery(productId, gallery) {
+    const query = `
+      UPDATE ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE}
+      SET accessory_gallery = $1
+      WHERE accessory_id = $2
+      RETURNING *;
+    `;
+
+    try {
+      const result = await pool.query(query, [JSON.stringify(gallery), productId]);
+      
+      if (result.rows.length === 0) {
+        return { success: false, message: "Accessory product not found" };
+      }
+
+      const product = result.rows[0];
+      
+      // Parse the gallery back to object
+      if (product.accessory_gallery) {
+        try {
+          product.accessory_gallery = 
+            typeof product.accessory_gallery === "string"
+              ? JSON.parse(product.accessory_gallery)
+              : product.accessory_gallery;
+        } catch (e) {
+          console.warn("⚠️ Could not parse accessory gallery JSON:", e);
+          product.accessory_gallery = [];
+        }
+      }
+
+      return { success: true, data: product };
+    } catch (error) {
+      console.error("❌ Error updating accessory gallery:", error.message);
       return { success: false, error: error.message };
     }
   }
@@ -1141,9 +1203,7 @@ const query = `
       "accessory_name",
       "accessory_description",
       "accessory_category",
-      "accessory_price",
-      "stock_quantity",
-      "sku",
+      "accessory_sizes",
       "accessory_status",
       "accessory_gallery",
     ];
@@ -1159,7 +1219,7 @@ const query = `
     // Build dynamic query
     const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
     const values = keys.map((key) =>
-      key === "accessory_gallery" ? JSON.stringify(fields[key]) : fields[key]
+      (key === "accessory_gallery" || key === "accessory_sizes") ? JSON.stringify(fields[key]) : fields[key]
     );
     values.push(productId); // last param for WHERE
 
@@ -1182,46 +1242,32 @@ const query = `
     }
   }
 
-  async getAllStoreAccessoryProducts(productStore) {
+ 
+
+   async getAllStoreAccessoryProducts(accessory_store) {
     const query = `
-    SELECT ap.*, ac.accessory_category_name
-    FROM ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE} ap
-    LEFT JOIN ${process.env.DATABASE_ACCESSORY_CATEGORY_TABLE} ac 
-      ON ap.accessory_category = ac.accessory_category_id
-    WHERE ap.accessory_store = $1
-    ORDER BY ap.created_at DESC;
+    SELECT a.*, 
+           a.accessory_sizes as sizes
+    FROM ${process.env.DATABASE_ACCESSORY_PRODUCTS_TABLE} a
+    WHERE a.accessory_store = $1
+    ORDER BY a.created_at DESC;
   `;
 
     try {
-      const result = await pool.query(query, [productStore]);
+      const result = await pool.query(query, [accessory_store]);
 
-      // Parse JSONB galleries for all products
-      const products = result.rows.map((product) => {
-        if (product.accessory_gallery) {
-          try {
-            product.accessory_gallery =
-              typeof product.accessory_gallery === "string"
-                ? JSON.parse(product.accessory_gallery)
-                : product.accessory_gallery;
-          } catch (e) {
-            console.warn("⚠️ Could not parse accessory gallery JSON:", e);
-            product.accessory_gallery = [];
-          }
-        }
-        return product;
-      });
-
-      return { success: true, data: products };
-    } catch (error) {
-      console.error(
-        "❌ Error getting store accessory products:",
-        error.message
+      // Parse JSONB sizes for each product
+      const accessories = result.rows.map((accessory) =>
+        this.parseAccessorySizes(accessory)
       );
-      return { success: false, error: error.message };
+
+      console.log("✅ Fetched accessories:", accessories.length);
+      return { success: true, data: accessories };
+    } catch (error) {
+      console.log("❌ Error fetching products:", error.message);
+      return { success: false, data: [] };
     }
   }
-
-
 
 
 

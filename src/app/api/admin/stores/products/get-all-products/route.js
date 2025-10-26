@@ -6,7 +6,7 @@ import { TableCreator } from "../../../../../../../utils/DB/TableCreator";
 export const dynamic = 'force-dynamic';
 
 export async function POST(request) {
-  await TableCreator();
+
   try {
     const body = await request.json();
     const { product_store } = body;

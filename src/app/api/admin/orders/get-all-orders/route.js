@@ -3,7 +3,7 @@ import { NextResponse } from "next/server";
 import { TableCreator } from "../../../../../../utils/DB/TableCreator";
 
 export async function POST(request) {
-    await TableCreator()
+  
     
   const dbactions = new DBFunctions();
 

@@ -6,7 +6,7 @@ import StorageFunctions from "../../../../../../../../utils/DB/StorageFunctions"
 export async function POST(request) {
   const dbActions = new DBFunctions();
   const storage = new StorageFunctions();
-  await TableCreator();
+
 
   try {
     const body = await request.json();

@@ -9,7 +9,7 @@ import { OrderDelayed } from "../../../../../../utils/email/emailTemplates/Order
 
 export async function POST(request) {
   console.log("📤 Incoming order update request");
-  await TableCreator();
+
 
   try {
     const body = await request.json();

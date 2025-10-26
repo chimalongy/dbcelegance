@@ -13,24 +13,38 @@ export async function POST(request) {
     const accessory_name = formData.get("accessory_name");
     const accessory_description = formData.get("accessory_description");
     const accessory_category = parseInt(formData.get("accessory_category"));
-    const accessory_price = parseFloat(formData.get("accessory_price"));
-    const stock_quantity = parseInt(formData.get("stock_quantity"));
-    const sku = formData.get("sku");
+    const accessory_sizes = formData.get("accessory_sizes");
     const accessory_status = formData.get("accessory_status");
     const accessory_store = formData.get("accessory_store");
 
     // Extract all files (multiple uploads possible)
     const files = formData.getAll("accessory_gallery");
 
-    if (!accessory_name || !accessory_category || !accessory_price || !stock_quantity || !accessory_status || !accessory_store) {
+    if (!accessory_name || !accessory_category || !accessory_status || !accessory_store) {
       return NextResponse.json(
         { success: false, message: "All required fields are required." },
         { status: 400 }
       );
     }
 
+    // Parse sizes data
+    let sizes = [];
+    if (accessory_sizes) {
+      try {
+        sizes = JSON.parse(accessory_sizes);
+        if (!Array.isArray(sizes)) {
+          throw new Error("Sizes must be an array");
+        }
+      } catch (error) {
+        return NextResponse.json(
+          { success: false, message: "Invalid sizes data format." },
+          { status: 400 }
+        );
+      }
+    }
+
     // Create table if not exists
-    await TableCreator();
+  
 
     // Check if accessory category exists
     let category_exist_result = await dbActions.getAccessoryCategoryById(accessory_category);
@@ -81,9 +95,7 @@ export async function POST(request) {
       accessory_name,
       accessory_description: accessory_description || "",
       accessory_category,
-      accessory_price,
-      stock_quantity,
-      sku: sku || null,
+      accessory_sizes: sizes,
       accessory_status,
       accessory_gallery: gallery,
       accessory_store,

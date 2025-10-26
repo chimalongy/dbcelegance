@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FiX, FiImage, FiLoader } from 'react-icons/fi';
 
-const EditAccessoryCategoryModal = ({ setShowEditCategoryModal, currentCategory, handleEditCategory, isEditingCategory }) => {
+const EditAccessoryCategoryModal = ({ setShowEditCategoryModal, currentCategory, setCurrentCategory, handleEditCategory, isEditingCategory }) => {
   const [imagePreview, setImagePreview] = useState(null);
   const [editCategory, setEditCategory] = useState({
     name: '',
@@ -27,6 +27,10 @@ const EditAccessoryCategoryModal = ({ setShowEditCategoryModal, currentCategory,
     if (file) {
       setEditCategory({ ...editCategory, image: file });
       setImagePreview(URL.createObjectURL(file));
+      // Mirror to parent state so submit uses updated file
+      if (setCurrentCategory) {
+        setCurrentCategory({ ...currentCategory, image: file });
+      }
     }
   };
 
@@ -55,7 +59,13 @@ const EditAccessoryCategoryModal = ({ setShowEditCategoryModal, currentCategory,
               type="text"
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={editCategory.name}
-              onChange={(e) => setEditCategory({...editCategory, name: e.target.value})}
+              onChange={(e) => {
+                const name = e.target.value;
+                setEditCategory({ ...editCategory, name });
+                if (setCurrentCategory) {
+                  setCurrentCategory({ ...currentCategory, name });
+                }
+              }}
               required
             />
           </div>
@@ -65,7 +75,13 @@ const EditAccessoryCategoryModal = ({ setShowEditCategoryModal, currentCategory,
             <select
               className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               value={editCategory.status}
-              onChange={(e) => setEditCategory({...editCategory, status: e.target.value})}
+              onChange={(e) => {
+                const status = e.target.value;
+                setEditCategory({ ...editCategory, status });
+                if (setCurrentCategory) {
+                  setCurrentCategory({ ...currentCategory, status });
+                }
+              }}
             >
               <option value="active">Active</option>
               <option value="inactive">Inactive</option>
@@ -126,4 +142,4 @@ const EditAccessoryCategoryModal = ({ setShowEditCategoryModal, currentCategory,
   );
 };
 
-export default EditAccessoryCategoryModal; 
+export default EditAccessoryCategoryModal;

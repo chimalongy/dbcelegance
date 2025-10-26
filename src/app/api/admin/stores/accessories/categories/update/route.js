@@ -32,7 +32,7 @@ export async function POST(request) {
     }
 
     // Create table if it doesn't exist
-    await TableCreator();
+  
 
     // Check if category exists
     const categoryExists = await dbActions.getAccessoryCategoryById(accessory_category_id);

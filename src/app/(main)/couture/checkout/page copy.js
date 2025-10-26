@@ -1,5 +1,6 @@
 "use client";
 import React, { useMemo, useEffect, useState } from "react";
+import dynamic from "next/dynamic";
 import { MdKeyboardArrowLeft } from "react-icons/md";
 import { useRouter } from "next/navigation";
 import { FiChevronDown } from "react-icons/fi";
@@ -7,7 +8,6 @@ import { RiSecurePaymentLine } from "react-icons/ri";
 import { CiUser } from "react-icons/ci";
 import { FaRegUser } from "react-icons/fa";
 import { FiEdit } from "react-icons/fi";
-import { useFlutterwave, closePaymentModal } from 'flutterwave-react-v3';
 import {
   MdOutlineContactSupport,
   MdOutlineCalendarToday,
@@ -18,15 +18,24 @@ import Cookies from "js-cookie";
 import { useGuestCustomerStore } from "@/app/lib/store/guestCustomer";
 import { useLoggedCustomerStore } from "@/app/lib/store/loggedCustomer";
 import { useNewOrderStorage } from "@/app/lib/store/neworder";
+import { useGeoDataStore } from "@/app/lib/store/geoDataStore";
 
 import AuthOptions from "./components/AuthOptions";
 import CheckOutSteps from "./components/CheckOutSteps";
-import { useGeoDataStore } from "@/app/lib/store/geoDataStore";
+import axios from "axios";
+import { apiSummary } from "@/app/lib/apiSummary";
+import toast from "react-hot-toast";
+import CategoryLoader from "@/app/components/CategoryLoader copy";
 
 const CheckOut = () => {
-  let geoData = useGeoDataStore((state) => state.geoData);
-  const router = useRouter();
+  const [showpage, setShowpage] = useState(false);
+  const [handlingPayment, sethandlingPayment] = useState(false);
+  const [authenticated, setAuthenticated] = useState(false);
+  const [selectedAuthType, setSelectedAuthType] = useState(null);
+  const [session, setSession] = useState(null);
 
+  const router = useRouter();
+  const geoData = useGeoDataStore((state) => state.geoData);
   const loggedCustomer = useLoggedCustomerStore(
     (state) => state.loggedCustomer
   );
@@ -36,137 +45,7 @@ const CheckOut = () => {
   const clearGuestCustomer = useGuestCustomerStore(
     (state) => state.clearGuestCustomer
   );
-
   const newOrder = useNewOrderStorage((state) => state.newOrder);
-
-  let [authentucated, setauthenticated] = useState(false);
-  const [selectedauthtype, setSelectedAuthtype] = useState(null);
-
-  const [session, setSession] = useState(null);
-
-  //FLUTTTER WAVE INTEGRATION
-
-
-
-  // State to track step completion from CheckOutSteps
-  const [completedSteps, setCompletedSteps] = useState({
-    shippingAddress: false,
-    shippingMethod: false,
-    billingPayment: false,
-  });
-
-  // State to track if purchase is ready (when Purchase now button is enabled)
-  const [isPurchaseReady, setIsPurchaseReady] = useState(false);
-
-  // Check if all steps are completed AND purchase is ready
-  const allStepsCompleted =
-    completedSteps.shippingAddress &&
-    completedSteps.shippingMethod &&
-    completedSteps.billingPayment &&
-    isPurchaseReady;
-
-
-     
-
-  const handlePayment = () => {
-    // Log all values from each section
-    console.log("=== CHECKOUT DATA SUMMARY ===");
-
-    let order = { ...newOrder };
-
-    order["shipping_address"] = formData;
-    order["authenticated"] = authentucated;
-    order["billing_address"] = useShippingForBilling
-      ? formData
-      : billingFormData;
-    order["selected_payment_method"] = selectedPayment;
-   
-    order["shipping_method"] = selectedShipping;
-    order["sub_total"]= formatPrice(geoData?.exchange_rate * subtotal)
-    order["total"]= formatPrice(geoData?.exchange_rate * total)
-    order["geo_data"]=geoData
-    order["customer_email"]=  session && session!==null && loggedCustomer.id?loggedCustomer.customer_email : guestCustomerValue
-
-  
-    console.log(order);
-     
-    const config = {
-    public_key: process.env.NEXT_PUBLIC_FLW_PUBLIC_KEY,
-    tx_ref: Date.now(),
-    amount: order.total,
-    currency: geoData.currency_code,
-    payment_options: "",
-    customer: {
-      email: order.customer_email,
-      phonenumber: order.shipping_address.phone,
-      name: order.shipping_address.firstName + " " + order.shipping_address.lastName
-    },
-    customizations: {
-      title: 'DBC ELEGANCE',
-      description: 'Complete Payment',
-      logo: 'https://st2.depositphotos.com/4403291/7418/v/450/depositphotos_74189661-stock-illustration-online-shop-log.jpg',
-    },
-  };
-
-  console.log(config)
-const handleFlutterPayment = useFlutterwave(config);
-
-    const makePayment = () => {
-    handleFlutterPayment({
-      callback: (response) => {
-        console.log("Payment response:", response);
-        closePaymentModal(); // closes the modal programmatically
-      },
-      onClose: () => {
-        console.log("Payment modal closed");
-      },
-    });
-  };
-
-  makePayment()
-   
-  };
-
-  useEffect(() => {
-    const sessionValue = Cookies.get("session") || null;
-    setSession(sessionValue);
-    console.log("Session:", sessionValue);
-  }, []);
-
-  useEffect(() => {
-    if (
-      (loggedCustomer !== null &&
-        loggedCustomer.customer_id &&
-        session &&
-        session !== null) ||
-      guestCustomerValue !== ""
-    ) {
-      setauthenticated(true);
-    } else {
-      setauthenticated(false);
-    }
-  }, [loggedCustomer, guestCustomerValue]);
-
-  // ✅ Calculate subtotal from newOrder
-  const subtotal = useMemo(() => {
-    if (!newOrder?.cart) return 0;
-    return newOrder.cart.reduce((total, product) => {
-      const size = product.selected_size;
-      const price = parseFloat(
-        product.product_sizes.find((s) => s.size === size?.user_selected_size)
-          ?.price || 0
-      );
-      return total + price * (size?.quantity || 1);
-    }, 0);
-  }, [newOrder]);
-
-  const total = subtotal;
-
-  const formatPrice = (price) =>
-    new Intl.NumberFormat("en-US", {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price);
 
   const [showForm, setShowForm] = useState(false);
   const [selectedShipping, setSelectedShipping] = useState("");
@@ -175,11 +54,11 @@ const handleFlutterPayment = useFlutterwave(config);
   const [countries, setCountries] = useState([]);
   const [formData, setFormData] = useState({
     title: "Mr",
-    firstName: "",
-    lastName: "",
-    country: "",
-    address: "",
-    phone: "",
+    firstName: "Chimaobi",
+    lastName: "Olegeme",
+    country: "Nigeria",
+    address: "123 Main St",
+    phone: "1234567890",
   });
 
   const [billingFormData, setBillingFormData] = useState({
@@ -193,6 +72,249 @@ const handleFlutterPayment = useFlutterwave(config);
 
   const [errors, setErrors] = useState({});
   const [billingErrors, setBillingErrors] = useState({});
+  const [completedSteps, setCompletedSteps] = useState({
+    shippingAddress: false,
+    shippingMethod: false,
+    billingPayment: false,
+  });
+  const [isPurchaseReady, setIsPurchaseReady] = useState(false);
+
+  const allStepsCompleted =
+    completedSteps.shippingAddress &&
+    completedSteps.shippingMethod &&
+    completedSteps.billingPayment &&
+    isPurchaseReady;
+
+  // ✅ Calculate subtotal from newOrder
+  const subtotal = useMemo(() => {
+    if (!newOrder?.cart) return 0;
+    return newOrder.cart.reduce((total, item) => {
+      const size = item.selected_size;
+
+      if (item.product_sizes) {
+        const price = parseFloat(
+          item.product_sizes.find((s) => s.size === size?.user_selected_size)
+            ?.price || 0
+        );
+        return total + price * (size?.quantity || 1);
+      }
+
+      if (item.accessory_sizes) {
+        const price = parseFloat(
+          item.accessory_sizes.find((s) => s.size === size?.user_selected_size)
+            ?.price || 0
+        );
+        return total + price * (size?.quantity || 1);
+      }
+
+      return total;
+    }, 0);
+  }, [newOrder]);
+
+  const total = subtotal;
+
+  // ✅ Format price for display
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price);
+
+  // ✅ Initialize Flutterwave payment
+  const initializeFlutterwavePayment = () => {
+    return new Promise((resolve, reject) => {
+      if (typeof window === "undefined" || !window.FlutterwaveCheckout) {
+        reject(new Error("Flutterwave not loaded"));
+        return;
+      }
+
+      const customerEmail = session && loggedCustomer?.id
+        ? loggedCustomer?.customer_email
+        : guestCustomerValue;
+
+      const paymentData = {
+        public_key: "FLWPUBK_TEST-95c42ef0e76da405eab51c16a67d8de8-X", // Replace with your Flutterwave public key
+        tx_ref: `DBC-${Date.now()}`,
+        amount: total,
+        currency: geoData?.currency_code,
+        payment_options: "card, banktransfer, ussd",
+        customer: {
+          email: customerEmail,
+          phone_number: formData.phone,
+          name: `${formData.firstName} ${formData.lastName}`,
+        },
+        customizations: {
+          title: "DBC ELEGANCE",
+          description: "Payment for items in cart",
+          logo: "https://your-logo-url.com/logo.png", // Add your logo URL
+        },
+        callback: (response) => {
+          // Payment successful
+          if (response.status === "successful") {
+            resolve(response);
+          } else {
+            reject(new Error("Payment failed or was cancelled"));
+          }
+        },
+        onclose: () => {
+          reject(new Error("Payment window closed"));
+        },
+      };
+
+      // Initialize Flutterwave payment
+      window.FlutterwaveCheckout(paymentData);
+    });
+  };
+
+  // ✅ Handle payment with Flutterwave
+  const handlePayment = async () => {
+    sethandlingPayment(true);
+    try {
+      // First, prepare the order data
+      let order = { ...newOrder };
+      order["shipping_address"] = formData;
+      order["billing_address"] = useShippingForBilling
+        ? formData
+        : billingFormData;
+      order["customer_email"] =
+        session && loggedCustomer?.id
+          ? loggedCustomer?.customer_email
+          : guestCustomerValue;
+      order["sub_total"] = formatPrice(geoData?.exchange_rate * subtotal);
+      order["total"] = formatPrice(geoData?.exchange_rate * total);
+      order["geo_data"] = geoData;
+      order["use_shipping_address"] = useShippingForBilling;
+
+      console.log("order", order);
+
+      // Initialize Flutterwave payment
+      const paymentResponse = await initializeFlutterwavePayment();
+      
+      // If payment is successful, send order to your backend
+      if (paymentResponse.status === "successful") {
+        console.log("Payment successful:", paymentResponse);
+        
+        // Add payment reference to order
+        order["payment_reference"] = paymentResponse.tx_ref;
+        order["flutterwave_transaction_id"] = paymentResponse.transaction_id;
+        
+        // Send order to your backend
+        const result = await axios.post(apiSummary.store.orders.new_order, order);
+
+        if (result.data.success) {
+          toast.success("Payment successful! Order created.");
+          router.push("/couture/checkout/order-recieved");
+        } else {
+          toast.error("Failed to create order: " + result.data.message);
+        }
+      }
+    } catch (error) {
+      console.error("❌ Error in handlePayment:", error);
+      if (error.message === "Payment window closed") {
+        toast.error("Payment was cancelled. Please try again.");
+      } else if (error.message === "Payment failed or was cancelled") {
+        toast.error("Payment failed. Please try again.");
+      } else {
+        toast.error("An error occurred during payment. Please try again.");
+      }
+    } finally {
+      sethandlingPayment(false);
+    }
+  };
+
+  // ✅ Load Flutterwave script dynamically
+  useEffect(() => {
+    const loadFlutterwaveScript = () => {
+      return new Promise((resolve, reject) => {
+        if (typeof window === "undefined") {
+          reject(new Error("Window is not defined"));
+          return;
+        }
+
+        // Check if script is already loaded
+        if (window.FlutterwaveCheckout) {
+          resolve();
+          return;
+        }
+
+        const script = document.createElement("script");
+        script.src = "https://checkout.flutterwave.com/v3.js";
+        script.async = true;
+        
+        script.onload = () => {
+          console.log("Flutterwave script loaded successfully");
+          resolve();
+        };
+        
+        script.onerror = () => {
+          reject(new Error("Failed to load Flutterwave script"));
+        };
+
+        document.head.appendChild(script);
+      });
+    };
+
+    // Load Flutterwave script when component mounts
+    loadFlutterwaveScript().catch(console.error);
+  }, []);
+
+  // ✅ Control when page is visible
+  useEffect(() => {
+    if (newOrder && Object.keys(newOrder).length > 0) {
+      setShowpage(true);
+    }
+  }, [newOrder]);
+
+  // ✅ Validate session cookie
+  useEffect(() => {
+    const sessionValue = Cookies.get("session");
+    if (
+      !sessionValue ||
+      sessionValue === "null" ||
+      sessionValue === "undefined"
+    ) {
+      Cookies.remove("session");
+      setSession(null);
+    } else {
+      setSession(sessionValue);
+    }
+  }, []);
+
+  // ✅ CORRECTED: Strict authentication logic
+  useEffect(() => {
+    let isAuthenticated = false;
+
+    // Check if user is logged in (has customer_id and valid session)
+    if (
+      loggedCustomer &&
+      loggedCustomer.customer_id &&
+      session &&
+      session !== "null" &&
+      session !== "undefined"
+    ) {
+      isAuthenticated = true;
+    }
+    // Check if guest customer has a valid email
+    else if (
+      guestCustomerValue &&
+      guestCustomerValue !== null &&
+      guestCustomerValue !== "null" &&
+      guestCustomerValue !== "undefined" &&
+      typeof guestCustomerValue === "string" &&
+      guestCustomerValue.includes("@")
+    ) {
+      isAuthenticated = true;
+    }
+
+    setAuthenticated(isAuthenticated);
+  }, [loggedCustomer, guestCustomerValue, session]);
+
+  // ✅ Reset authentication when user clicks edit
+  const handleEditAuth = () => {
+    setAuthenticated(false);
+    clearGuestCustomer();
+    setSelectedAuthType(null);
+  };
 
   const validate = () => {
     const newErrors = {};
@@ -217,9 +339,9 @@ const handleFlutterPayment = useFlutterwave(config);
     return Object.keys(newErrors).length === 0;
   };
 
+  // ✅ Accordion reusable component
   const AccordionItem = ({ title, children, defaultOpen = false }) => {
     const [open, setOpen] = useState(defaultOpen);
-
     return (
       <div className="border-b border-gray-200 p-3 flex flex-col gap-4">
         <button
@@ -240,6 +362,62 @@ const handleFlutterPayment = useFlutterwave(config);
     );
   };
 
+  // ✅ Helper for product display
+  const getProductDisplayInfo = (item) => {
+    const size = item.selected_size?.user_selected_size;
+    const quantity = item.selected_size?.quantity || 1;
+
+    if (item.product_sizes) {
+      const price = parseFloat(
+        item.product_sizes.find((s) => s.size === size)?.price || 0
+      );
+      return {
+        name: item.product_name,
+        image: item.product_gallery?.[0]?.url,
+        size,
+        quantity,
+        price,
+        type: "product",
+      };
+    }
+
+    if (item.accessory_sizes) {
+      const price = parseFloat(
+        item.accessory_sizes.find((s) => s.size === size)?.price || 0
+      );
+      return {
+        name: item.accessory_name,
+        image: item.accessory_gallery?.[0]?.url,
+        size,
+        quantity,
+        price,
+        type: "accessory",
+      };
+    }
+
+    return {
+      name: "Unknown Product",
+      image: "",
+      size: "",
+      quantity: 1,
+      price: 0,
+      type: "unknown",
+    };
+  };
+
+  // ✅ Get display email for authenticated user
+  const getDisplayEmail = () => {
+    if (loggedCustomer && loggedCustomer.customer_id) {
+      return loggedCustomer.email;
+    } else if (guestCustomerValue) {
+      return guestCustomerValue;
+    }
+    return "";
+  };
+
+  // ✅ Page loader until data is ready
+  if (!showpage) return <CategoryLoader />;
+
   return (
     <div className="min-h-screen flex flex-col hide-scrollbar">
       {/* Header */}
@@ -253,87 +431,80 @@ const handleFlutterPayment = useFlutterwave(config);
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Main */}
       <div className="flex flex-col lg:flex-row flex-1 bg-gray-50 pt-[30px] lg:pt-[85px] overflow-y-auto hide-scrollbar">
-        {/* Left Section */}
-        <div className=" mt-8 lg:mt-3 flex-2 hide-scrollbar w-full lg:px-[150px] lg:overflow-y-auto lg:h-[calc(100vh-80px)] ">
-          <div className="flex items-center justify-between bg-gray-50 p-4 rounded-md border border-gray-200">
-            {guestCustomerValue && guestCustomerValue !== null ? (
-              <div className="flex items-center gap-2 text-gray-700">
-                <CiUser className="text-gray-400 text-xl" />
-                <span>
-                  <span className="text-gray-500">Connected as:</span>{" "}
-                  <span className="text-gray-600">{guestCustomerValue}</span>
-                </span>
-              </div>
-            ) : (
-              loggedCustomer &&
-              loggedCustomer.customer_id && (
-                <div className="flex items-center gap-2 text-gray-700">
-                  <FaRegUser className="text-gray-400 text-xl" />
-                  <span>
-                    <span className="text-gray-500">Customer:</span>{" "}
-                    <span className="text-gray-600">
-                      {loggedCustomer.email}
-                    </span>
-                  </span>
-                </div>
-              )
-            )}
-
-            <button
-              className="text-gray-500 hover:text-gray-600 transition"
-              aria-label="Edit email"
-              onClick={() => {
-                setauthenticated(false);
-                clearGuestCustomer();
-                setSelectedAuthtype(null);
-              }}
-            >
-              <FiEdit className="text-xl" />
-            </button>
-          </div>
-
-          {authentucated ? (
-            <div>
-              <CheckOutSteps
-                showForm={showForm}
-                setShowForm={setShowForm}
-                selectedShipping={selectedShipping}
-                setSelectedShipping={setSelectedShipping}
-                useShippingForBilling={useShippingForBilling}
-                setUseShippingForBilling={setUseShippingForBilling}
-                selectedPayment={selectedPayment}
-                setSelectedPayment={setSelectedPayment}
-                formData={formData}
-                setFormData={setFormData}
-                billingFormData={billingFormData}
-                setBillingFormData={setBillingFormData}
-                errors={errors}
-                setErrors={setErrors}
-                billingErrors={billingErrors}
-                setBillingErrors={setBillingErrors}
-                countries={countries}
-                setCountries={setCountries}
-                validate={validate}
-                validateBilling={validateBilling}
-                // Pass completion state and setter
-                completedSteps={completedSteps}
-                setCompletedSteps={setCompletedSteps}
-                // Pass purchase ready state and setter
-                isPurchaseReady={isPurchaseReady}
-                setIsPurchaseReady={setIsPurchaseReady}
-              />
-            </div>
-          ) : (
+        {/* LEFT */}
+        <div className="mt-8 lg:mt-3 flex-2 hide-scrollbar w-full lg:px-[150px] lg:overflow-y-auto lg:h-[calc(100vh-80px)] ">
+          {/* CORRECTED: Show AuthOptions only when NOT authenticated */}
+          {!authenticated ? (
             <AuthOptions
-              selectedauthtype={selectedauthtype}
-              setSelectedAuthtype={setSelectedAuthtype}
+              selectedauthtype={selectedAuthType}
+              setSelectedAuthtype={setSelectedAuthType}
             />
+          ) : (
+            // Show user info when authenticated
+            <div>
+              <div className="flex flex-col justify-between bg-gray-50 rounded-md border border-gray-200">
+                <div className="flex flex-row justify-between items-center px-3 py-4">
+                  <div className="flex   items-center gap-2 text-gray-700">
+                    {loggedCustomer && loggedCustomer.customer_id ? (
+                      <FaRegUser className="text-gray-400 text-xl" />
+                    ) : (
+                      <CiUser className="text-gray-400 text-xl" />
+                    )}
+                    <span>
+                      <span className="text-gray-500">
+                        {loggedCustomer && loggedCustomer.customer_id
+                          ? "Customer:"
+                          : "Connected as:"}
+                      </span>{" "}
+                      <span className="text-gray-600">{getDisplayEmail()}</span>
+                    </span>
+                  </div>
+                  <button
+                    className="text-gray-500 hover:text-gray-600 transition"
+                    onClick={handleEditAuth}
+                  >
+                    <FiEdit className="text-xl" />
+                  </button>
+                </div>
+
+                <CheckOutSteps
+                  showForm={showForm}
+                  setShowForm={setShowForm}
+                  selectedShipping={selectedShipping}
+                  setSelectedShipping={setSelectedShipping}
+                  useShippingForBilling={useShippingForBilling}
+                  setUseShippingForBilling={setUseShippingForBilling}
+                  selectedPayment={selectedPayment}
+                  setSelectedPayment={setSelectedPayment}
+                  formData={formData}
+                  setFormData={setFormData}
+                  billingFormData={billingFormData}
+                  setBillingFormData={setBillingFormData}
+                  errors={errors}
+                  setErrors={setErrors}
+                  billingErrors={billingErrors}
+                  setBillingErrors={setBillingErrors}
+                  countries={countries}
+                  setCountries={setCountries}
+                  validate={validate}
+                  validateBilling={validateBilling}
+                  completedSteps={completedSteps}
+                  setCompletedSteps={setCompletedSteps}
+                  isPurchaseReady={isPurchaseReady}
+                  setIsPurchaseReady={setIsPurchaseReady}
+                  // Pass the handlePayment function and loading state
+                  handlePayment={handlePayment}
+                  handlingPayment={handlingPayment}
+                  sethandlingPayment={sethandlingPayment}
+                />
+              </div>
+            </div>
           )}
         </div>
 
-        {/* Right Section */}
+        {/* RIGHT */}
         <div className="flex-1 w-full pb-14 lg:max-h-full bg-white overflow-y-scroll">
           <div className="bg-white p-6 space-y-6 relative lg:static">
             {/* Order Summary */}
@@ -344,30 +515,39 @@ const handleFlutterPayment = useFlutterwave(config);
 
               <div className="flex flex-col gap-4">
                 {newOrder?.cart?.map((item, index) => {
-                  const size = item.selected_size?.user_selected_size;
-                  const quantity = item.selected_size?.quantity || 1;
-                  const price = parseFloat(
-                    item.product_sizes.find((s) => s.size === size)?.price || 0
-                  );
+                  const productInfo = getProductDisplayInfo(item);
                   return (
                     <div key={index} className="flex items-center gap-4">
                       <div className="w-20 h-24 border border-gray-200 rounded overflow-hidden">
                         <img
-                          src={item.product_gallery?.[0]?.url}
-                          alt={item.product_name}
+                          src={productInfo.image}
+                          alt={productInfo.name}
                           className="w-full h-full object-cover"
                         />
                       </div>
                       <div className="flex flex-col flex-1">
                         <p className="text-sm text-gray-800">
-                          {item.product_name}
+                          {productInfo.name}
                         </p>
-                        <p className="text-xs text-gray-500">Size: {size}</p>
-                        <p className="text-xs text-gray-500">Qty: {quantity}</p>
+                        <p className="text-xs text-gray-500">
+                          Size: {productInfo.size}
+                        </p>
+                        <p className="text-xs text-gray-500">
+                          Qty: {productInfo.quantity}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {productInfo.type === "accessory"
+                            ? "Accessory"
+                            : "Product"}
+                        </p>
                       </div>
                       <div className="text-sm font-medium">
                         {geoData.currency_symbol}
-                        {formatPrice(geoData?.exchange_rate * price * quantity)}
+                        {formatPrice(
+                          geoData?.exchange_rate *
+                            productInfo.price *
+                            productInfo.quantity
+                        )}
                       </div>
                     </div>
                   );
@@ -375,13 +555,12 @@ const handleFlutterPayment = useFlutterwave(config);
               </div>
             </div>
 
-            {/* Packaging & Gifting */}
+            {/* Packaging */}
             <div className="border-b border-gray-200 pb-6 pt-6">
               <h2 className="text-xl font-semibold mb-4 tracking-wide">
                 Packaging &amp; Gifting
               </h2>
-
-              <div className="flexitems-center gap-3">
+              <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-full flex items-center justify-center border border-gray-300">
                   🎁
                 </div>
@@ -391,7 +570,10 @@ const handleFlutterPayment = useFlutterwave(config);
                     : "Standard Packaging"}
                 </p>
               </div>
-              <button className="bg-gray-300 p-3 mt-4 w-full ml-auto text-sm underline text-gray-600 hover:text-black">
+              <button
+                className="bg-gray-400 p-3 mt-4 w-full text-sm text-gray-600 hover:text-black"
+                onClick={router.back}
+              >
                 Edit
               </button>
             </div>
@@ -405,20 +587,22 @@ const handleFlutterPayment = useFlutterwave(config);
                   {formatPrice(geoData?.exchange_rate * total)}
                 </span>
               </div>
+
               <button
                 onClick={handlePayment}
-                disabled={!allStepsCompleted}
+                disabled={
+                  !allStepsCompleted || !authenticated || handlingPayment
+                }
                 className={`w-full mt-4 px-6 py-3 rounded text-sm uppercase tracking-wide transition ${
-                  allStepsCompleted
+                  allStepsCompleted && authenticated && !handlingPayment
                     ? "bg-black text-white hover:opacity-90 cursor-pointer"
                     : "bg-gray-300 text-gray-500 cursor-not-allowed"
                 }`}
               >
-                Proceed to Payment
+                {handlingPayment ? "Processing..." : "Proceed to Payment"}
               </button>
             </div>
 
-            {/* Terms */}
             <p className="text-center text-xs text-gray-500 mt-2">
               By placing your order you agree to the{" "}
               <a href="#" className="underline">
@@ -427,7 +611,7 @@ const handleFlutterPayment = useFlutterwave(config);
             </p>
           </div>
 
-          {/* Help & Services */}
+          {/* Help Section */}
           <div className="p-6 bg-white">
             <h2 className="text-xl font-semibold mb-4 tracking-wide">
               Help &amp; Services
@@ -444,29 +628,10 @@ const handleFlutterPayment = useFlutterwave(config);
               }
               defaultOpen
             >
-              <div className="flex flex-col gap-3">
-                <p className="mb-3 text-sm">
-                  Your credit card details are safe with us. All the information
-                  is protected using Secure Sockets Layer (SSL) technology.
-                </p>
-                <div className="flex space-x-4">
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/0/04/Visa.svg"
-                    alt="Visa"
-                    className="h-6"
-                  />
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/3/30/American_Express_logo.svg"
-                    alt="Amex"
-                    className="h-6"
-                  />
-                  <img
-                    src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg"
-                    alt="Mastercard"
-                    className="h-6"
-                  />
-                </div>
-              </div>
+              <p className="mb-3 text-sm">
+                Your credit card details are safe with us. All the information
+                is protected using SSL encryption.
+              </p>
             </AccordionItem>
 
             <AccordionItem
@@ -483,7 +648,7 @@ const handleFlutterPayment = useFlutterwave(config);
                 <p className="pb-2.5 text-sm">
                   DBC ELEGANCE Client Service Center is available by phone from
                   Monday to Friday from 10 am to 8 pm and Saturday from 10 am to
-                  6 pm GMT, or at any time via email.
+                  6 pm GMT, or via email.
                 </p>
                 <div className="bg-black text-white rounded-sm p-3 text-sm">
                   Contact us by phone: 08157967548
@@ -521,8 +686,7 @@ const handleFlutterPayment = useFlutterwave(config);
             >
               <p className="text-sm">
                 You have 30 days from the date of delivery to request a refund
-                or exchange. For any questions or immediate changes, please
-                contact DBC ELEGANCE Customer Care.
+                or exchange. For questions, contact our Customer Care.
               </p>
             </AccordionItem>
           </div>
