@@ -52,22 +52,22 @@ const CheckOut = () => {
   const [useShippingForBilling, setUseShippingForBilling] = useState(true);
   const [selectedPayment, setSelectedPayment] = useState("");
   const [countries, setCountries] = useState([]);
-  // const [formData, setFormData] = useState({
-  //   title: "Mr",
-  //   firstName: "Chimaobi",
-  //   lastName: "Olegeme",
-  //   country: "Nigeria",
-  //   address: "123 Main St",
-  //   phone: "1234567890",
-  // });
   const [formData, setFormData] = useState({
     title: "Mr",
-    firstName: "",
-    lastName: "",
-    country: "",
-    address: "",
-    phone: "",
+    firstName: "Chimaobi",
+    lastName: "Olegeme",
+    country: "Nigeria",
+    address: "123 Main St",
+    phone: "1234567890",
   });
+  // const [formData, setFormData] = useState({
+  //   title: "Mr",
+  //   firstName: "",
+  //   lastName: "",
+  //   country: "",
+  //   address: "",
+  //   phone: "",
+  // });
 
   const [billingFormData, setBillingFormData] = useState({
     title: "Mr",
@@ -175,7 +175,7 @@ const CheckOut = () => {
         onclose: () => {
           reject(new Error("Payment window closed"));
         },
-      };
+      }; 
 
       // Initialize Flutterwave payment
       window.FlutterwaveCheckout(paymentData);

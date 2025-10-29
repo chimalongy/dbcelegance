@@ -5,7 +5,7 @@ import { auditHelper } from '@/app/lib/auditHelper';
 
 export async function POST(request) {
   const dbActions = new DBFunctions();
-()
+
 
   try {
     const body = await request.json();
