@@ -95,7 +95,7 @@ const AccessoryProductList = ({ gender, accessory_products, selected_accessory_c
                   {accessory_product.accessory_name}
                 </h3>
                 {/* Example price display: show minimum price */}
-                {accessory_product.accessory_sizes?.length > 0 && (
+                {/* {accessory_product.accessory_sizes?.length > 0 && (
                   <p className="text-xs text-gray-500">
                     ₦
                     {Math.min(
@@ -104,7 +104,7 @@ const AccessoryProductList = ({ gender, accessory_products, selected_accessory_c
                       )
                     ).toLocaleString()}
                   </p>
-                )}
+                )} */}
               </div>
             </div>
           </Link>
