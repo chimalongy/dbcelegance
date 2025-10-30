@@ -72,23 +72,26 @@ export default function Home() {
     try {
       setSelectedStoreCategories([]);
       setSelectedStoreProducts([]);
-      const [categoriesRes, productsRes, acccessoriesCategoriesRes, acccessoriesRes] = await Promise.all([
+      const [categoriesRes, productsRes, acccessoriesCategoriesRes, acccessoriesRes, acccessoriesGroupsRes] = await Promise.all([
         axios.post(apiSummary.store.get_store_categories, { store_name: category.store_name }),
         axios.post(apiSummary.store.get_store_products, { store_name: category.store_name }),
         axios.post(apiSummary.store.get_store_accessories_categories, { store_name: category.store_name }),
-        axios.post(apiSummary.store.get_store_accessories, { store_name: category.store_name })
+        axios.post(apiSummary.store.get_store_accessories, { store_name: category.store_name }),
+        axios.post(apiSummary.store.get_store_groups, { store_name: category.store_name })
       ]);
 
 
       // console.log(categoriesRes.data.data);
       // console.log(productsRes.data.data);
-      console.log(acccessoriesCategoriesRes.data.data);
-      console.log(acccessoriesRes.data.data);
-      if (categoriesRes.data.success && productsRes.data.success && acccessoriesCategoriesRes.data.success && acccessoriesRes.data.success) {
+     // console.log(acccessoriesCategoriesRes.data.data);
+    //  console.log(acccessoriesRes.data.data);
+     console.log(acccessoriesGroupsRes.data.data);
+      if (categoriesRes.data.success && productsRes.data.success && acccessoriesCategoriesRes.data.success && acccessoriesRes.data.success && acccessoriesGroupsRes.data.success) {
         setSelectedStoreCategories(categoriesRes.data.data);
         setSelectedStoreProducts(productsRes.data.data);
         setSelectedStoreAccessoryCategories(acccessoriesCategoriesRes.data.data);
         setSelectedStoreAccessoryProducts(acccessoriesRes.data.data);
+       
         dataloaded = true;
       }
     } catch (error) {

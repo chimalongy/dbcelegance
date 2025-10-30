@@ -86,6 +86,12 @@ export default function AdminLayout({ children }) {
                 Accessories
               </a>
             </li>
+            <li>
+              <a href="/admin/dashboard/stores/male/productgroups" className="flex items-center p-2 pl-6 rounded hover:bg-blue-700">
+                <FiGift className="mr-3" />
+                Product Groups
+              </a>
+            </li>
 
             {/* Female Fashion */}
             <li className="mt-4 text-sm font-semibold text-blue-200 uppercase">Female Fashion</li>
@@ -107,6 +113,13 @@ export default function AdminLayout({ children }) {
                 Accessories
               </a>
             </li>
+            <li>
+              <a href="/admin/dashboard/stores/female/productgroups" className="flex items-center p-2 pl-6 rounded hover:bg-blue-700">
+                <FiGift className="mr-3" />
+                Product Groups
+              </a>
+            </li>
+
 
             {/* Others */}
             <li className="mt-4">

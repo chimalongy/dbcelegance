@@ -383,41 +383,110 @@ async function createOrdersTable() {
   }
 }
 
+
+
+
+export async function createProductGroupsTable() {
+  const tableName = process.env.DATABASE_PRODUCT_GROUPS_TABLE;
+
+  const createTableQuery = `
+    CREATE TABLE IF NOT EXISTS ${tableName} (
+      group_id SERIAL PRIMARY KEY,
+      group_name VARCHAR(255) NOT NULL,
+      group_description TEXT,
+      group_status VARCHAR(20) NOT NULL CHECK (group_status IN ('active', 'inactive')),
+      group_store VARCHAR(255) NOT NULL,
+      
+      -- Array of group items containing both products and accessories
+      -- Each item has: {id, type, name, price, image, etc.}
+      group_items JSONB DEFAULT '[]',
+      
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+    );
+  `;
+
+  const createIndexesQuery = `
+    CREATE INDEX IF NOT EXISTS idx_${tableName}_store 
+      ON ${tableName}(group_store);
+    
+    CREATE INDEX IF NOT EXISTS idx_${tableName}_status 
+      ON ${tableName}(group_status);
+    
+    CREATE INDEX IF NOT EXISTS idx_${tableName}_items 
+      ON ${tableName} USING GIN (group_items);
+    
+    CREATE INDEX IF NOT EXISTS idx_${tableName}_created_at 
+      ON ${tableName}(created_at);
+  `;
+
+  const createTriggerQuery = `
+    CREATE OR REPLACE FUNCTION update_updated_at_column()
+    RETURNS TRIGGER AS $$
+    BEGIN
+      NEW.updated_at = CURRENT_TIMESTAMP;
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql;
+
+    DROP TRIGGER IF EXISTS update_${tableName}_updated_at ON ${tableName};
+
+    CREATE TRIGGER update_${tableName}_updated_at
+    BEFORE UPDATE ON ${tableName}
+    FOR EACH ROW
+    EXECUTE FUNCTION update_updated_at_column();
+  `;
+
+  try {
+    await pool.query(createTableQuery);
+    await pool.query(createIndexesQuery);
+    await pool.query(createTriggerQuery);
+
+    console.log(`✅ Product groups table '${tableName}' created successfully`);
+  } catch (error) {
+    console.error("❌ Error creating product groups table:", error.message);
+    throw error;
+  }
+}
+
+
 export async function TableCreator() {
   const placeholderFile = Buffer.from("placeholder");
 
-  for (const folder of folders) {
-    const filePath = `${folder}.placeholder`;
+  // for (const folder of folders) {
+  //   const filePath = `${folder}.placeholder`;
 
-    const { error: uploadError } = await supabase.storage
-      .from(bucketName)
-      .upload(filePath, placeholderFile, {
-        contentType: "text/plain",
-        upsert: false, // don't overwrite if it already exists
-      });
+  //   const { error: uploadError } = await supabase.storage
+  //     .from(bucketName)
+  //     .upload(filePath, placeholderFile, {
+  //       contentType: "text/plain",
+  //       upsert: false, // don't overwrite if it already exists
+  //     });
 
-    if (uploadError) {
-      if (uploadError.message.includes("The resource already exists")) {
-        console.log(`🔁 Folder already exists: ${folder}`);
-      } else {
-        console.error(
-          `❌ Failed to create folder "${folder}":`,
-          uploadError.message
-        );
-      }
-    } else {
-      console.log(`✅ Created folder: ${folder}`);
-    }
-  }
-  await createBucketAndFolders();
-  await createAdminUsersTable();
-  await createCategoryTable();
-  await createProductsTable();
+  //   if (uploadError) {
+  //     if (uploadError.message.includes("The resource already exists")) {
+  //       console.log(`🔁 Folder already exists: ${folder}`);
+  //     } else {
+  //       console.error(
+  //         `❌ Failed to create folder "${folder}":`,
+  //         uploadError.message
+  //       );
+  //     }
+  //   } else {
+  //     console.log(`✅ Created folder: ${folder}`);
+  //   }
+  // }
+  // await createBucketAndFolders();
+  // await createAdminUsersTable();
+  // await createCategoryTable();
+  // await createProductsTable();
 
-  await createAccessoryCategoryTable();
-  await createAccessoryProductsTable();
-  await createAuditLogsTable();
-  await migrateAdminUsersTable();
-  await createCustomerTable();
-  await createOrdersTable();
+  // await createAccessoryCategoryTable();
+  // await createAccessoryProductsTable();
+  // await createAuditLogsTable();
+  // await migrateAdminUsersTable();
+  // await createCustomerTable();
+  // await createOrdersTable();
+
+ // await createProductGroupsTable();
 }

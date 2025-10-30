@@ -1549,6 +1549,164 @@ async updateOrder(orderData) {
 
 
 
+//----------------------------------------------PRODUCT GROUPS -------------------------------------------------
+
+async getAllStoreProductGroups(group_store) {
+  const query = `
+    SELECT pg.*
+    FROM ${process.env.DATABASE_PRODUCT_GROUPS_TABLE} pg
+    WHERE pg.group_store = $1
+    ORDER BY pg.created_at DESC;
+  `;
+
+  try {
+    const result = await pool.query(query, [group_store]);
+
+    // Parse JSONB group_items for each group
+    const groups = result.rows.map((group) =>
+      this.parseProductGroupItems(group)
+    );
+
+    console.log("✅ Fetched product groups:", groups.length);
+    return { success: true, data: groups };
+  } catch (error) {
+    console.log("❌ Error fetching product groups:", error.message);
+    return { success: false, data: [] };
+  }
+}
+
+// Helper function to parse group items
+parseProductGroupItems(group) {
+  try {
+    if (group.group_items && typeof group.group_items === 'string') {
+      group.group_items = JSON.parse(group.group_items);
+    }
+    
+    // Ensure group_items is always an array
+    if (!group.group_items) {
+      group.group_items = [];
+    }
+    
+    return group;
+  } catch (error) {
+    console.log("❌ Error parsing group items:", error.message);
+    group.group_items = [];
+    return group;
+  }
+}
+
+// Additional methods for product groups
+async createProductGroup(groupData) {
+  const query = `
+    INSERT INTO ${process.env.DATABASE_PRODUCT_GROUPS_TABLE} 
+    (group_name, group_description, group_status, group_store, group_items)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING *;
+  `;
+
+  try {
+    const { group_name, group_description, group_status, group_store, group_items } = groupData;
+    
+    const result = await pool.query(query, [
+      group_name,
+      group_description,
+      group_status,
+      group_store,
+      JSON.stringify(group_items || [])
+    ]);
+
+    const newGroup = this.parseProductGroupItems(result.rows[0]);
+    console.log("✅ Created product group:", newGroup.group_id);
+    return { success: true, data: newGroup };
+  } catch (error) {
+    console.log("❌ Error creating product group:", error.message);
+    return { success: false, data: null };
+  }
+}
+
+async updateProductGroup(group_id, groupData) {
+  const query = `
+    UPDATE ${process.env.DATABASE_PRODUCT_GROUPS_TABLE} 
+    SET group_name = $1, 
+        group_description = $2, 
+        group_status = $3, 
+        group_items = $4,
+        updated_at = CURRENT_TIMESTAMP
+    WHERE group_id = $5
+    RETURNING *;
+  `;
+
+  try {
+    const { group_name, group_description, group_status, group_items } = groupData;
+    
+    const result = await pool.query(query, [
+      group_name,
+      group_description,
+      group_status,
+      JSON.stringify(group_items || []),
+      group_id
+    ]);
+
+    if (result.rows.length === 0) {
+      return { success: false, data: null, message: "Product group not found" };
+    }
+
+    const updatedGroup = this.parseProductGroupItems(result.rows[0]);
+    console.log("✅ Updated product group:", updatedGroup.group_id);
+    return { success: true, data: updatedGroup };
+  } catch (error) {
+    console.log("❌ Error updating product group:", error.message);
+    return { success: false, data: null };
+  }
+}
+
+async deleteProductGroup(group_id) {
+  const query = `
+    DELETE FROM ${process.env.DATABASE_PRODUCT_GROUPS_TABLE} 
+    WHERE group_id = $1
+    RETURNING group_id;
+  `;
+
+  try {
+    const result = await pool.query(query, [group_id]);
+
+    if (result.rows.length === 0) {
+      return { success: false, message: "Product group not found" };
+    }
+
+    console.log("✅ Deleted product group:", group_id);
+    return { success: true, message: "Product group deleted successfully" };
+  } catch (error) {
+    console.log("❌ Error deleting product group:", error.message);
+    return { success: false, message: "Failed to delete product group" };
+  }
+}
+
+async getProductGroupById(group_id) {
+  const query = `
+    SELECT pg.*
+    FROM ${process.env.DATABASE_PRODUCT_GROUPS_TABLE} pg
+    WHERE pg.group_id = $1;
+  `;
+
+  try {
+    const result = await pool.query(query, [group_id]);
+
+    if (result.rows.length === 0) {
+      return { success: false, data: null, message: "Product group not found" };
+    }
+
+    const group = this.parseProductGroupItems(result.rows[0]);
+    console.log("✅ Fetched product group:", group.group_id);
+    return { success: true, data: group };
+  } catch (error) {
+    console.log("❌ Error fetching product group:", error.message);
+    return { success: false, data: null };
+  }
+}
+
+
+
 }
 
 export default DBFunctions;

@@ -15,58 +15,65 @@ export const apiSummary = {
     },
     stores: {
       categories: {
-        add_category:"/api/admin/stores/categories/add",
-        get_all_categories:"/api/admin/stores/categories/get-all-categories",
-        update_category:"/api/admin/stores/categories/update",
-        delete_category:"/api/admin/stores/categories/delete",
+        add_category: "/api/admin/stores/categories/add",
+        get_all_categories: "/api/admin/stores/categories/get-all-categories",
+        update_category: "/api/admin/stores/categories/update",
+        delete_category: "/api/admin/stores/categories/delete",
       },
-      products:{
-         add_product:"/api/admin/stores/products/add",
-        get_all_products:"/api/admin/stores/products/get-all-products",
-        update_product:"/api/admin/stores/products/update",
-        delete_product:"/api/admin/stores/products/delete",
-        delete_product_gallery_item:"/api/admin/stores/products/delete-gallery-item",
-        add_product_gallery_item:"/api/admin/stores/products/add-gallery-item"
-        
+      products: {
+        add_product: "/api/admin/stores/products/add",
+        get_all_products: "/api/admin/stores/products/get-all-products",
+        update_product: "/api/admin/stores/products/update",
+        delete_product: "/api/admin/stores/products/delete",
+        delete_product_gallery_item:
+          "/api/admin/stores/products/delete-gallery-item",
+        add_product_gallery_item: "/api/admin/stores/products/add-gallery-item",
       },
       accessories: {
         // Accessory Category endpoints
-        add_category:"/api/admin/stores/accessories/categories/add",
-        get_all_categories:"/api/admin/stores/accessories/categories/get-all-categories",
-        update_category:"/api/admin/stores/accessories/categories/update",
-        delete_category:"/api/admin/stores/accessories/categories/delete",
+        add_category: "/api/admin/stores/accessories/categories/add",
+        get_all_categories:
+          "/api/admin/stores/accessories/categories/get-all-categories",
+        update_category: "/api/admin/stores/accessories/categories/update",
+        delete_category: "/api/admin/stores/accessories/categories/delete",
         // Accessory Product endpoints
-        add_product:"/api/admin/stores/accessories/products/add",
-        get_all_products:"/api/admin/stores/accessories/products/get-all-products",
-        update_product:"/api/admin/stores/accessories/products/update",
-        delete_product:"/api/admin/stores/accessories/products/delete",
-        delete_accessory_gallery_item:"/api/admin/stores/accessories/products/delete-gallery-item",
-        add_accessory_gallery_item:"/api/admin/stores/accessories/products/add-gallery-item"
-      }
+        add_product: "/api/admin/stores/accessories/products/add",
+        get_all_products:
+          "/api/admin/stores/accessories/products/get-all-products",
+        update_product: "/api/admin/stores/accessories/products/update",
+        delete_product: "/api/admin/stores/accessories/products/delete",
+        delete_accessory_gallery_item:
+          "/api/admin/stores/accessories/products/delete-gallery-item",
+        add_accessory_gallery_item:
+          "/api/admin/stores/accessories/products/add-gallery-item",
+      },
+      productgroups: {
+        get_all_groups: "/api/admin/stores/productgroups/get_all_groups",
+        add_group: "/api/admin/stores/productgroups/add_group",
+        update_group: "/api/admin/stores/productgroups/update_group",
+        delete_group: "/api/admin/stores/productgroups/delete_group",
+      },
     },
-    orders:{
-      get_all_orders:"/api/admin/orders/get-all-orders",
-      update_order:"/api/admin/orders/update-order",
-     
-    }
+    orders: {
+      get_all_orders: "/api/admin/orders/get-all-orders",
+      update_order: "/api/admin/orders/update-order",
+    },
   },
-  store:{
-    get_store_categories:"/api/store/get_store_categories",
-    get_store_products:"/api/store/get_store_products",
-    get_store_accessories:"/api/store/get_store_accessories",
+  store: {
+    get_store_categories: "/api/store/get_store_categories",
+    get_store_products: "/api/store/get_store_products",
+    get_store_accessories: "/api/store/get_store_accessories",
     get_store_accessories_categories:"/api/store/get_store_accessories_categories",
-    orders:{
-        new_order:"/api/store/orders/neworder",
+    get_store_groups:"/api/store/get_store_groups",
+    orders: {
+      new_order: "/api/store/orders/neworder",
     },
-    
 
-    auth:{
-      register:"/api/store/auth/register",
-      login:"/api/store/auth/login",
-      sendOtp:"/api/store/auth/sendOTP",
-      update_password:"/api/store/auth/update-customer",
-        }
-
-  }
+    auth: {
+      register: "/api/store/auth/register",
+      login: "/api/store/auth/login",
+      sendOtp: "/api/store/auth/sendOTP",
+      update_password: "/api/store/auth/update-customer",
+    },
+  },
 };
- 
