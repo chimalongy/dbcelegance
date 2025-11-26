@@ -13,6 +13,8 @@ import { useSelectedStoreAccessoryCategories } from "../lib/store/selectedstorea
 import { useUserSelectedAccessoryCategory } from "../lib/store/UserSelectedAccessoryCategory";
 import { useSelectedStoreAccessoryProducts } from "../lib/store/selectedstoreaccessoryproductsstore";
 
+import { useSelectedStorProductsGroups } from "../lib/store/productgroups/selectedstoreproductgroups";
+
 import axios from "axios";
 import { apiSummary } from "../lib/apiSummary";
 
@@ -70,13 +72,16 @@ const NavLeftModal = () => {
     (state) => state.selectedstoreaccessoryproducts
   );
 
+  const setselectedstoreproductgroups = useSelectedStorProductsGroups((state)=>state.setSelectedStoreProductGroups)
+
   async function fetch_collections(store_name) {
     try {
-      const [categoriesRes, productsRes, accessory_categories, accessory_products] = await Promise.all([
+      const [categoriesRes, productsRes, accessory_categories, accessory_products, product_groups] = await Promise.all([
         axios.post(apiSummary.store.get_store_categories, { store_name }),
         axios.post(apiSummary.store.get_store_products, { store_name }),
         axios.post(apiSummary.store.get_store_accessories_categories, { store_name }),
         axios.post(apiSummary.store.get_store_accessories, { store_name }),
+        axios.post(apiSummary.store.get_store_groups, { store_name: store_name })
       ]);
 
       if (categoriesRes.data.success && productsRes.data.success) {
@@ -84,6 +89,7 @@ const NavLeftModal = () => {
         setSelectedStoreProducts(productsRes.data.data);
         setSelectedStoreAccessoriesProducts(accessory_products.data.data);
         setSelectedStoreAccessoriesCategories(accessory_categories.data.data);
+        setselectedstoreproductgroups(product_groups.data.data)
         return true;
       }
     } catch (error) {

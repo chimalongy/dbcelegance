@@ -400,7 +400,7 @@ export async function createProductGroupsTable() {
       -- Array of group items containing both products and accessories
       -- Each item has: {id, type, name, price, image, etc.}
       group_items JSONB DEFAULT '[]',
-      
+      group_gallery JSONB, -- Array of objects {url, type}
       created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
     );

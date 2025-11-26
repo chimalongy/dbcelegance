@@ -26,6 +26,8 @@ await TableCreator()
 
     const dbActions = new DBFunctions();
     const groups = await dbActions.getAllStoreProductGroups(group_store);
+   // console.log("groups", groups);
+    
 
     if (!groups.success) {
       return NextResponse.json(

@@ -1,10 +1,11 @@
 import {
     FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX,
     FiLoader, FiPackage, FiLayers, FiChevronDown, FiChevronUp,
-    FiXCircle, FiSave, FiArrowLeft, FiUpload
+    FiXCircle, FiSave, FiArrowLeft
 } from 'react-icons/fi';
-import { FaImage, FaVideo } from 'react-icons/fa';
-import { useState, useEffect, useRef } from "react";
+
+
+import { useState, useEffect } from "react";
 
 export default function EditGroupModal({
     isOpen,
@@ -18,16 +19,13 @@ export default function EditGroupModal({
     currentGroup
 }) {
     const [selectedItems, setSelectedItems] = useState(new Map());
-    const [isDragging, setIsDragging] = useState(false);
-    const [fileErrors, setFileErrors] = useState([]);
-    const fileInputRef = useRef(null);
 
     useEffect(() => {
         // Initialize selected items from groupData
-        console.log("groupData", groupData);
         if (groupData?.group_items) {
             const itemsMap = new Map();
             groupData.group_items.forEach(item => {
+                // Use the actual database IDs for the key
                 const itemId = item.type === 'product' ? item.product_id : item.accessory_id;
                 const key = `${item.type}-${itemId}`;
                 itemsMap.set(key, item);
@@ -36,32 +34,8 @@ export default function EditGroupModal({
         }
     }, [groupData]);
 
-    // Helper function to normalize gallery items
-    const normalizeGalleryItem = (item) => {
-        if (typeof item === 'string') {
-            return {
-                url: item,
-                type: item.match(/\.(mp4|webm|ogg)$/i) ? 'video' : 'image'
-            };
-        }
-        return item;
-    };
-
-    // Get normalized gallery
-    const getNormalizedGallery = () => {
-        if (!groupData?.group_gallery) return [];
-        
-        return groupData.group_gallery.map(item => {
-            if (item.file) {
-                // This is a newly uploaded file with object URL
-                return item;
-            }
-            // This is an existing item from API
-            return normalizeGalleryItem(item);
-        });
-    };
-
     const handleItemToggle = (item, type) => {
+        // Use the actual database IDs for the key
         const itemId = type === 'product' ? item.product_id : item.accessory_id;
         const key = `${type}-${itemId}`;
         
@@ -70,8 +44,9 @@ export default function EditGroupModal({
         if (newSelected.has(key)) {
             newSelected.delete(key);
         } else {
+            // Create the group item object
             const groupItem = {
-                id: itemId,
+                id: itemId, // Use the actual database ID
                 type: type,
                 name: type === 'product' ? item.product_name : item.accessory_name,
                 description: type === 'product' ? item.product_description : item.accessory_description,
@@ -85,124 +60,33 @@ export default function EditGroupModal({
         }
 
         setSelectedItems(newSelected);
+
+        // Update the group data with the new items array
         const groupItems = Array.from(newSelected.values());
         onChange({ ...groupData, group_items: groupItems });
     };
 
     const isItemSelected = (item, type) => {
+        // Use the actual database IDs for checking
         const itemId = type === 'product' ? item.product_id : item.accessory_id;
         const key = `${type}-${itemId}`;
         return selectedItems.has(key);
     };
 
-    // Gallery Management Functions
-    const handleFileChange = (e) => {
-        const files = Array.from(e.target.files);
-        processFiles(files);
-    };
-
-    const processFiles = (files) => {
-        const errors = [];
-        const validFiles = [];
-
-        files.forEach(file => {
-            const isImage = file.type.startsWith('image/');
-            const isVideo = file.type.startsWith('video/');
-
-            if (!isImage && !isVideo) {
-                errors.push(`Unsupported file type: ${file.name}`);
-                return;
-            }
-
-            if (isImage && file.size > 2 * 1024 * 1024) {
-                errors.push(`Image too large (max 2MB): ${file.name}`);
-                return;
-            }
-
-            if (isVideo && file.size > 3 * 1024 * 1024) {
-                errors.push(`Video too large (max 3MB): ${file.name}`);
-                return;
-            }
-
-            validFiles.push(file);
-        });
-
-        if (errors.length > 0) {
-            setFileErrors(errors);
-            return;
-        }
-
-        setFileErrors([]);
-
-        const filePreviews = validFiles.map(file => ({
-            url: URL.createObjectURL(file),
-            type: file.type.startsWith('image/') ? 'image' : 'video',
-            file, // Store the actual file object for upload
-            isNew: true // Mark as new upload
-        }));
-
-        const currentGallery = getNormalizedGallery();
-        const updatedGallery = [...currentGallery, ...filePreviews];
-        onChange({ ...groupData, group_gallery: updatedGallery });
-
-        if (fileInputRef.current) {
-            fileInputRef.current.value = '';
-        }
-    };
-
-    const removeFile = (index) => {
-        const currentGallery = getNormalizedGallery();
-        const fileToRemove = currentGallery[index];
-        
-        // Revoke object URL if it's a new file to prevent memory leaks
-        if (fileToRemove.isNew) {
-            URL.revokeObjectURL(fileToRemove.url);
-        }
-
-        const updatedGallery = currentGallery.filter((_, i) => i !== index);
-        onChange({ ...groupData, group_gallery: updatedGallery });
-    };
-
-    const handleDragEnter = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(true);
-    };
-
-    const handleDragLeave = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-    };
-
-    const handleDragOver = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-    };
-
-    const handleDrop = (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        setIsDragging(false);
-
-        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-            processFiles(Array.from(e.dataTransfer.files));
-        }
-    };
-
-    // Helper functions for images
+    // Helper function to get first image from gallery
     const getFirstImage = (gallery) => {
         if (!gallery || !Array.isArray(gallery) || gallery.length === 0) {
             return null;
         }
-        const firstItem = gallery[0];
-        return typeof firstItem === 'string' ? firstItem : firstItem.url;
+        return gallery[0]?.url || null;
     };
 
+    // Helper function to get product image
     const getProductImage = (product) => {
         return getFirstImage(product.product_gallery);
     };
 
+    // Helper function to get accessory image
     const getAccessoryImage = (accessory) => {
         return getFirstImage(accessory.accessory_gallery);
     };
@@ -211,19 +95,16 @@ export default function EditGroupModal({
         e.preventDefault();
         const finalData = {
             ...groupData,
-            group_items: Array.from(selectedItems.values()),
-            group_gallery: getNormalizedGallery()
+            group_items: Array.from(selectedItems.values())
         };
         onSave(finalData);
     };
 
     if (!isOpen) return null;
 
-    const normalizedGallery = getNormalizedGallery();
-
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[95vh] overflow-hidden">
+            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
                     <div>
                         <h2 className="text-xl font-semibold text-gray-800">
@@ -242,43 +123,22 @@ export default function EditGroupModal({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(95vh-200px)]">
+                <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-200px)]">
                     <div className="p-6 space-y-6">
-                        {/* Basic Information */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                            {/* Group Name */}
-                            <div>
-                                <label htmlFor="editGroupName" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Group Name *
-                                </label>
-                                <input
-                                    type="text"
-                                    id="editGroupName"
-                                    required
-                                    value={groupData?.group_name || ''}
-                                    onChange={(e) => onChange({ ...groupData, group_name: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    placeholder="Enter group name"
-                                    disabled={isSaving}
-                                />
-                            </div>
-
-                            {/* Status */}
-                            <div>
-                                <label htmlFor="editGroupStatus" className="block text-sm font-medium text-gray-700 mb-2">
-                                    Status
-                                </label>
-                                <select
-                                    id="editGroupStatus"
-                                    value={groupData?.group_status || 'active'}
-                                    onChange={(e) => onChange({ ...groupData, group_status: e.target.value })}
-                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                    disabled={isSaving}
-                                >
-                                    <option value="active">Active</option>
-                                    <option value="inactive">Inactive</option>
-                                </select>
-                            </div>
+                        {/* Group Name */}
+                        <div>
+                            <label htmlFor="editGroupName" className="block text-sm font-medium text-gray-700 mb-2">
+                                Group Name *
+                            </label>
+                            <input
+                                type="text"
+                                id="editGroupName"
+                                required
+                                value={groupData?.group_name || ''}
+                                onChange={(e) => onChange({ ...groupData, group_name: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                placeholder="Enter group name"
+                            />
                         </div>
 
                         {/* Group Description */}
@@ -293,123 +153,23 @@ export default function EditGroupModal({
                                 onChange={(e) => onChange({ ...groupData, group_description: e.target.value })}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Enter group description"
-                                disabled={isSaving}
                             />
                         </div>
 
-                        {/* Group Gallery Section */}
-                        <div className="space-y-4">
-                            <h4 className="text-lg font-medium text-gray-800 flex items-center">
-                                <FaImage className="mr-2" /> Group Gallery
-                            </h4>
-
-                            {/* Error messages */}
-                            {fileErrors.length > 0 && (
-                                <div className="p-3 bg-red-50 rounded-md text-sm text-red-600">
-                                    {fileErrors.map((error, index) => (
-                                        <p key={index} className="flex items-start">
-                                            <span className="mr-1">•</span> {error}
-                                        </p>
-                                    ))}
-                                </div>
-                            )}
-
-                            <div
-                                className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
-                                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
-                                onDragEnter={!isSaving ? handleDragEnter : undefined}
-                                onDragLeave={!isSaving ? handleDragLeave : undefined}
-                                onDragOver={!isSaving ? handleDragOver : undefined}
-                                onDrop={!isSaving ? handleDrop : undefined}
+                        {/* Status */}
+                        <div>
+                            <label htmlFor="editGroupStatus" className="block text-sm font-medium text-gray-700 mb-2">
+                                Status
+                            </label>
+                            <select
+                                id="editGroupStatus"
+                                value={groupData?.group_status || 'active'}
+                                onChange={(e) => onChange({ ...groupData, group_status: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                             >
-                                <div className="text-center">
-                                    <div className="flex flex-col items-center justify-center text-sm text-gray-600">
-                                        <FiUpload className="mx-auto h-10 w-10 text-gray-400 mb-2" />
-                                        <div className="flex flex-col items-center">
-                                            <label
-                                                htmlFor="edit-group-gallery-upload"
-                                                className={`relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none ${isSaving ? 'pointer-events-none opacity-50' : ''
-                                                    }`}
-                                            >
-                                                <span>Click to upload</span>
-                                                <input
-                                                    id="edit-group-gallery-upload"
-                                                    name="edit-group-gallery-upload"
-                                                    type="file"
-                                                    className="sr-only"
-                                                    multiple
-                                                    onChange={!isSaving ? handleFileChange : undefined}
-                                                    ref={fileInputRef}
-                                                    accept="image/*,video/*"
-                                                    disabled={isSaving}
-                                                />
-                                            </label>
-                                            <p className="text-xs text-gray-500 mt-1">
-                                                or drag and drop files here
-                                            </p>
-                                        </div>
-                                        <p className="text-xs text-gray-500 mt-2">
-                                            Supports: JPG, PNG, GIF, MP4 (Images: 2MB max, Videos: 3MB max)
-                                        </p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            {/* Preview uploaded files */}
-                            {normalizedGallery.length > 0 && (
-                                <div className="mt-4">
-                                    <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                        Group Gallery ({normalizedGallery.length} files)
-                                    </h4>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                        {normalizedGallery.map((file, index) => (
-                                            <div key={index} className="relative group rounded-md overflow-hidden border border-gray-200">
-                                                {file.type === 'image' || (typeof file === 'string' && file.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (
-                                                    <img
-                                                        src={file.url || file}
-                                                        alt={`Group gallery ${index + 1}`}
-                                                        className="h-24 w-full object-cover"
-                                                        onError={(e) => {
-                                                            e.target.onerror = null;
-                                                            e.target.src = '';
-                                                            e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100"><FiPackage className="text-gray-400 w-6 h-6" /></div>';
-                                                        }}
-                                                    />
-                                                ) : (
-                                                    <div className="relative h-24 w-full bg-gray-100 flex items-center justify-center">
-                                                        <FaVideo className="text-gray-400 text-2xl" />
-                                                        <video
-                                                            src={file.url || file}
-                                                            className="absolute inset-0 h-full w-full object-cover"
-                                                            muted
-                                                            loop
-                                                            playsInline
-                                                        />
-                                                    </div>
-                                                )}
-                                                <button
-                                                    type="button"
-                                                    onClick={() => !isSaving && removeFile(index)}
-                                                    className={`absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 ${isSaving ? 'opacity-0 cursor-not-allowed' : 'opacity-0 group-hover:opacity-100'
-                                                        } transition-opacity hover:bg-red-600`}
-                                                    aria-label="Remove file"
-                                                    disabled={isSaving}
-                                                >
-                                                    <FiTrash2 size={14} />
-                                                </button>
-                                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1">
-                                                    <p className="text-xs text-white truncate px-1">
-                                                        {file.type === 'image' || (typeof file === 'string' && file.match(/\.(jpg|jpeg|png|gif|webp)$/i)) 
-                                                            ? 'Image' 
-                                                            : 'Video'} {index + 1}
-                                                        {file.isNew && <span className="ml-1 bg-blue-500 px-1 rounded text-xs">New</span>}
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
                         </div>
 
                         {/* Products Selection */}
@@ -435,7 +195,6 @@ export default function EditGroupModal({
                                                     checked={isSelected}
                                                     onChange={() => handleItemToggle(product, 'product')}
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                                    disabled={isSaving}
                                                 />
                                                 <label htmlFor={`edit-product-${product.product_id}`} className="ml-3 flex-1 cursor-pointer">
                                                     <div className="flex items-center space-x-3">
@@ -526,7 +285,6 @@ export default function EditGroupModal({
                                                     checked={isSelected}
                                                     onChange={() => handleItemToggle(accessory, 'accessory')}
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                                                    disabled={isSaving}
                                                 />
                                                 <label htmlFor={`edit-accessory-${accessory.accessory_id}`} className="ml-3 flex-1 cursor-pointer">
                                                     <div className="flex items-center space-x-3">
@@ -613,12 +371,6 @@ export default function EditGroupModal({
                                         <span className="text-blue-700 font-medium">Accessories:</span>
                                         <span className="text-blue-600 ml-2">
                                             {Array.from(selectedItems.values()).filter(item => item.type === 'accessory').length}
-                                        </span>
-                                    </div>
-                                    <div>
-                                        <span className="text-blue-700 font-medium">Gallery Files:</span>
-                                        <span className="text-blue-600 ml-2">
-                                            {normalizedGallery.length} file(s)
                                         </span>
                                     </div>
                                 </div>

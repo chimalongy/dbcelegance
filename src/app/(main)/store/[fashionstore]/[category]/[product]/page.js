@@ -13,6 +13,7 @@ import { FaTrashAlt } from "react-icons/fa"; // Import the bin icon
 import { useLeftNavStore } from "@/app/lib/store/leftnavmodalstore";
 import NavLeftModal from "@/app/components/NavLeftModal";
 import { useGeoDataStore } from "@/app/lib/store/geoDataStore";
+import CompleteSilHoutte from "@/app/components/CompleteSilHoutte";
 
 const ProductPage = () => {
   let geoData = useGeoDataStore((state) => state.geoData);
@@ -52,15 +53,14 @@ const ProductPage = () => {
 
   const roundToNearestTopHundred = (price) => {
     if (!price) return "N/A";
-  //return Math.ceil(price / 100) * 100;
-  return price;
+    //return Math.ceil(price / 100) * 100;
+    return price;
   };
-const formatPrice = (price) =>
-        new Intl.NumberFormat("en-US", {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-        }).format(price);
-
+  const formatPrice = (price) =>
+    new Intl.NumberFormat("en-US", {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price);
 
   const isProductInCart = CartItems.some(
     (item) =>
@@ -443,8 +443,7 @@ const formatPrice = (price) =>
                 {geoData.currency_symbol}
                 {selectedSize?.price * geoData.exchange_rate
                   ? roundToNearestTopHundred(
-                    formatPrice( selectedSize.price * geoData.exchange_rate)
-                     
+                      formatPrice(selectedSize.price * geoData.exchange_rate)
                     )
                   : productSizes.length > 0
                   ? roundToNearestTopHundred(
@@ -653,6 +652,8 @@ const formatPrice = (price) =>
         {showmodal && <ModalMain />}
         {showLeftNavModal && <NavLeftModal />}
       </div>
+
+      <CompleteSilHoutte item={selectedProduct} />
 
       <RecentlyViewd />
 

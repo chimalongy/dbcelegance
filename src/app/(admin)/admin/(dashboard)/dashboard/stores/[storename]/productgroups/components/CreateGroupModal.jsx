@@ -1,11 +1,13 @@
 import {
     FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX,
     FiLoader, FiPackage, FiLayers, FiChevronDown, FiChevronUp,
-    FiXCircle, FiSave, FiArrowLeft
+    FiXCircle, FiSave, FiArrowLeft, FiUpload, FiImage
 } from 'react-icons/fi';
+import { FaImage, FaVideo } from 'react-icons/fa';
+import { useState, useEffect, useRef } from "react";
 
 
-import { useState, useEffect } from "react";
+
 export default function CreateGroupModal({
     isOpen,
     onClose,
@@ -17,13 +19,15 @@ export default function CreateGroupModal({
     isSaving
 }) {
     const [selectedItems, setSelectedItems] = useState(new Map());
+    const [isDragging, setIsDragging] = useState(false);
+    const [fileErrors, setFileErrors] = useState([]);
+    const fileInputRef = useRef(null);
 
     useEffect(() => {
         // Initialize selected items from groupData
         if (groupData?.group_items) {
             const itemsMap = new Map();
             groupData.group_items.forEach(item => {
-                // Use a unique key that combines type and the actual ID from the database
                 const key = `${item.type}-${item.type === 'product' ? item.product_id : item.accessory_id}`;
                 itemsMap.set(key, item);
             });
@@ -32,7 +36,6 @@ export default function CreateGroupModal({
     }, [groupData]);
 
     const handleItemToggle = (item, type) => {
-        // Create a unique key using type and the actual database ID
         const itemId = type === 'product' ? item.product_id : item.accessory_id;
         const key = `${type}-${itemId}`;
         
@@ -41,36 +44,128 @@ export default function CreateGroupModal({
         if (newSelected.has(key)) {
             newSelected.delete(key);
         } else {
-            // Create the group item object
             const groupItem = {
-                id: itemId, // Use the actual database ID
+                id: itemId,
                 type: type,
                 name: type === 'product' ? item.product_name : item.accessory_name,
                 description: type === 'product' ? item.product_description : item.accessory_description,
                 price: type === 'product' ? (item.sizes?.[0]?.price || 0) : item.accessory_price,
                 image: type === 'product' ? getProductImage(item) : getAccessoryImage(item),
                 status: type === 'product' ? item.product_status : item.accessory_status,
-                ...(type === 'product' && { product_id: item.product_id }),
-                ...(type === 'accessory' && { accessory_id: item.accessory_id })
+                // Add category information based on item type
+                category: type === 'product' ? item.product_category : item.accessory_category,
+                // Include the original IDs
+                ...(type === 'product' && { 
+                    product_id: item.product_id,
+                    product_category_name: item.product_name
+                }),
+                ...(type === 'accessory' && { 
+                    accessory_id: item.accessory_id,
+                    accessory_category_name: item.accessory_name 
+                })
             };
             newSelected.set(key, groupItem);
         }
 
         setSelectedItems(newSelected);
-
-        // Update the group data with the new items array
         const groupItems = Array.from(newSelected.values());
         onChange({ ...groupData, group_items: groupItems });
     };
 
     const isItemSelected = (item, type) => {
-        // Use the same unique key logic for checking selection
         const itemId = type === 'product' ? item.product_id : item.accessory_id;
         const key = `${type}-${itemId}`;
         return selectedItems.has(key);
     };
 
-    // Helper function to get first image from gallery
+    // Gallery Management Functions
+    const handleFileChange = (e) => {
+        const files = Array.from(e.target.files);
+        processFiles(files);
+    };
+
+    const processFiles = (files) => {
+        const errors = [];
+        const validFiles = [];
+
+        files.forEach(file => {
+            const isImage = file.type.startsWith('image/');
+            const isVideo = file.type.startsWith('video/');
+
+            if (!isImage && !isVideo) {
+                errors.push(`Unsupported file type: ${file.name}`);
+                return;
+            }
+
+            if (isImage && file.size > 2 * 1024 * 1024) {
+                errors.push(`Image too large (max 2MB): ${file.name}`);
+                return;
+            }
+
+            if (isVideo && file.size > 3 * 1024 * 1024) {
+                errors.push(`Video too large (max 3MB): ${file.name}`);
+                return;
+            }
+
+            validFiles.push(file);
+        });
+
+        if (errors.length > 0) {
+            setFileErrors(errors);
+            return;
+        }
+
+        setFileErrors([]);
+
+        const filePreviews = validFiles.map(file => ({
+            url: URL.createObjectURL(file),
+            type: file.type.startsWith('image/') ? 'image' : 'video',
+            file
+        }));
+
+        const updatedGallery = [...(groupData?.group_gallery || []), ...filePreviews];
+        onChange({ ...groupData, group_gallery: updatedGallery });
+
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
+    };
+
+    const removeFile = (index) => {
+        const updatedGallery = [...(groupData?.group_gallery || [])];
+        URL.revokeObjectURL(updatedGallery[index].url);
+        updatedGallery.splice(index, 1);
+        onChange({ ...groupData, group_gallery: updatedGallery });
+    };
+
+    const handleDragEnter = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+    };
+
+    const handleDragOver = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            processFiles(Array.from(e.dataTransfer.files));
+        }
+    };
+
+    // Helper functions for images
     const getFirstImage = (gallery) => {
         if (!gallery || !Array.isArray(gallery) || gallery.length === 0) {
             return null;
@@ -78,12 +173,10 @@ export default function CreateGroupModal({
         return gallery[0]?.url || null;
     };
 
-    // Helper function to get product image
     const getProductImage = (product) => {
         return getFirstImage(product.product_gallery);
     };
 
-    // Helper function to get accessory image
     const getAccessoryImage = (accessory) => {
         return getFirstImage(accessory.accessory_gallery);
     };
@@ -92,7 +185,8 @@ export default function CreateGroupModal({
         e.preventDefault();
         const finalData = {
             ...groupData,
-            group_items: Array.from(selectedItems.values())
+            group_items: Array.from(selectedItems.values()),
+            group_gallery: groupData?.group_gallery || []
         };
         onSave(finalData);
     };
@@ -101,10 +195,10 @@ export default function CreateGroupModal({
 
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[95vh] overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
                     <h2 className="text-xl font-semibold text-gray-800">
-                        Create Product Group
+                        {groupData?.group_id ? 'Edit Product Group' : 'Create Product Group'}
                     </h2>
                     <button
                         onClick={onClose}
@@ -115,22 +209,43 @@ export default function CreateGroupModal({
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-200px)]">
+                <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(95vh-200px)]">
                     <div className="p-6 space-y-6">
-                        {/* Group Name */}
-                        <div>
-                            <label htmlFor="groupName" className="block text-sm font-medium text-gray-700 mb-2">
-                                Group Name *
-                            </label>
-                            <input
-                                type="text"
-                                id="groupName"
-                                required
-                                value={groupData?.group_name || ''}
-                                onChange={(e) => onChange({ ...groupData, group_name: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                                placeholder="Enter group name"
-                            />
+                        {/* Basic Information */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            {/* Group Name */}
+                            <div>
+                                <label htmlFor="groupName" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Group Name *
+                                </label>
+                                <input
+                                    type="text"
+                                    id="groupName"
+                                    required
+                                    value={groupData?.group_name || ''}
+                                    onChange={(e) => onChange({ ...groupData, group_name: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    placeholder="Enter group name"
+                                    disabled={isSaving}
+                                />
+                            </div>
+
+                            {/* Status */}
+                            <div>
+                                <label htmlFor="groupStatus" className="block text-sm font-medium text-gray-700 mb-2">
+                                    Status
+                                </label>
+                                <select
+                                    id="groupStatus"
+                                    value={groupData?.group_status || 'active'}
+                                    onChange={(e) => onChange({ ...groupData, group_status: e.target.value })}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                    disabled={isSaving}
+                                >
+                                    <option value="active">Active</option>
+                                    <option value="inactive">Inactive</option>
+                                </select>
+                            </div>
                         </div>
 
                         {/* Group Description */}
@@ -145,23 +260,115 @@ export default function CreateGroupModal({
                                 onChange={(e) => onChange({ ...groupData, group_description: e.target.value })}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                                 placeholder="Enter group description"
+                                disabled={isSaving}
                             />
                         </div>
 
-                        {/* Status */}
-                        <div>
-                            <label htmlFor="groupStatus" className="block text-sm font-medium text-gray-700 mb-2">
-                                Status
-                            </label>
-                            <select
-                                id="groupStatus"
-                                value={groupData?.group_status || 'active'}
-                                onChange={(e) => onChange({ ...groupData, group_status: e.target.value })}
-                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        {/* Group Gallery Section */}
+                        <div className="space-y-4">
+                            <h4 className="text-lg font-medium text-gray-800 flex items-center">
+                                <FaImage className="mr-2" /> Group Gallery
+                            </h4>
+
+                            {/* Error messages */}
+                            {fileErrors.length > 0 && (
+                                <div className="p-3 bg-red-50 rounded-md text-sm text-red-600">
+                                    {fileErrors.map((error, index) => (
+                                        <p key={index} className="flex items-start">
+                                            <span className="mr-1">•</span> {error}
+                                        </p>
+                                    ))}
+                                </div>
+                            )}
+
+                            <div
+                                className={`mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed rounded-md transition-colors ${isDragging ? 'border-blue-500 bg-blue-50' : 'border-gray-300'
+                                    } ${isSaving ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                onDragEnter={!isSaving ? handleDragEnter : undefined}
+                                onDragLeave={!isSaving ? handleDragLeave : undefined}
+                                onDragOver={!isSaving ? handleDragOver : undefined}
+                                onDrop={!isSaving ? handleDrop : undefined}
                             >
-                                <option value="active">Active</option>
-                                <option value="inactive">Inactive</option>
-                            </select>
+                                <div className="text-center">
+                                    <div className="flex flex-col items-center justify-center text-sm text-gray-600">
+                                        <FiUpload className="mx-auto h-10 w-10 text-gray-400 mb-2" />
+                                        <div className="flex flex-col items-center">
+                                            <label
+                                                htmlFor="group-gallery-upload"
+                                                className={`relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none ${isSaving ? 'pointer-events-none opacity-50' : ''
+                                                    }`}
+                                            >
+                                                <span>Click to upload</span>
+                                                <input
+                                                    id="group-gallery-upload"
+                                                    name="group-gallery-upload"
+                                                    type="file"
+                                                    className="sr-only"
+                                                    multiple
+                                                    onChange={!isSaving ? handleFileChange : undefined}
+                                                    ref={fileInputRef}
+                                                    accept="image/*,video/*"
+                                                    disabled={isSaving}
+                                                />
+                                            </label>
+                                            <p className="text-xs text-gray-500 mt-1">
+                                                or drag and drop files here
+                                            </p>
+                                        </div>
+                                        <p className="text-xs text-gray-500 mt-2">
+                                            Supports: JPG, PNG, GIF, MP4 (Images: 2MB max, Videos: 3MB max)
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Preview uploaded files */}
+                            {groupData?.group_gallery?.length > 0 && (
+                                <div className="mt-4">
+                                    <h4 className="text-sm font-medium text-gray-700 mb-2">
+                                        Group Gallery ({groupData.group_gallery.length} files)
+                                    </h4>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                                        {groupData.group_gallery.map((file, index) => (
+                                            <div key={index} className="relative group rounded-md overflow-hidden border border-gray-200">
+                                                {file.type === 'image' ? (
+                                                    <img
+                                                        src={file.url}
+                                                        alt={`Preview ${index}`}
+                                                        className="h-24 w-full object-cover"
+                                                    />
+                                                ) : (
+                                                    <div className="relative h-24 w-full bg-gray-100 flex items-center justify-center">
+                                                        <FaVideo className="text-gray-400 text-2xl" />
+                                                        <video
+                                                            src={file.url}
+                                                            className="absolute inset-0 h-full w-full object-cover"
+                                                            muted
+                                                            loop
+                                                            playsInline
+                                                        />
+                                                    </div>
+                                                )}
+                                                <button
+                                                    type="button"
+                                                    onClick={() => !isSaving && removeFile(index)}
+                                                    className={`absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 ${isSaving ? 'opacity-0 cursor-not-allowed' : 'opacity-0 group-hover:opacity-100'
+                                                        } transition-opacity hover:bg-red-600`}
+                                                    aria-label="Remove file"
+                                                    disabled={isSaving}
+                                                >
+                                                    <FiTrash2 size={14} />
+                                                </button>
+                                                <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1">
+                                                    <p className="text-xs text-white truncate px-1">
+                                                        {file.type === 'image' ? 'Image' : 'Video'} {index + 1}
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Products Selection */}
@@ -187,6 +394,7 @@ export default function CreateGroupModal({
                                                     checked={isSelected}
                                                     onChange={() => handleItemToggle(product, 'product')}
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                    disabled={isSaving}
                                                 />
                                                 <label htmlFor={`product-${product.product_id}`} className="ml-3 flex-1 cursor-pointer">
                                                     <div className="flex items-center space-x-3">
@@ -233,17 +441,24 @@ export default function CreateGroupModal({
                                                             <p className="text-xs text-gray-500 mt-1 line-clamp-1">
                                                                 {product.product_description || 'No description'}
                                                             </p>
-                                                            {product.sizes && product.sizes.length > 0 && (
-                                                                <div className="mt-1 flex items-center space-x-2">
-                                                                    <span className="text-xs text-blue-600">
-                                                                        {product.sizes.length} size(s)
+                                                            <div className="flex items-center space-x-3 mt-1">
+                                                                {product.product_category && (
+                                                                    <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                                                                        {product.product_category}
                                                                     </span>
-                                                                    <span className="text-xs text-gray-400">•</span>
-                                                                    <span className="text-xs text-gray-500">
-                                                                        From ${Math.min(...product.sizes.map(s => s.price || 0))}
-                                                                    </span>
-                                                                </div>
-                                                            )}
+                                                                )}
+                                                                {product.sizes && product.sizes.length > 0 && (
+                                                                    <>
+                                                                        <span className="text-xs text-blue-600">
+                                                                            {product.sizes.length} size(s)
+                                                                        </span>
+                                                                        <span className="text-xs text-gray-400">•</span>
+                                                                        <span className="text-xs text-gray-500">
+                                                                            From ${Math.min(...product.sizes.map(s => s.price || 0))}
+                                                                        </span>
+                                                                    </>
+                                                                )}
+                                                            </div>
                                                         </div>
                                                     </div>
                                                 </label>
@@ -277,6 +492,7 @@ export default function CreateGroupModal({
                                                     checked={isSelected}
                                                     onChange={() => handleItemToggle(accessory, 'accessory')}
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                                                    disabled={isSaving}
                                                 />
                                                 <label htmlFor={`accessory-${accessory.accessory_id}`} className="ml-3 flex-1 cursor-pointer">
                                                     <div className="flex items-center space-x-3">
@@ -324,6 +540,11 @@ export default function CreateGroupModal({
                                                                 {accessory.accessory_description || 'No description'}
                                                             </p>
                                                             <div className="mt-1 flex items-center space-x-3">
+                                                                {accessory.accessory_category && (
+                                                                    <span className="text-xs text-purple-600 bg-purple-50 px-2 py-1 rounded-full">
+                                                                        {accessory.accessory_category}
+                                                                    </span>
+                                                                )}
                                                                 <span className="text-xs font-medium text-blue-600">
                                                                     ${accessory.accessory_price}
                                                                 </span>
@@ -365,9 +586,15 @@ export default function CreateGroupModal({
                                             {Array.from(selectedItems.values()).filter(item => item.type === 'accessory').length}
                                         </span>
                                     </div>
+                                    <div>
+                                        <span className="text-blue-700 font-medium">Gallery Files:</span>
+                                        <span className="text-blue-600 ml-2">
+                                            {groupData?.group_gallery?.length || 0} file(s)
+                                        </span>
+                                    </div>
                                 </div>
                                 <div className="mt-2 text-xs text-blue-600">
-                                    Selected items: {Array.from(selectedItems.values()).map(item => item.name).join(', ')}
+                                    Selected items: {Array.from(selectedItems.values()).map(item => `${item.name} (${item.category})`).join(', ')}
                                 </div>
                             </div>
                         )}
@@ -392,7 +619,7 @@ export default function CreateGroupModal({
                             ) : (
                                 <FiPlus className="mr-2" />
                             )}
-                            Create Group
+                            {groupData?.group_id ? 'Update Group' : 'Create Group'}
                         </button>
                     </div>
                 </form>

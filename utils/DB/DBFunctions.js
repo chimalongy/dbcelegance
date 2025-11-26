@@ -659,33 +659,33 @@ class DBFunctions {
   }
 
   async getAllProducts() {
-const query = `
+    const query = `
   SELECT *
   FROM ${process.env.DATABASE_PRODUCTS_TABLE}
   ORDER BY created_at DESC;
 `;
 
-  try {
-    const result = await pool.query(query);
+    try {
+      const result = await pool.query(query);
 
-    if (result.rows.length === 0) {
-      console.log("⚠️ No products found");
+      if (result.rows.length === 0) {
+        console.log("⚠️ No products found");
+        return { success: false, data: [] };
+      }
+
+      const products = result.rows;
+
+      // Parse JSONB sizes for each product if they exist
+      for (const product of products) {
+        this.parseProductSizes(product);
+      }
+
+      return { success: true, data: products };
+    } catch (error) {
+      console.log("❌ Error fetching products:", error.message);
       return { success: false, data: [] };
     }
-
-    const products = result.rows;
-
-    // Parse JSONB sizes for each product if they exist
-    for (const product of products) {
-      this.parseProductSizes(product);
-    }
-
-    return { success: true, data: products };
-  } catch (error) {
-    console.log("❌ Error fetching products:", error.message);
-    return { success: false, data: [] };
   }
-}
 
   async getProductByName(product_name, product_store) {
     const query = `
@@ -822,7 +822,6 @@ const query = `
     }
     return accessory;
   }
- 
 
   // Helper function to validate size data
   validateSizeData(size) {
@@ -1095,7 +1094,7 @@ const query = `
           product.accessory_gallery = [];
         }
       }
-      
+
       if (product.accessory_sizes) {
         try {
           product.accessory_sizes =
@@ -1124,18 +1123,21 @@ const query = `
     `;
 
     try {
-      const result = await pool.query(query, [JSON.stringify(gallery), productId]);
-      
+      const result = await pool.query(query, [
+        JSON.stringify(gallery),
+        productId,
+      ]);
+
       if (result.rows.length === 0) {
         return { success: false, message: "Accessory product not found" };
       }
 
       const product = result.rows[0];
-      
+
       // Parse the gallery back to object
       if (product.accessory_gallery) {
         try {
-          product.accessory_gallery = 
+          product.accessory_gallery =
             typeof product.accessory_gallery === "string"
               ? JSON.parse(product.accessory_gallery)
               : product.accessory_gallery;
@@ -1219,7 +1221,9 @@ const query = `
     // Build dynamic query
     const setClauses = keys.map((key, i) => `${key} = $${i + 1}`).join(", ");
     const values = keys.map((key) =>
-      (key === "accessory_gallery" || key === "accessory_sizes") ? JSON.stringify(fields[key]) : fields[key]
+      key === "accessory_gallery" || key === "accessory_sizes"
+        ? JSON.stringify(fields[key])
+        : fields[key]
     );
     values.push(productId); // last param for WHERE
 
@@ -1242,9 +1246,7 @@ const query = `
     }
   }
 
- 
-
-   async getAllStoreAccessoryProducts(accessory_store) {
+  async getAllStoreAccessoryProducts(accessory_store) {
     const query = `
     SELECT a.*, 
            a.accessory_sizes as sizes
@@ -1269,11 +1271,7 @@ const query = `
     }
   }
 
-
-
-
-
-// ==========================CUSTOMERS=========================================
+  // ==========================CUSTOMERS=========================================
 
   async registerCustomer({
     firstName,
@@ -1321,29 +1319,29 @@ const query = `
       throw error;
     }
   }
-async  findCustomerByEmail(email) {
-  try {
-    const query = `
+  async findCustomerByEmail(email) {
+    try {
+      const query = `
       SELECT *
       FROM ${process.env.DATABASE_USERS_TABLE}
       WHERE email = $1
       LIMIT 1;
     `;
 
-    const { rows } = await pool.query(query, [email]);
+      const { rows } = await pool.query(query, [email]);
 
-    if (rows.length === 0) {
-      return { success: false, message: "Customer not found" };
+      if (rows.length === 0) {
+        return { success: false, message: "Customer not found" };
+      }
+
+      return { success: true, customer: rows[0] };
+    } catch (error) {
+      console.error("Error finding customer by email:", error);
+      return { success: false, message: "Database error" };
     }
-
-    return { success: true, customer: rows[0] };
-  } catch (error) {
-    console.error("Error finding customer by email:", error);
-    return { success: false, message: "Database error" };
   }
-}
 
-async updateCustomerField(customerId, fieldName, newValue) {
+  async updateCustomerField(customerId, fieldName, newValue) {
     try {
       // ✅ Allowed fields (to prevent SQL injection)
       const allowedFields = [
@@ -1357,12 +1355,11 @@ async updateCustomerField(customerId, fieldName, newValue) {
         "share_preferences",
       ];
 
-      if (fieldName= "password_hash"){
-         const saltRounds = 10;
-         const passwordHash = await bcrypt.hash(newValue, saltRounds);
-         newValue= passwordHash;
+      if ((fieldName = "password_hash")) {
+        const saltRounds = 10;
+        const passwordHash = await bcrypt.hash(newValue, saltRounds);
+        newValue = passwordHash;
       }
-
 
       if (!allowedFields.includes(fieldName)) {
         return { success: false, error: "Invalid field name" };
@@ -1389,324 +1386,443 @@ async updateCustomerField(customerId, fieldName, newValue) {
     }
   }
 
-//----------------------------------------------- orders================================================
+  //----------------------------------------------- orders================================================
 
-async createNewOrder({
-  customer_email,
-  cart,
-  packaging,
-  shipping_address,
-  billing_address,
-  sub_total,
-  total,
-  geo_data,
-  use_shipping_address,
-  payment_status = "pending",
-}) {
-  try {
-    const query = `
+  async createNewOrder({
+    customer_email,
+    cart,
+    packaging,
+    shipping_address,
+    billing_address,
+    sub_total,
+    total,
+    geo_data,
+    use_shipping_address,
+    payment_status = "pending",
+  }) {
+    try {
+      const query = `
       INSERT INTO ${process.env.DATABASE_ORDERS_TABLE} 
       (customer_email, cart, packaging, shipping_address, billing_address, sub_total, total, geo_data, use_shipping_address, payment_status)
       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
       RETURNING order_id, customer_email, cart, packaging, shipping_address, billing_address, sub_total, total, geo_data, use_shipping_address, payment_status, created_at;
     `;
 
-    const values = [
-      customer_email,
-      cart,                // JSONB (cart array)
-      packaging,           // JSONB (packaging info)
-      shipping_address,    // JSONB
-      billing_address,     // JSONB
-      sub_total,
-      total,
-      geo_data,            // JSONB
-      use_shipping_address,
-      payment_status,
-    ];
+      const values = [
+        customer_email,
+        cart, // JSONB (cart array)
+        packaging, // JSONB (packaging info)
+        shipping_address, // JSONB
+        billing_address, // JSONB
+        sub_total,
+        total,
+        geo_data, // JSONB
+        use_shipping_address,
+        payment_status,
+      ];
 
-    const { rows } = await pool.query(query, values);
+      const { rows } = await pool.query(query, values);
 
-    return { success: true, data: rows[0] };
-  } catch (error) {
-    console.error("Error creating new order:", error);
-    return { success: false, message: "Could not create order" };
+      return { success: true, data: rows[0] };
+    } catch (error) {
+      console.error("Error creating new order:", error);
+      return { success: false, message: "Could not create order" };
+    }
   }
-}
-async getAllOrders() {
-  const query = `
+  async getAllOrders() {
+    const query = `
     SELECT * 
     FROM ${process.env.DATABASE_ORDERS_TABLE}
     ORDER BY created_at DESC;
   `;
 
-  try {
-    const result = await pool.query(query);
+    try {
+      const result = await pool.query(query);
 
-    // Parse JSONB cart if present
-    const orders = result.rows.map((order) => {
-      if (order.cart) {
-        try {
-          order.cart =
-            typeof order.cart === "string"
-              ? JSON.parse(order.cart)
-              : order.cart;
-        } catch (e) {
-          console.warn("⚠️ Could not parse cart JSON:", e);
-          order.cart = [];
+      // Parse JSONB cart if present
+      const orders = result.rows.map((order) => {
+        if (order.cart) {
+          try {
+            order.cart =
+              typeof order.cart === "string"
+                ? JSON.parse(order.cart)
+                : order.cart;
+          } catch (e) {
+            console.warn("⚠️ Could not parse cart JSON:", e);
+            order.cart = [];
+          }
         }
-      }
-      return order;
-    });
+        return order;
+      });
 
-    return { success: true, data: orders };
-  } catch (error) {
-    console.error("❌ Error getting all orders:", error.message);
-    return { success: false, error: error.message };
+      return { success: true, data: orders };
+    } catch (error) {
+      console.error("❌ Error getting all orders:", error.message);
+      return { success: false, error: error.message };
+    }
   }
-}
 
-async updateOrder(orderData) {
-  try {
-    const {
-      order_id,
-      customer_email,
-      cart,
-      packaging,
-      shipping_address,
-      billing_address,
-      sub_total,
-      total,
-      geo_data,
-      use_shipping_address,
-      payment_status,
-      order_status,
-      tracking_number,
-      use_tracking_number,
-      shipping_agency,
-      side_note,
-    } = orderData;
+  async updateOrder(orderData) {
+    try {
+      const {
+        order_id,
+        customer_email,
+        cart,
+        packaging,
+        shipping_address,
+        billing_address,
+        sub_total,
+        total,
+        geo_data,
+        use_shipping_address,
+        payment_status,
+        order_status,
+        tracking_number,
+        use_tracking_number,
+        shipping_agency,
+        side_note,
+      } = orderData;
 
-    if (!order_id) {
-      return { success: false, message: "order_id is required" };
-    }
-
-    // ✅ Build dynamic update query
-    const fields = [];
-    const values = [];
-    let index = 1;
-
-    const addField = (key, value) => {
-      if (value !== undefined) {
-        fields.push(`${key} = $${index++}`);
-        values.push(value);
+      if (!order_id) {
+        return { success: false, message: "order_id is required" };
       }
-    };
 
-    addField("customer_email", customer_email);
-    addField("cart", JSON.stringify(cart));
-    addField("packaging", packaging);
-    addField("shipping_address", shipping_address);
-    addField("billing_address", billing_address);
-    addField("sub_total", sub_total);
-    addField("total", total);
-    addField("geo_data", geo_data);
-    addField("use_shipping_address", use_shipping_address);
-    addField("payment_status", payment_status);
-    addField("order_status", order_status);
-    addField("tracking_number", tracking_number);
-    addField("use_tracking_number", use_tracking_number);
-    addField("shipping_agency", shipping_agency);
-    addField("side_note", side_note);
+      // ✅ Build dynamic update query
+      const fields = [];
+      const values = [];
+      let index = 1;
 
-    // ✅ Always update `updated_at`
-    fields.push(`updated_at = CURRENT_TIMESTAMP`);
+      const addField = (key, value) => {
+        if (value !== undefined) {
+          fields.push(`${key} = $${index++}`);
+          values.push(value);
+        }
+      };
 
-    if (fields.length === 0) {
-      return { success: false, message: "No fields to update." };
-    }
+      addField("customer_email", customer_email);
+      addField("cart", JSON.stringify(cart));
+      addField("packaging", packaging);
+      addField("shipping_address", shipping_address);
+      addField("billing_address", billing_address);
+      addField("sub_total", sub_total);
+      addField("total", total);
+      addField("geo_data", geo_data);
+      addField("use_shipping_address", use_shipping_address);
+      addField("payment_status", payment_status);
+      addField("order_status", order_status);
+      addField("tracking_number", tracking_number);
+      addField("use_tracking_number", use_tracking_number);
+      addField("shipping_agency", shipping_agency);
+      addField("side_note", side_note);
 
-    const query = `
+      // ✅ Always update `updated_at`
+      fields.push(`updated_at = CURRENT_TIMESTAMP`);
+
+      if (fields.length === 0) {
+        return { success: false, message: "No fields to update." };
+      }
+
+      const query = `
       UPDATE ${process.env.DATABASE_ORDERS_TABLE}
       SET ${fields.join(", ")}
       WHERE order_id = $${index}
       RETURNING *;
     `;
 
-    values.push(order_id);
+      values.push(order_id);
 
-    const { rows } = await pool.query(query, values);
+      const { rows } = await pool.query(query, values);
 
-    if (rows.length === 0) {
-      return { success: false, message: "Order not found" };
+      if (rows.length === 0) {
+        return { success: false, message: "Order not found" };
+      }
+
+      return { success: true, data: rows[0] };
+    } catch (error) {
+      console.error("Error updating order:", error);
+      return { success: false, message: "Could not update order" };
     }
-
-    return { success: true, data: rows[0] };
-  } catch (error) {
-    console.error("Error updating order:", error);
-    return { success: false, message: "Could not update order" };
   }
-}
 
-
-
-//----------------------------------------------PRODUCT GROUPS -------------------------------------------------
+  //----------------------------------------------PRODUCT GROUPS -------------------------------------------------
 
 async getAllStoreProductGroups(group_store) {
   const query = `
-    SELECT pg.*
-    FROM ${process.env.DATABASE_PRODUCT_GROUPS_TABLE} pg
-    WHERE pg.group_store = $1
-    ORDER BY pg.created_at DESC;
+    SELECT * 
+    FROM ${process.env.DATABASE_PRODUCT_GROUPS_TABLE}
+    WHERE group_store = $1
+    ORDER BY created_at DESC;
   `;
 
   try {
     const result = await pool.query(query, [group_store]);
 
-    // Parse JSONB group_items for each group
-    const groups = result.rows.map((group) =>
-      this.parseProductGroupItems(group)
+    // Parse or stringify JSON fields properly
+    const groups = result.rows.map((group) => {
+      return {
+        ...group,
+        group_items: JSON.stringify(group.group_items),
+        group_gallery: JSON.stringify(group.group_gallery ),
+      };
+    });
+
+    console.log(
+      `✅ Retrieved ${groups.length} product groups for store: ${group_store}`
     );
 
-    console.log("✅ Fetched product groups:", groups.length);
-    return { success: true, data: groups };
+    return {
+      success: true,
+      data: groups,
+    };
   } catch (error) {
-    console.log("❌ Error fetching product groups:", error.message);
-    return { success: false, data: [] };
+    console.error("❌ Error fetching store product groups:", error.message);
+    return {
+      success: false,
+      data: [],
+      message: "Failed to retrieve product groups.",
+    };
   }
 }
 
-// Helper function to parse group items
-parseProductGroupItems(group) {
-  try {
-    if (group.group_items && typeof group.group_items === 'string') {
-      group.group_items = JSON.parse(group.group_items);
-    }
-    
-    // Ensure group_items is always an array
-    if (!group.group_items) {
+
+  // Helper function to parse group items
+  parseProductGroupItems(group) {
+    console.log("Logging group");
+    console.log(group);
+    try {
+      if (group.group_items && typeof group.group_items === "string") {
+        group.group_items = JSON.parse(group.group_items);
+      }
+      if (group.group_gallery && typeof group.group_gallery === "string") {
+        group.group_gallery = JSON.parse(group.group_gallery);
+      }
+
+      // Ensure group_items is always an array
+      // if (!group.group_items) {
+      //   group.group_items = [];
+      // }
+
+      return group;
+    } catch (error) {
+      console.log("❌ Error parsing group items:", error.message);
       group.group_items = [];
+      return group;
     }
-    
-    return group;
-  } catch (error) {
-    console.log("❌ Error parsing group items:", error.message);
-    group.group_items = [];
-    return group;
   }
-}
 
-// Additional methods for product groups
-async createProductGroup(groupData) {
-  const query = `
+  // Additional methods for product groups
+  // Additional methods for product groups
+  async createProductGroup(groupData) {
+    const query = `
     INSERT INTO ${process.env.DATABASE_PRODUCT_GROUPS_TABLE} 
-    (group_name, group_description, group_status, group_store, group_items)
-    VALUES ($1, $2, $3, $4, $5)
+    (group_name, group_description, group_status, group_store, group_items, group_gallery)
+    VALUES ($1, $2, $3, $4, $5, $6)
     RETURNING *;
   `;
 
-  try {
-    const { group_name, group_description, group_status, group_store, group_items } = groupData;
-    
-    const result = await pool.query(query, [
-      group_name,
-      group_description,
-      group_status,
-      group_store,
-      JSON.stringify(group_items || [])
-    ]);
+    try {
+      const {
+        group_name,
+        group_description,
+        group_status,
+        group_store,
+        group_items,
+        group_gallery,
+      } = groupData;
 
-    const newGroup = this.parseProductGroupItems(result.rows[0]);
-    console.log("✅ Created product group:", newGroup.group_id);
-    return { success: true, data: newGroup };
-  } catch (error) {
-    console.log("❌ Error creating product group:", error.message);
-    return { success: false, data: null };
+      const result = await pool.query(query, [
+        group_name,
+        group_description,
+        group_status,
+        group_store,
+        JSON.stringify(group_items || []),
+        JSON.stringify(group_gallery || []),
+      ]);
+
+      const newGroup = this.parseProductGroupItems(result.rows[0]);
+      console.log("✅ Created product group:", newGroup.group_id);
+      return { success: true, data: newGroup };
+    } catch (error) {
+      console.log("❌ Error creating product group:", error.message);
+      return { success: false, data: null };
+    }
   }
-}
 
-async updateProductGroup(group_id, groupData) {
-  const query = `
+  // async updateProductGroup(group_id, groupData) {
+  //   const query = `
+  //     UPDATE ${process.env.DATABASE_PRODUCT_GROUPS_TABLE}
+  //     SET group_name = $1,
+  //         group_description = $2,
+  //         group_status = $3,
+  //         group_items = $4,
+  //         updated_at = CURRENT_TIMESTAMP
+  //     WHERE group_id = $5
+  //     RETURNING *;
+  //   `;
+
+  //   try {
+  //     const { group_name, group_description, group_status, group_items } = groupData;
+
+  //     const result = await pool.query(query, [
+  //       group_name,
+  //       group_description,
+  //       group_status,
+  //       JSON.stringify(group_items || []),
+  //       group_id
+  //     ]);
+
+  //     if (result.rows.length === 0) {
+  //       return { success: false, data: null, message: "Product group not found" };
+  //     }
+
+  //     const updatedGroup = this.parseProductGroupItems(result.rows[0]);
+  //     console.log("✅ Updated product group:", updatedGroup.group_id);
+  //     return { success: true, data: updatedGroup };
+  //   } catch (error) {
+  //     console.log("❌ Error updating product group:", error.message);
+  //     return { success: false, data: null };
+  //   }
+  // }
+
+  // Update product group with gallery support
+  async updateProductGroup(group_id, groupData) {
+    const query = `
     UPDATE ${process.env.DATABASE_PRODUCT_GROUPS_TABLE} 
     SET group_name = $1, 
         group_description = $2, 
         group_status = $3, 
         group_items = $4,
+        group_gallery = $5,
         updated_at = CURRENT_TIMESTAMP
-    WHERE group_id = $5
+    WHERE group_id = $6
     RETURNING *;
   `;
 
-  try {
-    const { group_name, group_description, group_status, group_items } = groupData;
-    
-    const result = await pool.query(query, [
-      group_name,
-      group_description,
-      group_status,
-      JSON.stringify(group_items || []),
-      group_id
-    ]);
+    try {
+      const {
+        group_name,
+        group_description,
+        group_status,
+        group_items,
+        group_gallery,
+      } = groupData;
 
-    if (result.rows.length === 0) {
-      return { success: false, data: null, message: "Product group not found" };
+      const result = await pool.query(query, [
+        group_name,
+        group_description,
+        group_status,
+        JSON.stringify(group_items || []),
+        JSON.stringify(group_gallery || []),
+        group_id,
+      ]);
+
+      if (result.rows.length === 0) {
+        return {
+          success: false,
+          data: null,
+          message: "Product group not found",
+        };
+      }
+
+      const updatedGroup = this.parseProductGroupItems(result.rows[0]);
+      console.log("✅ Updated product group:", updatedGroup.group_id);
+      return { success: true, data: updatedGroup };
+    } catch (error) {
+      console.log("❌ Error updating product group:", error.message);
+      return { success: false, data: null, message: error.message };
     }
-
-    const updatedGroup = this.parseProductGroupItems(result.rows[0]);
-    console.log("✅ Updated product group:", updatedGroup.group_id);
-    return { success: true, data: updatedGroup };
-  } catch (error) {
-    console.log("❌ Error updating product group:", error.message);
-    return { success: false, data: null };
   }
-}
 
-async deleteProductGroup(group_id) {
-  const query = `
+  // Get product group by ID
+  // async getProductGroupById(group_id) {
+  //   const query = `
+  //     SELECT * FROM ${process.env.DATABASE_PRODUCT_GROUPS_TABLE}
+  //     WHERE group_id = $1
+  //   `;
+
+  //   try {
+  //     const result = await pool.query(query, [group_id]);
+
+  //     if (result.rows.length === 0) {
+  //       return { success: false, data: null, message: "Product group not found" };
+  //     }
+
+  //     const group = this.parseProductGroupItems(result.rows[0]);
+  //     return { success: true, data: group };
+  //   } catch (error) {
+  //     console.log("❌ Error getting product group:", error.message);
+  //     return { success: false, data: null, message: error.message };
+  //   }
+  // }
+
+  // Helper function to parse group items and gallery
+  parseProductGroupItems(group) {
+    try {
+      return {
+        ...group,
+        group_items: group.group_items ? JSON.parse(group.group_items) : [],
+        group_gallery: group.group_gallery
+          ? JSON.parse(group.group_gallery)
+          : [],
+      };
+    } catch (error) {
+      console.log("❌ Error parsing group items:", error.message);
+      return {
+        ...group,
+        group_items: [],
+        group_gallery: [],
+      };
+    }
+  }
+
+  async deleteProductGroup(group_id) {
+    const query = `
     DELETE FROM ${process.env.DATABASE_PRODUCT_GROUPS_TABLE} 
     WHERE group_id = $1
     RETURNING group_id;
   `;
 
-  try {
-    const result = await pool.query(query, [group_id]);
+    try {
+      const result = await pool.query(query, [group_id]);
 
-    if (result.rows.length === 0) {
-      return { success: false, message: "Product group not found" };
+      if (result.rows.length === 0) {
+        return { success: false, message: "Product group not found" };
+      }
+
+      console.log("✅ Deleted product group:", group_id);
+      return { success: true, message: "Product group deleted successfully" };
+    } catch (error) {
+      console.log("❌ Error deleting product group:", error.message);
+      return { success: false, message: "Failed to delete product group" };
     }
-
-    console.log("✅ Deleted product group:", group_id);
-    return { success: true, message: "Product group deleted successfully" };
-  } catch (error) {
-    console.log("❌ Error deleting product group:", error.message);
-    return { success: false, message: "Failed to delete product group" };
   }
-}
 
-async getProductGroupById(group_id) {
-  const query = `
+  async getProductGroupById(group_id) {
+    const query = `
     SELECT pg.*
     FROM ${process.env.DATABASE_PRODUCT_GROUPS_TABLE} pg
     WHERE pg.group_id = $1;
   `;
 
-  try {
-    const result = await pool.query(query, [group_id]);
+    try {
+      const result = await pool.query(query, [group_id]);
 
-    if (result.rows.length === 0) {
-      return { success: false, data: null, message: "Product group not found" };
+      if (result.rows.length === 0) {
+        return {
+          success: false,
+          data: null,
+          message: "Product group not found",
+        };
+      }
+
+      const group = this.parseProductGroupItems(result.rows[0]);
+      console.log("✅ Fetched product group:", group.group_id);
+      return { success: true, data: group };
+    } catch (error) {
+      console.log("❌ Error fetching product group:", error.message);
+      return { success: false, data: null };
     }
-
-    const group = this.parseProductGroupItems(result.rows[0]);
-    console.log("✅ Fetched product group:", group.group_id);
-    return { success: true, data: group };
-  } catch (error) {
-    console.log("❌ Error fetching product group:", error.message);
-    return { success: false, data: null };
   }
-}
-
-
-
 }
 
 export default DBFunctions;

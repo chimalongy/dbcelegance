@@ -15,6 +15,7 @@ import { makeAdminJsonPost, makeAdminFormDataPost } from '@/app/lib/apiHelper';
 import CreateGroupModal from './components/CreateGroupModal';
 import DeleteGroupModal from './components/DeleteGroupModal';
 import EditGroupModal from './components/EditGroupModal';
+
 // Loading spinner component
 const LoadingSpinner = () => (
     <div className="flex justify-center items-center h-64" aria-live="polite" aria-busy="true">
@@ -63,15 +64,6 @@ const NoGroupsFound = ({ groups, clearFilters, openAddModal }) => (
     </div>
 );
 
-// Create Group Modal
-
-
-// Edit Group Modal (Similar structure but with different title and button)
-
-
-// Delete Confirmation Modal (unchanged)
-
-
 const ProductGroupsManagement = () => {
     const router = useRouter();
     const admin_user = useAdminUserStore(state => state.adminuser);
@@ -102,7 +94,8 @@ const ProductGroupsManagement = () => {
         group_name: '',
         group_description: '',
         group_status: 'active',
-        group_items: []
+        group_items: [],
+        group_gallery: []
     });
 
     // Filter states
@@ -146,8 +139,19 @@ const ProductGroupsManagement = () => {
                 apiSummary.admin.stores.productgroups.get_all_groups,
                 { group_store: store_name }
             );
-            setProductGroups(groupsRes.data.data || []);
-            setFilteredGroups(groupsRes.data.data || []);
+
+            let data = groupsRes.data.data
+
+            const newdata = data.map((group) => {
+                return {
+                    ...group,
+                    group_items: JSON.parse(group.group_items),
+                    group_gallery: JSON.parse(group.group_gallery),
+                };
+            });
+            setProductGroups(newdata || []);
+            console.log("groupsRes", newdata);
+            setFilteredGroups(newdata || []);
 
         } catch (error) {
             console.error("Error fetching data:", error);
@@ -181,37 +185,38 @@ const ProductGroupsManagement = () => {
         }
     }, [searchTerm, productGroups]);
 
-    // Group handlers - UPDATED to use group_items
     const handleCreateGroup = async (groupData) => {
         setIsSaving(true);
         try {
-            const response = await makeAdminJsonPost(
-                apiSummary.admin.stores.productgroups.add_group,
-                {
-                    group_name: groupData.group_name,
-                    group_description: groupData.group_description,
-                    group_status: groupData.group_status,
-                    group_store: store_name,
-                    group_items: groupData.group_items || []
+            const formData = new FormData();
+            formData.append("group_name", groupData.group_name);
+            formData.append("group_description", groupData.group_description || "");
+            formData.append("group_status", groupData.group_status);
+            formData.append("group_store", store_name);
+            formData.append("group_items", JSON.stringify(groupData.group_items));
+
+            // Append gallery files
+            groupData.group_gallery.forEach((item) => {
+                if (item.file) {
+                    formData.append("group_gallery", item.file);
                 }
+            });
+
+            const res = await makeAdminFormDataPost(
+                apiSummary.admin.stores.productgroups.add_group,
+                formData
             );
 
-            if (response.data.success) {
-                toast.success("Product group created successfully!");
+            if (res.data.success) {
+                toast.success(res.data.message || "Group created successfully!");
                 setShowCreateModal(false);
-                setGroupFormData({
-                    group_name: '',
-                    group_description: '',
-                    group_status: 'active',
-                    group_items: []
-                });
                 await fetchAllData();
             } else {
-                throw new Error(response.data.message || "Failed to create product group");
+                throw new Error(res.data.message || "Failed to create group.");
             }
         } catch (error) {
-            console.error("Error creating product group:", error);
-            toast.error(error.response?.data?.message || "Failed to create product group");
+            console.error("Error creating group:", error);
+            toast.error(error.response?.data?.message || "Internal server error.");
         } finally {
             setIsSaving(false);
         }
@@ -220,15 +225,24 @@ const ProductGroupsManagement = () => {
     const handleUpdateGroup = async (groupData) => {
         setIsSaving(true);
         try {
-            const response = await makeAdminJsonPost(
+            const formData = new FormData();
+            formData.append("group_id", selectedGroup.group_id);
+            formData.append("group_name", groupData.group_name);
+            formData.append("group_description", groupData.group_description);
+            formData.append("group_status", groupData.group_status);
+            formData.append("group_store", store_name);
+            formData.append("group_items", JSON.stringify(groupData.group_items || []));
+
+            // Append new gallery files
+            groupData.group_gallery
+                ?.filter(item => item.file) // Only include new files
+                .forEach(item => {
+                    formData.append("group_gallery", item.file);
+                });
+
+            const response = await makeAdminFormDataPost(
                 apiSummary.admin.stores.productgroups.update_group,
-                {
-                    group_id: selectedGroup.group_id,
-                    group_name: groupData.group_name,
-                    group_description: groupData.group_description,
-                    group_status: groupData.group_status,
-                    group_items: groupData.group_items || []
-                }
+                formData
             );
 
             if (response.data.success) {
@@ -239,7 +253,8 @@ const ProductGroupsManagement = () => {
                     group_name: '',
                     group_description: '',
                     group_status: 'active',
-                    group_items: []
+                    group_items: [],
+                    group_gallery: []
                 });
                 await fetchAllData();
             } else {
@@ -279,13 +294,14 @@ const ProductGroupsManagement = () => {
         }
     };
 
-    // Modal handlers
+    // Modal handlers - FIXED: Include group_gallery in the form data
     const openCreateModal = () => {
         setGroupFormData({
             group_name: '',
             group_description: '',
             group_status: 'active',
-            group_items: []
+            group_items: [],
+            group_gallery: [] // Include empty gallery array
         });
         setSelectedGroup(null);
         setShowCreateModal(true);
@@ -297,7 +313,8 @@ const ProductGroupsManagement = () => {
             group_name: group.group_name,
             group_description: group.group_description || '',
             group_status: group.group_status,
-            group_items: group.group_items || []
+            group_items: group.group_items || [],
+            group_gallery: group.group_gallery || [] // ADD THIS LINE - include existing gallery
         });
         setShowEditModal(true);
     };
@@ -440,7 +457,7 @@ const ProductGroupsManagement = () => {
                 </div>
             </div>
 
-            {/* Groups Table - UPDATED to use group_items */}
+            {/* Groups Table */}
             <div className="bg-white rounded-lg shadow overflow-hidden">
                 {filteredGroups.length === 0 ? (
                     <NoGroupsFound
@@ -507,8 +524,8 @@ const ProductGroupsManagement = () => {
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${group.group_status === 'active'
-                                                        ? 'bg-green-100 text-green-800'
-                                                        : 'bg-gray-100 text-gray-800'
+                                                    ? 'bg-green-100 text-green-800'
+                                                    : 'bg-gray-100 text-gray-800'
                                                     }`}>
                                                     {group.group_status}
                                                 </span>

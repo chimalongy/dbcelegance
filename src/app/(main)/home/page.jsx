@@ -13,6 +13,7 @@ import axios from 'axios';
 import { useSelectedStoreCategories } from '@/app/lib/store/selectedstorecategoriesstore';
 import { useSelectedStoreProducts } from '@/app/lib/store/selectedstoreproductsstore';
 import { useSelectedStoreAccessoryCategories } from '@/app/lib/store/selectedstoreaccessorycategoriesstore';
+import { useSelectedStorProductsGroups } from '@/app/lib/store/productgroups/selectedstoreproductgroups';
 
 import { Noto_Serif } from 'next/font/google';
 import CategoryLoader from '@/app/components/CategoryLoader';
@@ -60,6 +61,10 @@ export default function Home() {
   const setSelectedStoreAccessoryProducts = useSelectedStoreAccessoryProducts(
     (state) => state.setSelectedStoreAccessoryProducts
   );  
+
+ const setselectedstoreproductgroups = useSelectedStorProductsGroups((state)=>state. setSelectedStoreProductGroups)
+
+
   async function fetch_collections(category) {
     if (!category.store_name) {
       router.push(category.link);
@@ -72,7 +77,7 @@ export default function Home() {
     try {
       setSelectedStoreCategories([]);
       setSelectedStoreProducts([]);
-      const [categoriesRes, productsRes, acccessoriesCategoriesRes, acccessoriesRes, acccessoriesGroupsRes] = await Promise.all([
+      const [categoriesRes, productsRes, acccessoriesCategoriesRes, acccessoriesRes, productGroupsRes] = await Promise.all([
         axios.post(apiSummary.store.get_store_categories, { store_name: category.store_name }),
         axios.post(apiSummary.store.get_store_products, { store_name: category.store_name }),
         axios.post(apiSummary.store.get_store_accessories_categories, { store_name: category.store_name }),
@@ -85,12 +90,13 @@ export default function Home() {
       // console.log(productsRes.data.data);
      // console.log(acccessoriesCategoriesRes.data.data);
     //  console.log(acccessoriesRes.data.data);
-     console.log(acccessoriesGroupsRes.data.data);
-      if (categoriesRes.data.success && productsRes.data.success && acccessoriesCategoriesRes.data.success && acccessoriesRes.data.success && acccessoriesGroupsRes.data.success) {
+     console.log(productGroupsRes.data.data);
+      if (categoriesRes.data.success && productsRes.data.success && acccessoriesCategoriesRes.data.success && acccessoriesRes.data.success && productGroupsRes.data.success) {
         setSelectedStoreCategories(categoriesRes.data.data);
         setSelectedStoreProducts(productsRes.data.data);
         setSelectedStoreAccessoryCategories(acccessoriesCategoriesRes.data.data);
         setSelectedStoreAccessoryProducts(acccessoriesRes.data.data);
+        setselectedstoreproductgroups(productGroupsRes.data.data)
        
         dataloaded = true;
       }

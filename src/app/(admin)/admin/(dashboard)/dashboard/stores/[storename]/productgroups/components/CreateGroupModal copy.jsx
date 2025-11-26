@@ -1,12 +1,12 @@
 import {
     FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiX,
     FiLoader, FiPackage, FiLayers, FiChevronDown, FiChevronUp,
-    FiXCircle, FiSave, FiArrowLeft, FiUpload
+    FiXCircle, FiSave, FiArrowLeft, FiUpload, FiImage
 } from 'react-icons/fi';
 import { FaImage, FaVideo } from 'react-icons/fa';
 import { useState, useEffect, useRef } from "react";
 
-export default function EditGroupModal({
+export default function CreateGroupModal({
     isOpen,
     onClose,
     onSave,
@@ -14,8 +14,7 @@ export default function EditGroupModal({
     onChange,
     products,
     accessories,
-    isSaving,
-    currentGroup
+    isSaving
 }) {
     const [selectedItems, setSelectedItems] = useState(new Map());
     const [isDragging, setIsDragging] = useState(false);
@@ -24,42 +23,15 @@ export default function EditGroupModal({
 
     useEffect(() => {
         // Initialize selected items from groupData
-        console.log("groupData", groupData);
         if (groupData?.group_items) {
             const itemsMap = new Map();
             groupData.group_items.forEach(item => {
-                const itemId = item.type === 'product' ? item.product_id : item.accessory_id;
-                const key = `${item.type}-${itemId}`;
+                const key = `${item.type}-${item.type === 'product' ? item.product_id : item.accessory_id}`;
                 itemsMap.set(key, item);
             });
             setSelectedItems(itemsMap);
         }
     }, [groupData]);
-
-    // Helper function to normalize gallery items
-    const normalizeGalleryItem = (item) => {
-        if (typeof item === 'string') {
-            return {
-                url: item,
-                type: item.match(/\.(mp4|webm|ogg)$/i) ? 'video' : 'image'
-            };
-        }
-        return item;
-    };
-
-    // Get normalized gallery
-    const getNormalizedGallery = () => {
-        if (!groupData?.group_gallery) return [];
-        
-        return groupData.group_gallery.map(item => {
-            if (item.file) {
-                // This is a newly uploaded file with object URL
-                return item;
-            }
-            // This is an existing item from API
-            return normalizeGalleryItem(item);
-        });
-    };
 
     const handleItemToggle = (item, type) => {
         const itemId = type === 'product' ? item.product_id : item.accessory_id;
@@ -137,12 +109,10 @@ export default function EditGroupModal({
         const filePreviews = validFiles.map(file => ({
             url: URL.createObjectURL(file),
             type: file.type.startsWith('image/') ? 'image' : 'video',
-            file, // Store the actual file object for upload
-            isNew: true // Mark as new upload
+            file
         }));
 
-        const currentGallery = getNormalizedGallery();
-        const updatedGallery = [...currentGallery, ...filePreviews];
+        const updatedGallery = [...(groupData?.group_gallery || []), ...filePreviews];
         onChange({ ...groupData, group_gallery: updatedGallery });
 
         if (fileInputRef.current) {
@@ -151,15 +121,9 @@ export default function EditGroupModal({
     };
 
     const removeFile = (index) => {
-        const currentGallery = getNormalizedGallery();
-        const fileToRemove = currentGallery[index];
-        
-        // Revoke object URL if it's a new file to prevent memory leaks
-        if (fileToRemove.isNew) {
-            URL.revokeObjectURL(fileToRemove.url);
-        }
-
-        const updatedGallery = currentGallery.filter((_, i) => i !== index);
+        const updatedGallery = [...(groupData?.group_gallery || [])];
+        URL.revokeObjectURL(updatedGallery[index].url);
+        updatedGallery.splice(index, 1);
         onChange({ ...groupData, group_gallery: updatedGallery });
     };
 
@@ -195,8 +159,7 @@ export default function EditGroupModal({
         if (!gallery || !Array.isArray(gallery) || gallery.length === 0) {
             return null;
         }
-        const firstItem = gallery[0];
-        return typeof firstItem === 'string' ? firstItem : firstItem.url;
+        return gallery[0]?.url || null;
     };
 
     const getProductImage = (product) => {
@@ -212,27 +175,20 @@ export default function EditGroupModal({
         const finalData = {
             ...groupData,
             group_items: Array.from(selectedItems.values()),
-            group_gallery: getNormalizedGallery()
+            group_gallery: groupData?.group_gallery || []
         };
         onSave(finalData);
     };
 
     if (!isOpen) return null;
 
-    const normalizedGallery = getNormalizedGallery();
-
     return (
         <div className="fixed inset-0 z-50 overflow-y-auto bg-black bg-opacity-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-lg shadow-xl max-w-6xl w-full max-h-[95vh] overflow-hidden">
                 <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                    <div>
-                        <h2 className="text-xl font-semibold text-gray-800">
-                            Edit Product Group
-                        </h2>
-                        <p className="text-sm text-gray-500 mt-1">
-                            Group ID: {currentGroup?.group_id}
-                        </p>
-                    </div>
+                    <h2 className="text-xl font-semibold text-gray-800">
+                        {groupData?.group_id ? 'Edit Product Group' : 'Create Product Group'}
+                    </h2>
                     <button
                         onClick={onClose}
                         className="text-gray-400 hover:text-gray-600 transition-colors"
@@ -248,12 +204,12 @@ export default function EditGroupModal({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {/* Group Name */}
                             <div>
-                                <label htmlFor="editGroupName" className="block text-sm font-medium text-gray-700 mb-2">
+                                <label htmlFor="groupName" className="block text-sm font-medium text-gray-700 mb-2">
                                     Group Name *
                                 </label>
                                 <input
                                     type="text"
-                                    id="editGroupName"
+                                    id="groupName"
                                     required
                                     value={groupData?.group_name || ''}
                                     onChange={(e) => onChange({ ...groupData, group_name: e.target.value })}
@@ -265,11 +221,11 @@ export default function EditGroupModal({
 
                             {/* Status */}
                             <div>
-                                <label htmlFor="editGroupStatus" className="block text-sm font-medium text-gray-700 mb-2">
+                                <label htmlFor="groupStatus" className="block text-sm font-medium text-gray-700 mb-2">
                                     Status
                                 </label>
                                 <select
-                                    id="editGroupStatus"
+                                    id="groupStatus"
                                     value={groupData?.group_status || 'active'}
                                     onChange={(e) => onChange({ ...groupData, group_status: e.target.value })}
                                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
@@ -283,11 +239,11 @@ export default function EditGroupModal({
 
                         {/* Group Description */}
                         <div>
-                            <label htmlFor="editGroupDescription" className="block text-sm font-medium text-gray-700 mb-2">
+                            <label htmlFor="groupDescription" className="block text-sm font-medium text-gray-700 mb-2">
                                 Description
                             </label>
                             <textarea
-                                id="editGroupDescription"
+                                id="groupDescription"
                                 rows={3}
                                 value={groupData?.group_description || ''}
                                 onChange={(e) => onChange({ ...groupData, group_description: e.target.value })}
@@ -327,14 +283,14 @@ export default function EditGroupModal({
                                         <FiUpload className="mx-auto h-10 w-10 text-gray-400 mb-2" />
                                         <div className="flex flex-col items-center">
                                             <label
-                                                htmlFor="edit-group-gallery-upload"
+                                                htmlFor="group-gallery-upload"
                                                 className={`relative cursor-pointer bg-white rounded-md font-medium text-blue-600 hover:text-blue-500 focus-within:outline-none ${isSaving ? 'pointer-events-none opacity-50' : ''
                                                     }`}
                                             >
                                                 <span>Click to upload</span>
                                                 <input
-                                                    id="edit-group-gallery-upload"
-                                                    name="edit-group-gallery-upload"
+                                                    id="group-gallery-upload"
+                                                    name="group-gallery-upload"
                                                     type="file"
                                                     className="sr-only"
                                                     multiple
@@ -356,30 +312,25 @@ export default function EditGroupModal({
                             </div>
 
                             {/* Preview uploaded files */}
-                            {normalizedGallery.length > 0 && (
+                            {groupData?.group_gallery?.length > 0 && (
                                 <div className="mt-4">
                                     <h4 className="text-sm font-medium text-gray-700 mb-2">
-                                        Group Gallery ({normalizedGallery.length} files)
+                                        Group Gallery ({groupData.group_gallery.length} files)
                                     </h4>
                                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
-                                        {normalizedGallery.map((file, index) => (
+                                        {groupData.group_gallery.map((file, index) => (
                                             <div key={index} className="relative group rounded-md overflow-hidden border border-gray-200">
-                                                {file.type === 'image' || (typeof file === 'string' && file.match(/\.(jpg|jpeg|png|gif|webp)$/i)) ? (
+                                                {file.type === 'image' ? (
                                                     <img
-                                                        src={file.url || file}
-                                                        alt={`Group gallery ${index + 1}`}
+                                                        src={file.url}
+                                                        alt={`Preview ${index}`}
                                                         className="h-24 w-full object-cover"
-                                                        onError={(e) => {
-                                                            e.target.onerror = null;
-                                                            e.target.src = '';
-                                                            e.target.parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center bg-gray-100"><FiPackage className="text-gray-400 w-6 h-6" /></div>';
-                                                        }}
                                                     />
                                                 ) : (
                                                     <div className="relative h-24 w-full bg-gray-100 flex items-center justify-center">
                                                         <FaVideo className="text-gray-400 text-2xl" />
                                                         <video
-                                                            src={file.url || file}
+                                                            src={file.url}
                                                             className="absolute inset-0 h-full w-full object-cover"
                                                             muted
                                                             loop
@@ -399,10 +350,7 @@ export default function EditGroupModal({
                                                 </button>
                                                 <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-1">
                                                     <p className="text-xs text-white truncate px-1">
-                                                        {file.type === 'image' || (typeof file === 'string' && file.match(/\.(jpg|jpeg|png|gif|webp)$/i)) 
-                                                            ? 'Image' 
-                                                            : 'Video'} {index + 1}
-                                                        {file.isNew && <span className="ml-1 bg-blue-500 px-1 rounded text-xs">New</span>}
+                                                        {file.type === 'image' ? 'Image' : 'Video'} {index + 1}
                                                     </p>
                                                 </div>
                                             </div>
@@ -431,13 +379,13 @@ export default function EditGroupModal({
                                             <div key={`product-${product.product_id}`} className={`flex items-center p-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50 border-blue-200' : ''}`}>
                                                 <input
                                                     type="checkbox"
-                                                    id={`edit-product-${product.product_id}`}
+                                                    id={`product-${product.product_id}`}
                                                     checked={isSelected}
                                                     onChange={() => handleItemToggle(product, 'product')}
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                     disabled={isSaving}
                                                 />
-                                                <label htmlFor={`edit-product-${product.product_id}`} className="ml-3 flex-1 cursor-pointer">
+                                                <label htmlFor={`product-${product.product_id}`} className="ml-3 flex-1 cursor-pointer">
                                                     <div className="flex items-center space-x-3">
                                                         {/* Product Image */}
                                                         <div className="flex-shrink-0 w-12 h-12 rounded-md bg-gray-100 overflow-hidden border border-gray-200">
@@ -522,13 +470,13 @@ export default function EditGroupModal({
                                             <div key={`accessory-${accessory.accessory_id}`} className={`flex items-center p-3 border-b border-gray-200 last:border-b-0 hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50 border-blue-200' : ''}`}>
                                                 <input
                                                     type="checkbox"
-                                                    id={`edit-accessory-${accessory.accessory_id}`}
+                                                    id={`accessory-${accessory.accessory_id}`}
                                                     checked={isSelected}
                                                     onChange={() => handleItemToggle(accessory, 'accessory')}
                                                     className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
                                                     disabled={isSaving}
                                                 />
-                                                <label htmlFor={`edit-accessory-${accessory.accessory_id}`} className="ml-3 flex-1 cursor-pointer">
+                                                <label htmlFor={`accessory-${accessory.accessory_id}`} className="ml-3 flex-1 cursor-pointer">
                                                     <div className="flex items-center space-x-3">
                                                         {/* Accessory Image */}
                                                         <div className="flex-shrink-0 w-12 h-12 rounded-md bg-gray-100 overflow-hidden border border-gray-200">
@@ -618,7 +566,7 @@ export default function EditGroupModal({
                                     <div>
                                         <span className="text-blue-700 font-medium">Gallery Files:</span>
                                         <span className="text-blue-600 ml-2">
-                                            {normalizedGallery.length} file(s)
+                                            {groupData?.group_gallery?.length || 0} file(s)
                                         </span>
                                     </div>
                                 </div>
@@ -646,9 +594,9 @@ export default function EditGroupModal({
                             {isSaving ? (
                                 <FiLoader className="animate-spin mr-2" />
                             ) : (
-                                <FiSave className="mr-2" />
+                                <FiPlus className="mr-2" />
                             )}
-                            Update Group
+                            {groupData?.group_id ? 'Update Group' : 'Create Group'}
                         </button>
                     </div>
                 </form>
