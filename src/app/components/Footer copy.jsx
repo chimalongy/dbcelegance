@@ -1,7 +1,6 @@
 'use client';
 import React, { useState } from 'react';
 import { FaChevronDown, FaChevronUp, FaFacebookF, FaTwitter, FaInstagram, FaPinterest, FaLinkedin, FaTiktok, FaSnapchat } from 'react-icons/fa';
-import Link from 'next/link';
 
 export default function Footer() {
   const [openSections, setOpenSections] = useState({});
@@ -61,26 +60,10 @@ export default function Footer() {
               </span>
             </button>
             <ul className={`${openSections['services'] ? 'block' : 'hidden'} md:block space-y-4 text-gray-600`}>
-              <li>
-                <Link href="/delivery-returns" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Delivery and Returns
-                </Link>
-              </li>
-              <li>
-                <Link href="/faq" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  FAQ
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact-us" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Contact Us
-                </Link>
-              </li>
-              <li>
-                <Link href="/complaints" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Complaints
-                </Link>
-              </li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Delivery and Returns</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">FAQ</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Contact Us</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Complaints</a></li>
             </ul>
           </div>
 
@@ -96,21 +79,9 @@ export default function Footer() {
               </span>
             </button>
             <ul className={`${openSections['house'] ? 'block' : 'hidden'} md:block space-y-4 text-gray-600`}>
-              <li>
-                <Link href="/dbc-elegance-couture" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  DBC Elegance Couture
-                </Link>
-              </li>
-              <li>
-                <Link href="/heritage" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Heritage
-                </Link>
-              </li>
-              <li>
-                <Link href="/sustainability" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Sustainability
-                </Link>
-              </li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">DBC Elegance Couture</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Heritage</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Sustainability</a></li>
             </ul>
           </div>
 
@@ -126,41 +97,13 @@ export default function Footer() {
               </span>
             </button>
             <ul className={`${openSections['legal'] ? 'block' : 'hidden'} md:block space-y-4 text-gray-600`}>
-              <li>
-                <Link href="/legal/general-sales-conditions" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  General Sales Conditions
-                </Link>
-              </li>
-              <li>
-                <Link href="/legal/legal-terms" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Legal Terms
-                </Link>
-              </li>
-              <li>
-                <Link href="/legal/privacy-notice" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Privacy Notice
-                </Link>
-              </li>
-              <li>
-                <Link href="/legal/privacy-choices" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Your Privacy Choices & Cookies
-                </Link>
-              </li>
-              <li>
-                <Link href="/legal/ethics-compliance" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Ethics & Compliance
-                </Link>
-              </li>
-              <li>
-                <Link href="/legal/accessibility" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Accessibility
-                </Link>
-              </li>
-              <li>
-                <Link href="/sitemap" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">
-                  Sitemap
-                </Link>
-              </li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">General Sales Conditions</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Legal Terms</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Privacy Notice</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Your Privacy Choices & Cookies</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Ethics & Compliance</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Accessibility</a></li>
+              <li><a href="#" className="hover:text-black transition-colors duration-200 text-sm tracking-wide block py-1">Sitemap</a></li>
             </ul>
           </div>
         </div>
@@ -170,25 +113,25 @@ export default function Footer() {
           <div className="flex flex-col md:flex-row items-center gap-8 mb-8 md:mb-0">
             <span className="font-light text-sm tracking-wide uppercase text-gray-700">FOLLOW US</span>
             <div className="flex space-x-5">
-              <a href="https://tiktok.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
+              <a href="#" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
                 <FaTiktok className="w-4 h-4" />
               </a>
-              <a href="https://instagram.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
+              <a href="#" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
                 <FaInstagram className="w-4 h-4" />
               </a>
-              <a href="https://twitter.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
+              <a href="#" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
                 <FaTwitter className="w-4 h-4" />
               </a>
-              <a href="https://facebook.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
+              <a href="#" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
                 <FaFacebookF className="w-4 h-4" />
               </a>
-              <a href="https://pinterest.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
+              <a href="#" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
                 <FaPinterest className="w-4 h-4" />
               </a>
-              <a href="https://snapchat.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
+              <a href="#" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
                 <FaSnapchat className="w-4 h-4" />
               </a>
-              <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
+              <a href="#" className="text-gray-500 hover:text-black transition-colors duration-200 p-2">
                 <FaLinkedin className="w-4 h-4" />
               </a>
             </div>
