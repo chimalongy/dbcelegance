@@ -453,40 +453,40 @@ export async function createProductGroupsTable() {
 export async function TableCreator() {
   const placeholderFile = Buffer.from("placeholder");
 
-  // for (const folder of folders) {
-  //   const filePath = `${folder}.placeholder`;
+  for (const folder of folders) {
+    const filePath = `${folder}.placeholder`;
 
-  //   const { error: uploadError } = await supabase.storage
-  //     .from(bucketName)
-  //     .upload(filePath, placeholderFile, {
-  //       contentType: "text/plain",
-  //       upsert: false, // don't overwrite if it already exists
-  //     });
+    const { error: uploadError } = await supabase.storage
+      .from(bucketName)
+      .upload(filePath, placeholderFile, {
+        contentType: "text/plain",
+        upsert: false, // don't overwrite if it already exists
+      });
 
-  //   if (uploadError) {
-  //     if (uploadError.message.includes("The resource already exists")) {
-  //       console.log(`🔁 Folder already exists: ${folder}`);
-  //     } else {
-  //       console.error(
-  //         `❌ Failed to create folder "${folder}":`,
-  //         uploadError.message
-  //       );
-  //     }
-  //   } else {
-  //     console.log(`✅ Created folder: ${folder}`);
-  //   }
-  // }
-  // await createBucketAndFolders();
-  // await createAdminUsersTable();
-  // await createCategoryTable();
-  // await createProductsTable();
+    if (uploadError) {
+      if (uploadError.message.includes("The resource already exists")) {
+        console.log(`🔁 Folder already exists: ${folder}`);
+      } else {
+        console.error(
+          `❌ Failed to create folder "${folder}":`,
+          uploadError.message
+        );
+      }
+    } else {
+      console.log(`✅ Created folder: ${folder}`);
+    }
+  }
+  await createBucketAndFolders();
+  await createAdminUsersTable();
+  await createCategoryTable();
+  await createProductsTable();
 
-  // await createAccessoryCategoryTable();
-  // await createAccessoryProductsTable();
-  // await createAuditLogsTable();
-  // await migrateAdminUsersTable();
-  // await createCustomerTable();
-  // await createOrdersTable();
+  await createAccessoryCategoryTable();
+  await createAccessoryProductsTable();
+  await createAuditLogsTable();
+  await migrateAdminUsersTable();
+  await createCustomerTable();
+  await createOrdersTable();
 
- // await createProductGroupsTable();
+ await createProductGroupsTable();
 }
